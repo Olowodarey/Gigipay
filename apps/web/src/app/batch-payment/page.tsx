@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2, ArrowRight, Check } from "lucide-react";
+import UploadRecipients, { UploadRecipient } from "@/components/batch-payment/UploadRecipients";
 
 // UI-only token config (no blockchain deps)
 const TOKENS = {
@@ -20,6 +21,7 @@ export default function BatchPaymentPage() {
   const [selectedToken, setSelectedToken] = useState<TokenSymbol>("STRK");
   const [recipients, setRecipients] = useState<Recipient[]>([{ id: "1", address: "", amount: "" }]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
 
   // Inline notice to replace toasts
   const [notice, setNotice] = useState<{
@@ -49,6 +51,13 @@ export default function BatchPaymentPage() {
   };
 
   const totalAmount = () => recipients.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+
+  const handleImported = (rows: UploadRecipient[]) => {
+    const mapped: Recipient[] = rows.map((r, idx) => ({ id: String(idx + 1), address: r.address, amount: r.amount }));
+    setRecipients(mapped);
+    setShowUpload(false);
+    notify({ description: `Imported ${mapped.length} recipients.` });
+  };
 
   const validateForm = () => {
     // Basic checks: all addresses and amounts present, amounts > 0
@@ -149,7 +158,8 @@ export default function BatchPaymentPage() {
             </div>
           </div>
 
-          {/* Step 1: Enter recipients */}
+          {/* Step 1: Enter recipients */
+          }
           {step === 1 && (
             <Card>
               <CardHeader>
@@ -178,51 +188,64 @@ export default function BatchPaymentPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Recipients</span>
-                    <Button onClick={addRecipient} size="sm" variant="outline">
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Recipient
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button onClick={() => setShowUpload((v) => !v)} size="sm" variant="outline">
+                        {showUpload ? "Manual entry" : "Import from file"}
+                      </Button>
+                      {!showUpload && (
+                        <Button onClick={addRecipient} size="sm" variant="outline">
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add Recipient
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {recipients.map((r, idx) => (
-                      <div key={r.id} className="flex gap-2 items-start p-3 rounded-lg border border-border">
-                        <div className="flex-1 space-y-2">
-                          <input
-                            className={inputClass}
-                            placeholder={`Wallet address ${idx + 1}`}
-                            value={r.address}
-                            onChange={(e) => updateRecipient(r.id, "address", (e.target as HTMLInputElement).value)}
-                          />
-                          <input
-                            className={inputClass}
-                            type="number"
-                            placeholder={`Amount (${selectedToken})`}
-                            value={r.amount}
-                            onChange={(e) => updateRecipient(r.id, "amount", (e.target as HTMLInputElement).value)}
-                            min="0"
-                            step="0.01"
-                          />
-                        </div>
-                        {recipients.length > 1 && (
-                          <Button onClick={() => removeRecipient(r.id)} size="icon" variant="ghost" className="mt-1">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
+                  {showUpload ? (
+                    <UploadRecipients onParsed={handleImported} />
+                  ) : (
+                    <>
+                      <div className="space-y-3 max-h-96 overflow-y-auto">
+                        {recipients.map((r, idx) => (
+                          <div key={r.id} className="flex gap-2 items-start p-3 rounded-lg border border-border">
+                            <div className="flex-1 space-y-2">
+                              <input
+                                className={inputClass}
+                                placeholder={`Wallet address ${idx + 1}`}
+                                value={r.address}
+                                onChange={(e) => updateRecipient(r.id, "address", (e.target as HTMLInputElement).value)}
+                              />
+                              <input
+                                className={inputClass}
+                                type="number"
+                                placeholder={`Amount (${selectedToken})`}
+                                value={r.amount}
+                                onChange={(e) => updateRecipient(r.id, "amount", (e.target as HTMLInputElement).value)}
+                                min="0"
+                                step="0.01"
+                              />
+                            </div>
+                            {recipients.length > 1 && (
+                              <Button onClick={() => removeRecipient(r.id)} size="icon" variant="ghost" className="mt-1">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
 
-                  <div className="p-3 rounded-lg bg-muted/50 space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Total Recipients:</span>
-                      <span className="font-medium">{recipients.length}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Total Amount:</span>
-                      <span className="font-medium">{totalAmount().toFixed(2)} {selectedToken}</span>
-                    </div>
-                  </div>
+                      <div className="p-3 rounded-lg bg-muted/50 space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Total Recipients:</span>
+                          <span className="font-medium">{recipients.length}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Total Amount:</span>
+                          <span className="font-medium">{totalAmount().toFixed(2)} {selectedToken}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <Button onClick={handleNext} className="w-full" size="lg">
