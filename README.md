@@ -1,19 +1,25 @@
-# Payflow
+# GiGipay
 
-PayFlow is a Celo-powered payment protocol designed to make on-chain transfers faster, cheaper, and more inclusive. With PayFlow, users can send funds to multiple wallet addresses in a single transaction—reducing gas costs, saving time, and simplifying complex payouts. But it goes further: PayFlow introduces claim-code payments, enabling users to send crypto without needing the recipient’s wallet address. Instead, a secure claim code is generated, and the receiver can redeem it at any time, even if they don’t yet have a wallet—making it perfect for giveaways, community rewards, and onboarding new Web3 users.
+GigiPay is a Celo-powered payment protocol designed to make on-chain transfers faster, cheaper, and more inclusive. With GigiPay, users can send funds to multiple wallets in a single transaction, significantly reducing gas costs and simplifying large-scale payouts.
+GigiPay also introduces claim-code payments, allowing users to send crypto without needing the recipient’s wallet address. Instead, a secure claim code or shareable link is generated, which the recipient can redeem at any time — even if they don’t yet have a wallet.
 
-A modern Celo blockchain application built with Next.js, TypeScript, and Turborepo.
-
+Other key features include:
+    • CSV batch uploads: Organizations can upload wallet addresses to execute mass payments effortlessly.
+    • Giveaway and rewards dashboard: Track who has claimed rewards and reclaim unclaimed funds after expiration.
+    • Optional gasless redemption: Users can redeem claim codes without paying gas, lowering barriers for first-time users.
+    • Wallet abstraction via Gmail: New users can create a wallet using just their Gmail, avoiding seed phrase complexity.
+    • Future off-ramp integration: Plans to integrate APIs enabling stablecoins like cUSD to be converted into local currencies such as Naira.
+Built on Celo’s mobile-first, carbon-negative blockchain, and leveraging stablecoins for price stability, GigiPay delivers a seamless and inclusive payment experience for communities, DAOs, businesses, and organizations managing bulk transfers or reward campaigns.
 ## Getting Started
 
 1. Install dependencies:
    ```bash
-   pnpm install
+   npm install
    ```
 
 2. Start the development server:
    ```bash
-   pnpm dev
+   npm run dev
    ```
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser.
@@ -38,7 +44,7 @@ This is a monorepo managed by Turborepo with the following structure:
 - **Styling**: Tailwind CSS
 - **UI Components**: shadcn/ui
 - **Monorepo**: Turborepo
-- **Package Manager**: PNPM
+- **Package Manager**: NPM
 
 ## Learn More
 
