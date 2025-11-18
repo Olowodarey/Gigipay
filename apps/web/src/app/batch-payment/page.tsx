@@ -13,6 +13,7 @@ import { ProgressIndicator } from "@/components/batch-payment/ProgressIndicator"
 import { RecipientForm } from "@/components/batch-payment/RecipientForm";
 import { ReviewStep } from "@/components/batch-payment/ReviewStep";
 import { SuccessStep } from "@/components/batch-payment/SuccessStep";
+import { ClientOnly } from "@/components/batch-payment/ClientOnly";
 
 // Define Celo Sepolia chain
 const celoSepolia = defineChain({
@@ -34,7 +35,7 @@ const TOKENS = {
 type TokenSymbol = keyof typeof TOKENS;
 type Recipient = { id: string; address: string; amount: string };
 
-export default function BatchPaymentPage() {
+function BatchPaymentContent() {
   const [step, setStep] = useState(1);
   const [selectedToken, setSelectedToken] = useState<TokenSymbol>("CELO");
   const [recipients, setRecipients] = useState<Recipient[]>([{ id: "1", address: "", amount: "" }]);
@@ -279,5 +280,14 @@ export default function BatchPaymentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Default export with client-only rendering
+export default function BatchPaymentPage() {
+  return (
+    <ClientOnly>
+      <BatchPaymentContent />
+    </ClientOnly>
   );
 }
