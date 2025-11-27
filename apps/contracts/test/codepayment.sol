@@ -22,6 +22,13 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
     string constant CODE3 = "PROMO999";
     string constant WRONG_CODE = "WRONGCODE";
     
+    // Test voucher names
+    string constant VOUCHER1 = "TestVoucher1";
+    string constant VOUCHER2 = "TestVoucher2";
+    string constant VOUCHER3 = "TestVoucher3";
+    string constant VOUCHER4 = "Birthday2024";
+    string constant VOUCHER5 = "Christmas2024";
+    
     function setUp() public {
         // Create test addresses
         admin = makeAddr("admin");
@@ -67,7 +74,8 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
             ,
             uint256 voucherExpiresAt,
             bool claimed,
-            bool refunded
+            bool refunded,
+            string memory voucherName
         ) = gigipay.vouchers(voucherId);
         
         assertEq(voucherSender, sender, "Sender mismatch");
@@ -75,6 +83,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         assertEq(voucherExpiresAt, expiresAt, "Expiration mismatch");
         assertFalse(claimed, "Should not be claimed");
         assertFalse(refunded, "Should not be refunded");
+        assertEq(voucherName, VOUCHER1, "Voucher name mismatch");
         
         console.log("[SUCCESS] Single voucher created with ID:", voucherId);
         console.log("  Amount:", amount);
@@ -82,6 +91,11 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
     }
     
     function test_CreateBatchVouchers() public {
+        string[] memory names = new string[](3);
+        names[0] = VOUCHER1;
+        names[1] = VOUCHER2;
+        names[2] = VOUCHER3;
+        
         string[] memory codes = new string[](3);
         codes[0] = CODE1;
         codes[1] = CODE2;
@@ -101,6 +115,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         vm.prank(sender);
         uint256[] memory voucherIds = gigipay.createVoucherBatch{value: totalAmount}(
+            names,
             codes,
             amounts,
             expirationTimes
@@ -128,9 +143,15 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         // Create voucher
         vm.prank(sender);
-        uint256 voucherId = gigipay.createVoucher{value: amount}(CODE1, expiresAt);
+        uint256 voucherId = gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
         uint256 claimerBalanceBefore = claimer1.balance;
+        uint256 contractBalanceBefore = address(gigipay).balance;
+        
+        console.log("[BEFORE CLAIM]");
+        console.log("  Claimer balance:", claimerBalanceBefore);
+        console.log("  Contract balance:", contractBalanceBefore);
+        console.log("  Voucher amount:", amount);
         
         // Expect event emission
         vm.expectEmit(true, true, false, true);
@@ -140,13 +161,23 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         vm.prank(claimer1);
         gigipay.claimVoucher(voucherId, CODE1);
         
+        uint256 claimerBalanceAfter = claimer1.balance;
+        uint256 contractBalanceAfter = address(gigipay).balance;
+        uint256 amountClaimed = claimerBalanceAfter - claimerBalanceBefore;
+        
+        console.log("[AFTER CLAIM]");
+        console.log("  Claimer balance:", claimerBalanceAfter);
+        console.log("  Contract balance:", contractBalanceAfter);
+        console.log("  Amount claimed:", amountClaimed);
+        
         // Verify claim
-        (, , , , bool claimed, ) = gigipay.vouchers(voucherId);
+        (, , , , bool claimed, ,) = gigipay.vouchers(voucherId);
         assertTrue(claimed, "Voucher should be claimed");
-        assertEq(claimer1.balance, claimerBalanceBefore + amount, "Claimer should receive funds");
+        assertEq(amountClaimed, amount, "Claimer should receive exact voucher amount");
+        assertEq(contractBalanceAfter, contractBalanceBefore - amount, "Contract balance should decrease");
         
         console.log("[SUCCESS] Voucher claimed successfully");
-        console.log("  Claimer received:", amount);
+        console.log("  [OK] Claimed amount matches voucher amount:", amount);
     }
     
     function test_RevertClaimWithWrongCode() public {
@@ -155,7 +186,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         // Create voucher
         vm.prank(sender);
-        uint256 voucherId = gigipay.createVoucher{value: amount}(CODE1, expiresAt);
+        uint256 voucherId = gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
         // Try to claim with wrong code
         vm.prank(claimer1);
@@ -171,7 +202,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         // Create voucher
         vm.prank(sender);
-        uint256 voucherId = gigipay.createVoucher{value: amount}(CODE1, expiresAt);
+        uint256 voucherId = gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
         // Fast forward past expiration
         vm.warp(block.timestamp + 2 hours);
@@ -190,7 +221,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         // Create voucher
         vm.prank(sender);
-        uint256 voucherId = gigipay.createVoucher{value: amount}(CODE1, expiresAt);
+        uint256 voucherId = gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
         // First claim succeeds
         vm.prank(claimer1);
@@ -210,7 +241,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         // Create voucher
         vm.prank(sender);
-        uint256 voucherId = gigipay.createVoucher{value: amount}(CODE1, expiresAt);
+        uint256 voucherId = gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
         uint256 senderBalanceBefore = sender.balance;
         
@@ -225,13 +256,15 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         vm.prank(sender);
         gigipay.refundVoucher(voucherId);
         
+        uint256 amountRefunded = sender.balance - senderBalanceBefore;
+        
         // Verify refund
-        (, , , , , bool refunded) = gigipay.vouchers(voucherId);
+        (, , , , , bool refunded,) = gigipay.vouchers(voucherId);
         assertTrue(refunded, "Voucher should be refunded");
-        assertEq(sender.balance, senderBalanceBefore + amount, "Sender should receive refund");
+        assertEq(amountRefunded, amount, "Sender should receive exact refund amount");
         
         console.log("[SUCCESS] Expired voucher refunded");
-        console.log("  Refund amount:", amount);
+        console.log("  [OK] Refund amount:", amountRefunded);
     }
     
     function test_RevertRefundBeforeExpiration() public {
@@ -240,7 +273,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         // Create voucher
         vm.prank(sender);
-        uint256 voucherId = gigipay.createVoucher{value: amount}(CODE1, expiresAt);
+        uint256 voucherId = gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
         // Try to refund before expiration
         vm.prank(sender);
@@ -256,7 +289,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         // Create voucher
         vm.prank(sender);
-        uint256 voucherId = gigipay.createVoucher{value: amount}(CODE1, expiresAt);
+        uint256 voucherId = gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
         // Claim voucher
         vm.prank(claimer1);
@@ -279,7 +312,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         // Create voucher
         vm.prank(sender);
-        uint256 voucherId = gigipay.createVoucher{value: amount}(CODE1, expiresAt);
+        uint256 voucherId = gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
         // Should be claimable
         assertTrue(gigipay.isVoucherClaimable(voucherId), "Should be claimable");
@@ -300,7 +333,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         // Create voucher
         vm.prank(sender);
-        uint256 voucherId = gigipay.createVoucher{value: amount}(CODE1, expiresAt);
+        uint256 voucherId = gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
         // Should not be refundable yet
         assertFalse(gigipay.isVoucherRefundable(voucherId), "Should not be refundable before expiry");
@@ -319,7 +352,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         vm.prank(sender);
         vm.expectRevert(InvalidAmount.selector);
-        gigipay.createVoucher{value: 0}(CODE1, expiresAt);
+        gigipay.createVoucher{value: 0}(VOUCHER1, CODE1, expiresAt);
         
         console.log("[SUCCESS] Prevented voucher creation with zero amount");
     }
@@ -333,7 +366,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         vm.prank(sender);
         vm.expectRevert(InvalidExpirationTime.selector);
-        gigipay.createVoucher{value: amount}(CODE1, pastTime);
+        gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, pastTime);
         
         console.log("[SUCCESS] Prevented voucher with past expiration");
     }
@@ -344,7 +377,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         vm.prank(sender);
         vm.expectRevert(InvalidClaimCode.selector);
-        gigipay.createVoucher{value: amount}("", expiresAt);
+        gigipay.createVoucher{value: amount}(VOUCHER1, "", expiresAt);
         
         console.log("[SUCCESS] Prevented voucher with empty code");
     }
@@ -357,13 +390,13 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         // Sender 1 creates 2 vouchers
         vm.startPrank(sender);
-        gigipay.createVoucher{value: 1 ether}(CODE1, expiresAt);
-        gigipay.createVoucher{value: 2 ether}(CODE2, expiresAt);
+        gigipay.createVoucher{value: 1 ether}(VOUCHER1, CODE1, expiresAt);
+        gigipay.createVoucher{value: 2 ether}(VOUCHER2, CODE2, expiresAt);
         vm.stopPrank();
         
         // Sender 2 creates 1 voucher
         vm.prank(sender2);
-        gigipay.createVoucher{value: 3 ether}(CODE3, expiresAt);
+        gigipay.createVoucher{value: 3 ether}(VOUCHER3, CODE3, expiresAt);
         
         // Check sender vouchers
         uint256[] memory sender1Vouchers = gigipay.getSenderVouchers(sender);
@@ -388,7 +421,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         // Try to create voucher when paused
         vm.prank(sender);
         vm.expectRevert();
-        gigipay.createVoucher{value: amount}(CODE1, expiresAt);
+        gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
         console.log("[SUCCESS] Prevented voucher creation when paused");
     }

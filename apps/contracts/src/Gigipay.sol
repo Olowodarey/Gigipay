@@ -23,6 +23,7 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
         uint256 expiresAt;
         bool claimed;
         bool refunded;
+        string voucherName; // Name/identifier for the voucher (e.g., "Birthday2024")
     }
 
     // Counter for unique voucher IDs
@@ -33,6 +34,12 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
     
     // Mapping from sender to their voucher IDs
     mapping(address => uint256[]) public senderVouchers;
+    
+    // Mapping from voucher name hash to voucher ID (for easy lookup)
+    mapping(bytes32 => uint256) public voucherNameToId;
+    
+    // Mapping to check if a voucher name is already used
+    mapping(bytes32 => bool) public voucherNameExists;
     
     // Reentrancy guard
     uint256 private _status;
@@ -84,18 +91,24 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
     }
 
     /**
-     * @notice Create a single payment voucher with a claim code
+     * @notice Create a single payment voucher with a name and claim code
+     * @param voucherName The name/identifier for this voucher (e.g., "Birthday2024")
      * @param claimCode The secret code that can be used to claim this voucher
      * @param expirationTime The timestamp when this voucher expires
      * @return voucherId The ID of the created voucher
      */
     function createVoucher(
+        string memory voucherName,
         string memory claimCode,
         uint256 expirationTime
     ) public payable whenNotPaused returns (uint256) {
         if (msg.value == 0) revert InvalidAmount();
         if (expirationTime <= block.timestamp) revert InvalidExpirationTime();
         if (bytes(claimCode).length == 0) revert InvalidClaimCode();
+        if (bytes(voucherName).length == 0) revert InvalidClaimCode(); // Reuse error
+
+        bytes32 voucherNameHash = keccak256(abi.encodePacked(voucherName));
+        if (voucherNameExists[voucherNameHash]) revert InvalidClaimCode(); // Name already used
 
         uint256 voucherId = _voucherIdCounter++;
         bytes32 claimCodeHash = _hashClaimCode(claimCode);
@@ -106,10 +119,13 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
             claimCodeHash: claimCodeHash,
             expiresAt: expirationTime,
             claimed: false,
-            refunded: false
+            refunded: false,
+            voucherName: voucherName
         });
 
         senderVouchers[msg.sender].push(voucherId);
+        voucherNameToId[voucherNameHash] = voucherId;
+        voucherNameExists[voucherNameHash] = true;
 
         emit VoucherCreated(voucherId, msg.sender, msg.value, expirationTime);
 
@@ -118,18 +134,20 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
 
     /**
      * @notice Create multiple payment vouchers in one transaction (gas efficient!)
+     * @param voucherNames Array of names/identifiers for each voucher
      * @param claimCodes Array of secret codes for each voucher
      * @param amounts Array of amounts for each voucher
      * @param expirationTimes Array of expiration timestamps for each voucher
      * @return voucherIds Array of created voucher IDs
      */
     function createVoucherBatch(
+        string[] memory voucherNames,
         string[] memory claimCodes,
         uint256[] memory amounts,
         uint256[] memory expirationTimes
     ) public payable whenNotPaused returns (uint256[] memory) {
         uint256 length = claimCodes.length;
-        if (length != amounts.length || length != expirationTimes.length) {
+        if (length != amounts.length || length != expirationTimes.length || length != voucherNames.length) {
             revert InvalidAmount();
         }
 
@@ -145,6 +163,10 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
             if (amounts[i] == 0) revert InvalidAmount();
             if (expirationTimes[i] <= block.timestamp) revert InvalidExpirationTime();
             if (bytes(claimCodes[i]).length == 0) revert InvalidClaimCode();
+            if (bytes(voucherNames[i]).length == 0) revert InvalidClaimCode();
+
+            bytes32 voucherNameHash = keccak256(abi.encodePacked(voucherNames[i]));
+            if (voucherNameExists[voucherNameHash]) revert InvalidClaimCode(); // Name already used
 
             uint256 voucherId = _voucherIdCounter++;
             bytes32 claimCodeHash = _hashClaimCode(claimCodes[i]);
@@ -155,10 +177,13 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
                 claimCodeHash: claimCodeHash,
                 expiresAt: expirationTimes[i],
                 claimed: false,
-                refunded: false
+                refunded: false,
+                voucherName: voucherNames[i]
             });
 
             senderVouchers[msg.sender].push(voucherId);
+            voucherNameToId[voucherNameHash] = voucherId;
+            voucherNameExists[voucherNameHash] = true;
             voucherIds[i] = voucherId;
 
             emit VoucherCreated(voucherId, msg.sender, amounts[i], expirationTimes[i]);
@@ -168,7 +193,37 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
     }
 
     /**
-     * @notice Claim a payment voucher using the claim code
+     * @notice Claim a payment voucher using voucher name and claim code
+     * @param voucherName The name of the voucher to claim
+     * @param claimCode The secret code to unlock the voucher
+     */
+    function claimVoucherByName(
+        string memory voucherName,
+        string memory claimCode
+    ) public whenNotPaused {
+        bytes32 voucherNameHash = keccak256(abi.encodePacked(voucherName));
+        uint256 voucherId = voucherNameToId[voucherNameHash];
+        
+        PaymentVoucher storage voucher = vouchers[voucherId];
+        
+        if (voucher.sender == address(0)) revert VoucherNotFound();
+        if (voucher.claimed) revert VoucherAlreadyClaimed();
+        if (voucher.refunded) revert VoucherAlreadyRefunded();
+        if (block.timestamp > voucher.expiresAt) revert VoucherExpired();
+
+        bytes32 providedCodeHash = _hashClaimCode(claimCode);
+        if (providedCodeHash != voucher.claimCodeHash) revert InvalidClaimCode();
+
+        voucher.claimed = true;
+
+        (bool success, ) = payable(msg.sender).call{value: voucher.amount}("");
+        if (!success) revert TransferFailed();
+
+        emit VoucherClaimed(voucherId, msg.sender, voucher.amount);
+    }
+
+    /**
+     * @notice Claim a payment voucher using the voucher ID (legacy method)
      * @param voucherId The ID of the voucher to claim
      * @param claimCode The secret code to unlock the voucher
      */

@@ -12,7 +12,9 @@ import {
 } from "@/components/ui/card";
 import { Gift, Sparkles, ExternalLink, AlertCircle, Copy } from "lucide-react";
 import Confetti from "react-confetti";
-// UI-only page: removed Starknet/wallet/auth/share dependencies
+import { useAccount } from "wagmi";
+import { useClaimVoucher, useVoucherDetails, useIsVoucherClaimable } from "@/hooks/useVouchers";
+import { formatUnits } from "viem";
 
 type ClaimState = "initial" | "valid" | "invalid" | "claimed";
 
@@ -22,8 +24,13 @@ export default function ClaimPage() {
   const [prizeAmount, setPrizeAmount] = useState("");
   const [txHash, setTxHash] = useState("");
   const [showConfetti, setShowConfetti] = useState(false);
-  const [isClaiming, setIsClaiming] = useState(false);
-  const [giveawayName, setGiveawayName] = useState(""); // Giveaway name instead of ID
+  const [voucherId, setVoucherId] = useState("");
+  
+  // Wagmi hooks
+  const { address, isConnected } = useAccount();
+  const { claimVoucher, isPending: isClaiming, isConfirmed, hash, error } = useClaimVoucher();
+  const { voucher } = useVoucherDetails(voucherId ? parseInt(voucherId) : 0);
+  const { isClaimable } = useIsVoucherClaimable(voucherId ? parseInt(voucherId) : 0);
 
   // Inline notice to replace toasts
   const [notice, setNotice] = useState<{
@@ -54,13 +61,13 @@ export default function ClaimPage() {
     toast({ description: "Copied to clipboard" });
   };
 
-  const getShareTemplate = () => `🎊 I just received a payment from "${giveawayName}" on Gigi Pay! 🎉\n\nGigi Pay makes crypto payments simple - just Gmail needed, no wallet setup required! \n\nTry Gigi Pay for seamless crypto payments! 🎁\n\n#GigiPay #Starknet #CryptoPayments`;
+  const getShareTemplate = () => `🎊 I just received ${prizeAmount} CELO on Gigipay! 🎉\n\nGigipay makes crypto payments simple and secure on Celo blockchain! \n\nTry Gigipay for seamless crypto payments! 🎁\n\n#Gigipay #Celo #CryptoPayments`;
 
   const validateCode = () => {
-    if (!giveawayName.trim()) {
+    if (!voucherId.trim()) {
       toast({
-        title: "Missing Giveaway Name",
-        description: "Please enter the giveaway name",
+        title: "Missing Voucher ID",
+        description: "Please enter the voucher ID",
         variant: "destructive",
       });
       return;
@@ -75,28 +82,76 @@ export default function ClaimPage() {
       return;
     }
 
-    // For now, just mark as valid - actual validation happens on-chain
+    // Check if voucher exists and is claimable
+    if (!voucher) {
+      toast({
+        title: "Invalid Voucher",
+        description: "Voucher not found",
+        variant: "destructive",
+      });
+      setClaimState("invalid");
+      return;
+    }
+
+    if (!isClaimable) {
+      toast({
+        title: "Cannot Claim",
+        description: "Voucher has already been claimed or expired",
+        variant: "destructive",
+      });
+      setClaimState("invalid");
+      return;
+    }
+
     setClaimState("valid");
+    if (voucher) {
+      setPrizeAmount(formatUnits(voucher.amount, 18));
+    }
   };
 
   const handleClaim = async () => {
-    setIsClaiming(true);
+    if (!isConnected) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet to claim",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // Simulate processing delay
-      await new Promise((r) => setTimeout(r, 1000));
-      const amount = (Math.random() * 10 + 1).toFixed(2);
-      setPrizeAmount(amount);
-      // Fake tx hash
-      const fakeHash = "0x" + Math.random().toString(16).slice(2).padEnd(64, "0").slice(0, 64);
-      setTxHash(fakeHash);
+      await claimVoucher(parseInt(voucherId), claimCode);
+    } catch (err: any) {
+      toast({
+        title: "Claim Failed",
+        description: err.message || "Failed to claim voucher",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle successful claim
+  useEffect(() => {
+    if (isConfirmed && hash) {
+      setTxHash(hash);
       setClaimState("claimed");
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 4000);
       toast({ description: "Your payment has been successfully received!" });
-    } finally {
-      setIsClaiming(false);
     }
-  };
+  }, [isConfirmed, hash]);
+
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message || "Transaction failed",
+        variant: "destructive",
+      });
+      setClaimState("invalid");
+    }
+  }, [error]);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -129,17 +184,17 @@ export default function ClaimPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <label htmlFor="giveawayName" className="text-sm font-medium">Payment Name</label>
+                  <label htmlFor="voucherId" className="text-sm font-medium">Voucher ID</label>
                   <input
-                    id="giveawayName"
-                    type="text"
-                    placeholder="e.g., MyGiveaway"
-                    value={giveawayName}
-                    onChange={(e) => setGiveawayName((e.target as HTMLInputElement).value)}
+                    id="voucherId"
+                    type="number"
+                    placeholder="e.g., 0"
+                    value={voucherId}
+                    onChange={(e) => setVoucherId((e.target as HTMLInputElement).value)}
                     className={`${inputClass} text-center`}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Enter the giveaway name you want to claim from
+                    Enter the voucher ID you want to claim
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -177,9 +232,9 @@ export default function ClaimPage() {
               <CardContent className="space-y-4">
                 <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 space-y-2">
                   <p className="text-sm text-center text-foreground">
-                    <strong>Payment:</strong>{" "}
+                    <strong>Voucher ID:</strong>{" "}
                     <span className="font-mono font-semibold">
-                      {giveawayName}
+                      {voucherId}
                     </span>
                   </p>
                   <p className="text-sm text-center text-foreground">
@@ -190,18 +245,18 @@ export default function ClaimPage() {
                     Please verify:
                   </p>
                   <ul className="text-xs text-muted-foreground space-y-1">
-                    <li>• The payment name is spelled correctly</li>
+                    <li>• The voucher ID is correct</li>
                     <li>• The claim code hasn't been used already</li>
                     <li>
-                      • <strong>Each code can only be claimed once</strong>
+                      • <strong>Each voucher can only be claimed once</strong>
                     </li>
-                    <li>• The payment exists on-chain</li>
+                    <li>• The voucher exists on-chain and hasn't expired</li>
                   </ul>
                 </div>
                 <Button
                   onClick={() => {
                     setClaimState("initial");
-                    setGiveawayName("");
+                    setVoucherId("");
                     setClaimCode("");
                   }}
                   variant="outline"
@@ -230,16 +285,22 @@ export default function ClaimPage() {
                   <div className="text-sm text-muted-foreground mb-2">
                     Payment Amount
                   </div>
-                  <div className="text-5xl font-bold text-accent mb-2">???</div>
-                  <div className="text-sm text-muted-foreground">STRK</div>
+                  <div className="text-5xl font-bold text-accent mb-2">{prizeAmount || "???"}</div>
+                  <div className="text-sm text-muted-foreground">CELO</div>
                 </div>
 
                 <div className="space-y-3">
-                  <Button onClick={handleClaim} className="w-full" size="lg" disabled={isClaiming}>
-                    {isClaiming ? "Claiming..." : "Claim Payment"}
-                  </Button>
+                  {!isConnected ? (
+                    <p className="text-sm text-center text-muted-foreground">
+                      Please connect your wallet to claim
+                    </p>
+                  ) : (
+                    <Button onClick={handleClaim} className="w-full" size="lg" disabled={isClaiming}>
+                      {isClaiming ? "Claiming..." : "Claim Payment"}
+                    </Button>
+                  )}
                   <p className="text-xs text-center text-muted-foreground">
-                    No gas fees required - completely free to claim
+                    Gas fees apply on Celo Sepolia testnet
                   </p>
                 </div>
               </CardContent>
@@ -281,7 +342,7 @@ export default function ClaimPage() {
                       Transaction
                     </span>
                     <a
-                      href={`https://starkscan.co/tx/${txHash}`}
+                      href={`https://alfajores.celoscan.io/tx/${txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm font-mono text-accent hover:underline flex items-center gap-1 break-all text-right"
@@ -307,7 +368,7 @@ export default function ClaimPage() {
                   <Button
                     onClick={() => {
                       setClaimState("initial");
-                      setGiveawayName("");
+                      setVoucherId("");
                       setClaimCode("");
                       setPrizeAmount("");
                       setTxHash("");
@@ -325,12 +386,12 @@ export default function ClaimPage() {
           {/* Info Section */}
           <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border">
             <h3 className="font-semibold text-foreground mb-2 text-sm">
-              How to find claim codes
+              How to claim vouchers
             </h3>
             <ul className="text-sm text-muted-foreground space-y-1 leading-relaxed">
-              <li>• Get claim codes from payment creators</li>
-              <li>• Look for posts or messages containing claim codes</li>
-              <li>• Enter the code here to claim your payment</li>
+              <li>• Get voucher ID and claim code from the sender</li>
+              <li>• Connect your wallet to Celo Sepolia network</li>
+              <li>• Enter the voucher ID and claim code to receive CELO</li>
             </ul>
           </div>
         </div>

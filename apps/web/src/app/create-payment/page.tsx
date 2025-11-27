@@ -1,19 +1,17 @@
 
 "use client";
 
-import { useState } from "react";
-// Page-level UI is composed via step components; no direct Card/Button usage here
+import { useState, useEffect } from "react";
 import CreatePaymentStep1 from "@/components/create-payment/CreatePaymentStep1";
 import CreatePaymentStep2 from "@/components/create-payment/CreatePaymentStep2";
 import CreatePaymentStep3 from "@/components/create-payment/CreatePaymentStep3";
-// Removed shadcn input/label components (use native elements)
 import { Check } from "lucide-react";
-// Removed non-existent components: use-toast, social-share, footer, select, checkbox
+import { useAccount, useBalance } from "wagmi";
+import { useCreateVoucherBatch } from "@/hooks/useVouchers";
+import { formatUnits } from "viem";
 
-// UI-only token config (no blockchain deps)
+// Token config - only CELO for now
 const TOKENS = {
-  STRK: { symbol: "STRK", name: "Stark", icon: "💎" },
-  USDC: { symbol: "USDC", name: "USD Coin", icon: "💵" },
   CELO: { symbol: "CELO", name: "Celo", icon: "🟡" },
 } as const;
 type TokenSymbol = keyof typeof TOKENS;
@@ -37,7 +35,7 @@ export default function CreatePage() {
     name: "",
     totalPrize: "",
     expiryHours: "24",
-    selectedToken: "STRK",
+    selectedToken: "CELO",
   });
   const [neverExpire, setNeverExpire] = useState(false);
   const [expiryValue, setExpiryValue] = useState("24");
@@ -47,7 +45,12 @@ export default function CreatePage() {
   const [winners, setWinners] = useState<Winner[]>([
     { id: "1", code: "", amount: "" },
   ]);
-  const [isCreating, setIsCreating] = useState(false);
+  const [createdVoucherIds, setCreatedVoucherIds] = useState<number[]>([]);
+  
+  // Wagmi hooks
+  const { address, isConnected, chain } = useAccount();
+  const { data: balance } = useBalance({ address });
+  const { createVoucherBatch, isPending: isCreating, isConfirmed, hash, error } = useCreateVoucherBatch();
 
   // Inline notice system to replace toast
   const [notice, setNotice] = useState<{
@@ -210,26 +213,69 @@ export default function CreatePage() {
   };
 
   const handleCreateGiveaway = async () => {
-    setIsCreating(true);
-    try {
-      // Simulate API/processing delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
+    if (!isConnected) {
       toast({
-        title: "Success!",
-        description: "Payment created (simulation)",
-      });
-      setStep(3);
-    } catch {
-      toast({
-        title: "Error",
-        description: "Failed to create payment.",
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet to create vouchers",
         variant: "destructive",
       });
-    } finally {
-      setIsCreating(false);
+      return;
+    }
+
+    // Check balance
+    const totalAmount = calculateTotalPrizes();
+    if (balance && parseFloat(formatUnits(balance.value, 18)) < totalAmount) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You need ${totalAmount} CELO but only have ${formatUnits(balance.value, 18)} CELO`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Calculate expiration timestamp
+      const hoursToExpire = convertToHours(expiryValue, expiryUnit);
+      const expirationTime = Math.floor(Date.now() / 1000) + (hoursToExpire * 60 * 60);
+      
+      // Prepare vouchers
+      const vouchers = winners.map(w => ({
+        claimCode: w.code,
+        amount: w.amount,
+        expirationTime: expirationTime,
+      }));
+
+      await createVoucherBatch(vouchers);
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message || "Failed to create vouchers",
+        variant: "destructive",
+      });
     }
   };
+
+  // Handle successful creation
+  useEffect(() => {
+    if (isConfirmed && hash) {
+      toast({
+        title: "Success!",
+        description: "Vouchers created successfully!",
+      });
+      setStep(3);
+    }
+  }, [isConfirmed, hash]);
+
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message || "Transaction failed",
+        variant: "destructive",
+      });
+    }
+  }, [error]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -257,6 +303,7 @@ export default function CreatePage() {
   };
 
   const getTweetTemplate = () => {
+    const hoursToExpire = convertToHours(expiryValue, expiryUnit);
     return `🎉 ${formData.name} - Payment Giveaway! 🎁
 
 I'm giving away ${formData.totalPrize} ${formData.selectedToken} to ${
@@ -264,12 +311,12 @@ I'm giving away ${formData.totalPrize} ${formData.selectedToken} to ${
     } lucky winner${winners.length > 1 ? "s" : ""}!
 
 💎 Prize amounts are HIDDEN until you claim!
-⏰ Expires in ${formData.expiryHours} hours
+⏰ Expires in ${hoursToExpire} hours
 🔗 Claim at: /claim-payment
 
-Use code [CODE] to claim your prize!
+Use your voucher ID and code to claim!
 
-#Payflow #Crypto`;
+#Gigipay #Celo #CryptoPayments`;
   };
 
   return (
