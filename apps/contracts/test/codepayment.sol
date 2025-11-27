@@ -62,7 +62,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         emit VoucherCreated(0, sender, amount, expiresAt);
         
         vm.prank(sender);
-        uint256 voucherId = gigipay.createVoucher{value: amount}(CODE1, expiresAt);
+        uint256 voucherId = gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
         // Verify voucher was created
         assertEq(voucherId, 0, "First voucher should have ID 0");
@@ -91,11 +91,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
     }
     
     function test_CreateBatchVouchers() public {
-        string[] memory names = new string[](3);
-        names[0] = VOUCHER1;
-        names[1] = VOUCHER2;
-        names[2] = VOUCHER3;
-        
+        // Create 3 vouchers under ONE campaign name
         string[] memory codes = new string[](3);
         codes[0] = CODE1;
         codes[1] = CODE2;
@@ -115,7 +111,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         vm.prank(sender);
         uint256[] memory voucherIds = gigipay.createVoucherBatch{value: totalAmount}(
-            names,
+            VOUCHER1,  // ONE campaign name for all vouchers
             codes,
             amounts,
             expirationTimes
@@ -131,7 +127,11 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         uint256[] memory senderVouchers = gigipay.getSenderVouchers(sender);
         assertEq(senderVouchers.length, 3, "Sender should have 3 vouchers");
         
-        console.log("[SUCCESS] Batch created 3 vouchers");
+        // Check vouchers by campaign name
+        uint256[] memory campaignVouchers = gigipay.getVouchersByName(VOUCHER1);
+        assertEq(campaignVouchers.length, 3, "Campaign should have 3 vouchers");
+        
+        console.log("[SUCCESS] Batch created 3 vouchers under ONE campaign:", VOUCHER1);
         console.log("  Voucher 0: 1 CELO, expires in 1 day");
         console.log("  Voucher 1: 2 CELO, expires in 7 days");
         console.log("  Voucher 2: 3 CELO, expires in 30 days");
@@ -157,9 +157,9 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         vm.expectEmit(true, true, false, true);
         emit VoucherClaimed(voucherId, claimer1, amount);
         
-        // Claim voucher
+        // Claim voucher by campaign name
         vm.prank(claimer1);
-        gigipay.claimVoucher(voucherId, CODE1);
+        gigipay.claimVoucher(VOUCHER1, CODE1);
         
         uint256 claimerBalanceAfter = claimer1.balance;
         uint256 contractBalanceAfter = address(gigipay).balance;
@@ -176,7 +176,8 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         assertEq(amountClaimed, amount, "Claimer should receive exact voucher amount");
         assertEq(contractBalanceAfter, contractBalanceBefore - amount, "Contract balance should decrease");
         
-        console.log("[SUCCESS] Voucher claimed successfully");
+        console.log("[SUCCESS] Voucher claimed by name successfully");
+        console.log("  Campaign:", VOUCHER1);
         console.log("  [OK] Claimed amount matches voucher amount:", amount);
     }
     
@@ -186,12 +187,12 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         // Create voucher
         vm.prank(sender);
-        uint256 voucherId = gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
+        gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
         // Try to claim with wrong code
         vm.prank(claimer1);
         vm.expectRevert(InvalidClaimCode.selector);
-        gigipay.claimVoucher(voucherId, WRONG_CODE);
+        gigipay.claimVoucher(VOUCHER1, WRONG_CODE);
         
         console.log("[SUCCESS] Rejected claim with wrong code");
     }
@@ -202,7 +203,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         // Create voucher
         vm.prank(sender);
-        uint256 voucherId = gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
+        gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
         // Fast forward past expiration
         vm.warp(block.timestamp + 2 hours);
@@ -210,7 +211,7 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         // Try to claim expired voucher
         vm.prank(claimer1);
         vm.expectRevert(VoucherExpired.selector);
-        gigipay.claimVoucher(voucherId, CODE1);
+        gigipay.claimVoucher(VOUCHER1, CODE1);
         
         console.log("[SUCCESS] Rejected claim of expired voucher");
     }
@@ -221,16 +222,17 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         
         // Create voucher
         vm.prank(sender);
-        uint256 voucherId = gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
+        gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
         // First claim succeeds
         vm.prank(claimer1);
-        gigipay.claimVoucher(voucherId, CODE1);
+        gigipay.claimVoucher(VOUCHER1, CODE1);
         
-        // Second claim should fail
+        // Second claim should fail with InvalidClaimCode
+        // (because the code is skipped in the loop since it's already claimed)
         vm.prank(claimer2);
-        vm.expectRevert(VoucherAlreadyClaimed.selector);
-        gigipay.claimVoucher(voucherId, CODE1);
+        vm.expectRevert(InvalidClaimCode.selector);
+        gigipay.claimVoucher(VOUCHER1, CODE1);
         
         console.log("[SUCCESS] Prevented double claim");
     }
@@ -291,9 +293,9 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         vm.prank(sender);
         uint256 voucherId = gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
-        // Claim voucher
+        // Claim voucher by campaign name
         vm.prank(claimer1);
-        gigipay.claimVoucher(voucherId, CODE1);
+        gigipay.claimVoucher(VOUCHER1, CODE1);
         
         // Fast forward past expiration
         vm.warp(block.timestamp + 8 days);
@@ -317,9 +319,9 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         // Should be claimable
         assertTrue(gigipay.isVoucherClaimable(voucherId), "Should be claimable");
         
-        // Claim it
+        // Claim it by campaign name
         vm.prank(claimer1);
-        gigipay.claimVoucher(voucherId, CODE1);
+        gigipay.claimVoucher(VOUCHER1, CODE1);
         
         // Should no longer be claimable
         assertFalse(gigipay.isVoucherClaimable(voucherId), "Should not be claimable after claim");
@@ -424,5 +426,151 @@ contract CodePaymentTest is Test, IGigipayEvents, IGigipayErrors {
         gigipay.createVoucher{value: amount}(VOUCHER1, CODE1, expiresAt);
         
         console.log("[SUCCESS] Prevented voucher creation when paused");
+    }
+    
+    function test_OneNameMultipleCodes() public {
+        // Create 5 vouchers under ONE campaign name with different codes and amounts
+        string[] memory codes = new string[](5);
+        codes[0] = "CODE1";
+        codes[1] = "CODE2";
+        codes[2] = "CODE3";
+        codes[3] = "CODE4";
+        codes[4] = "CODE5";
+        
+        uint256[] memory amounts = new uint256[](5);
+        amounts[0] = 10 ether;  // VIP
+        amounts[1] = 5 ether;   // Regular
+        amounts[2] = 5 ether;   // Regular
+        amounts[3] = 2 ether;   // Basic
+        amounts[4] = 2 ether;   // Basic
+        
+        uint256[] memory expirationTimes = new uint256[](5);
+        uint256 expiry = block.timestamp + 7 days;
+        for (uint i = 0; i < 5; i++) {
+            expirationTimes[i] = expiry;
+        }
+        
+        uint256 totalAmount = 24 ether;
+        
+        console.log("[TEST] Creating campaign with multiple codes...");
+        
+        vm.prank(sender);
+        uint256[] memory voucherIds = gigipay.createVoucherBatch{value: totalAmount}(
+            VOUCHER4,  // Campaign: "Birthday2024"
+            codes,
+            amounts,
+            expirationTimes
+        );
+        
+        // Verify all vouchers created
+        assertEq(voucherIds.length, 5, "Should create 5 vouchers");
+        
+        // Verify all under same campaign name
+        uint256[] memory campaignVouchers = gigipay.getVouchersByName(VOUCHER4);
+        assertEq(campaignVouchers.length, 5, "Campaign should have 5 vouchers");
+        
+        console.log("[SUCCESS] Created 5 vouchers under campaign:", VOUCHER4);
+        console.log("  VIP codes: 1 x 10 CELO");
+        console.log("  Regular codes: 2 x 5 CELO");
+        console.log("  Basic codes: 2 x 2 CELO");
+        
+        // Test claiming different codes from same campaign
+        console.log("\n[TEST] Claiming vouchers from same campaign...");
+        
+        // Claimer 1 claims CODE1 (10 CELO)
+        uint256 claimer1BalanceBefore = claimer1.balance;
+        vm.prank(claimer1);
+        gigipay.claimVoucher(VOUCHER4, "CODE1");
+        assertEq(claimer1.balance - claimer1BalanceBefore, 10 ether, "Claimer1 should get 10 CELO");
+        console.log("  Claimer1 claimed CODE1: 10 CELO");
+        
+        // Claimer 2 claims CODE2 (5 CELO)
+        uint256 claimer2BalanceBefore = claimer2.balance;
+        vm.prank(claimer2);
+        gigipay.claimVoucher(VOUCHER4, "CODE2");
+        assertEq(claimer2.balance - claimer2BalanceBefore, 5 ether, "Claimer2 should get 5 CELO");
+        console.log("  Claimer2 claimed CODE2: 5 CELO");
+        
+        // Claimer 1 claims CODE4 (2 CELO) - same person, different code
+        claimer1BalanceBefore = claimer1.balance;
+        vm.prank(claimer1);
+        gigipay.claimVoucher(VOUCHER4, "CODE4");
+        assertEq(claimer1.balance - claimer1BalanceBefore, 2 ether, "Claimer1 should get 2 CELO");
+        console.log("  Claimer1 claimed CODE4: 2 CELO (same person, different code)");
+        
+        // Verify 3 claimed, 2 remaining
+        uint256 claimedCount = 0;
+        for (uint i = 0; i < voucherIds.length; i++) {
+            (, , , , bool claimed, ,) = gigipay.vouchers(voucherIds[i]);
+            if (claimed) claimedCount++;
+        }
+        assertEq(claimedCount, 3, "Should have 3 claimed vouchers");
+        
+        console.log("\n[SUCCESS] One campaign, multiple codes works perfectly!");
+        console.log("  3 codes claimed, 2 remaining");
+    }
+    
+    function test_CannotClaimSameCodeTwice() public {
+        // Create campaign with multiple codes
+        string[] memory codes = new string[](2);
+        codes[0] = CODE1;
+        codes[1] = CODE2;
+        
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 5 ether;
+        amounts[1] = 5 ether;
+        
+        uint256[] memory expirationTimes = new uint256[](2);
+        expirationTimes[0] = block.timestamp + 7 days;
+        expirationTimes[1] = block.timestamp + 7 days;
+        
+        vm.prank(sender);
+        gigipay.createVoucherBatch{value: 10 ether}(
+            VOUCHER4,
+            codes,
+            amounts,
+            expirationTimes
+        );
+        
+        // Claimer 1 claims CODE1
+        vm.prank(claimer1);
+        gigipay.claimVoucher(VOUCHER4, CODE1);
+        
+        // Claimer 2 tries to claim same CODE1 - should fail
+        vm.prank(claimer2);
+        vm.expectRevert(InvalidClaimCode.selector);
+        gigipay.claimVoucher(VOUCHER4, CODE1);
+        
+        console.log("[SUCCESS] Prevented double claim of same code");
+    }
+    
+    function test_WrongCodeInCampaign() public {
+        // Create campaign
+        string[] memory codes = new string[](2);
+        codes[0] = CODE1;
+        codes[1] = CODE2;
+        
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 5 ether;
+        amounts[1] = 5 ether;
+        
+        uint256[] memory expirationTimes = new uint256[](2);
+        expirationTimes[0] = block.timestamp + 7 days;
+        expirationTimes[1] = block.timestamp + 7 days;
+        
+        vm.prank(sender);
+        gigipay.createVoucherBatch{value: 10 ether}(
+            VOUCHER4,
+            codes,
+            amounts,
+            expirationTimes
+        );
+        
+        // Try to claim with wrong code
+        vm.prank(claimer1);
+        vm.expectRevert(InvalidClaimCode.selector);
+        gigipay.claimVoucher(VOUCHER4, WRONG_CODE);
+        
+        console.log("[SUCCESS] Rejected wrong code in campaign");
     }
 }
