@@ -14,18 +14,19 @@ export function useCreateVoucher() {
 
   /**
    * Create a single payment voucher
+   * @param voucherName - Name identifier for the voucher
    * @param claimCode - Secret code to claim the voucher
    * @param amount - Amount in CELO (e.g., "10.5")
    * @param expirationTime - Unix timestamp when voucher expires
    */
-  const createVoucher = async (claimCode: string, amount: string, expirationTime: number) => {
+  const createVoucher = async (voucherName: string, claimCode: string, amount: string, expirationTime: number) => {
     const parsedAmount = parseUnits(amount, 18); // CELO has 18 decimals
 
     writeContract({
       address: BATCH_TRANSFER_CONTRACT.address,
       abi: BATCH_TRANSFER_CONTRACT.abi,
       functionName: 'createVoucher',
-      args: [claimCode, BigInt(expirationTime)],
+      args: [voucherName, claimCode, BigInt(expirationTime)],
       value: parsedAmount,
     });
   };
@@ -52,9 +53,11 @@ export function useCreateVoucherBatch() {
 
   /**
    * Create multiple vouchers in one transaction
+   * @param voucherName - Name identifier for all vouchers in this batch
    * @param vouchers - Array of { claimCode, amount, expirationTime }
    */
   const createVoucherBatch = async (
+    voucherName: string,
     vouchers: Array<{ claimCode: string; amount: string; expirationTime: number }>
   ) => {
     const claimCodes = vouchers.map((v) => v.claimCode);
@@ -67,7 +70,7 @@ export function useCreateVoucherBatch() {
       address: BATCH_TRANSFER_CONTRACT.address,
       abi: BATCH_TRANSFER_CONTRACT.abi,
       functionName: 'createVoucherBatch',
-      args: [claimCodes, amounts, expirationTimes],
+      args: [voucherName, claimCodes, amounts, expirationTimes],
       value: totalAmount,
     });
   };
@@ -93,16 +96,16 @@ export function useClaimVoucher() {
   });
 
   /**
-   * Claim a voucher using its ID and claim code
-   * @param voucherId - The voucher ID
+   * Claim a voucher using voucher name and claim code
+   * @param voucherName - The voucher name identifier
    * @param claimCode - The secret claim code
    */
-  const claimVoucher = async (voucherId: number, claimCode: string) => {
+  const claimVoucher = async (voucherName: string, claimCode: string) => {
     writeContract({
       address: BATCH_TRANSFER_CONTRACT.address,
       abi: BATCH_TRANSFER_CONTRACT.abi,
       functionName: 'claimVoucher',
-      args: [BigInt(voucherId), claimCode],
+      args: [voucherName, claimCode],
     });
   };
 
@@ -169,6 +172,7 @@ export function useVoucherDetails(voucherId: number) {
           expiresAt: data[3] as bigint,
           claimed: data[4] as boolean,
           refunded: data[5] as boolean,
+          voucherName: data[6] as string,
         }
       : null,
     isLoading,
@@ -187,6 +191,27 @@ export function useSenderVouchers(senderAddress?: Address) {
     args: senderAddress ? [senderAddress] : undefined,
     query: {
       enabled: !!senderAddress,
+    },
+  });
+
+  return {
+    voucherIds: (data as bigint[]) ?? [],
+    isLoading,
+    refetch,
+  };
+}
+
+/**
+ * Hook to get all vouchers by name
+ */
+export function useVouchersByName(voucherName?: string) {
+  const { data, isLoading, refetch } = useReadContract({
+    address: BATCH_TRANSFER_CONTRACT.address,
+    abi: BATCH_TRANSFER_CONTRACT.abi,
+    functionName: 'getVouchersByName',
+    args: voucherName ? [voucherName] : undefined,
+    query: {
+      enabled: !!voucherName,
     },
   });
 

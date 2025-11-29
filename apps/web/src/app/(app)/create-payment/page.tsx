@@ -244,7 +244,8 @@ export default function CreatePage() {
         expirationTime: expirationTime,
       }));
 
-      await createVoucherBatch(vouchers);
+      // Pass voucher name from formData
+      await createVoucherBatch(formData.name, vouchers);
     } catch (err: any) {
       toast({
         title: "Error",

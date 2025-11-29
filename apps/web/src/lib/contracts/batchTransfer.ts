@@ -3,11 +3,10 @@ import { Address } from 'viem';
 /**
  * Gigipay Contract Configuration
  * Deployed on Celo Sepolia Testnet (Alfajores)
- * Proxy Address: 0xc9ccBb9821Fdda9c51C8c992e8352b221e7CEd91
- * Implementation: 0xedA3b2C3c43aAE98dF94bf8149b96407C026931c
+ * Proxy Address: 0x0f1159Fcce71b37B6A912f05e3961425e6703873
  */
 export const BATCH_TRANSFER_CONTRACT = {
-  address: '0xc9ccBb9821Fdda9c51C8c992e8352b221e7CEd91' as Address,
+  address: '0x0f1159Fcce71b37B6A912f05e3961425e6703873' as Address,
   abi: [
     { inputs: [], stateMutability: 'nonpayable', type: 'constructor' },
     { inputs: [], name: 'AccessControlBadConfirmation', type: 'error' },
@@ -44,11 +43,12 @@ export const BATCH_TRANSFER_CONTRACT = {
     { inputs: [], name: 'DEFAULT_ADMIN_ROLE', outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }], stateMutability: 'view', type: 'function' },
     { inputs: [], name: 'PAUSER_ROLE', outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }], stateMutability: 'view', type: 'function' },
     { inputs: [{ internalType: 'address', name: 'token', type: 'address' }, { internalType: 'address[]', name: 'recipients', type: 'address[]' }, { internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' }], name: 'batchTransfer', outputs: [], stateMutability: 'payable', type: 'function' },
-    { inputs: [{ internalType: 'uint256', name: 'voucherId', type: 'uint256' }, { internalType: 'string', name: 'claimCode', type: 'string' }], name: 'claimVoucher', outputs: [], stateMutability: 'nonpayable', type: 'function' },
-    { inputs: [{ internalType: 'string', name: 'claimCode', type: 'string' }, { internalType: 'uint256', name: 'expirationTime', type: 'uint256' }], name: 'createVoucher', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'payable', type: 'function' },
-    { inputs: [{ internalType: 'string[]', name: 'claimCodes', type: 'string[]' }, { internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' }, { internalType: 'uint256[]', name: 'expirationTimes', type: 'uint256[]' }], name: 'createVoucherBatch', outputs: [{ internalType: 'uint256[]', name: '', type: 'uint256[]' }], stateMutability: 'payable', type: 'function' },
+    { inputs: [{ internalType: 'string', name: 'voucherName', type: 'string' }, { internalType: 'string', name: 'claimCode', type: 'string' }], name: 'claimVoucher', outputs: [], stateMutability: 'nonpayable', type: 'function' },
+    { inputs: [{ internalType: 'string', name: 'voucherName', type: 'string' }, { internalType: 'string', name: 'claimCode', type: 'string' }, { internalType: 'uint256', name: 'expirationTime', type: 'uint256' }], name: 'createVoucher', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'payable', type: 'function' },
+    { inputs: [{ internalType: 'string', name: 'voucherName', type: 'string' }, { internalType: 'string[]', name: 'claimCodes', type: 'string[]' }, { internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' }, { internalType: 'uint256[]', name: 'expirationTimes', type: 'uint256[]' }], name: 'createVoucherBatch', outputs: [{ internalType: 'uint256[]', name: '', type: 'uint256[]' }], stateMutability: 'payable', type: 'function' },
     { inputs: [{ internalType: 'bytes32', name: 'role', type: 'bytes32' }], name: 'getRoleAdmin', outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }], stateMutability: 'view', type: 'function' },
     { inputs: [{ internalType: 'address', name: 'sender', type: 'address' }], name: 'getSenderVouchers', outputs: [{ internalType: 'uint256[]', name: '', type: 'uint256[]' }], stateMutability: 'view', type: 'function' },
+    { inputs: [{ internalType: 'string', name: 'voucherName', type: 'string' }], name: 'getVouchersByName', outputs: [{ internalType: 'uint256[]', name: '', type: 'uint256[]' }], stateMutability: 'view', type: 'function' },
     { inputs: [{ internalType: 'bytes32', name: 'role', type: 'bytes32' }, { internalType: 'address', name: 'account', type: 'address' }], name: 'grantRole', outputs: [], stateMutability: 'nonpayable', type: 'function' },
     { inputs: [{ internalType: 'bytes32', name: 'role', type: 'bytes32' }, { internalType: 'address', name: 'account', type: 'address' }], name: 'hasRole', outputs: [{ internalType: 'bool', name: '', type: 'bool' }], stateMutability: 'view', type: 'function' },
     { inputs: [{ internalType: 'address', name: 'defaultAdmin', type: 'address' }, { internalType: 'address', name: 'pauser', type: 'address' }], name: 'initialize', outputs: [], stateMutability: 'nonpayable', type: 'function' },
@@ -62,7 +62,9 @@ export const BATCH_TRANSFER_CONTRACT = {
     { inputs: [{ internalType: 'address', name: '', type: 'address' }, { internalType: 'uint256', name: '', type: 'uint256' }], name: 'senderVouchers', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
     { inputs: [{ internalType: 'bytes4', name: 'interfaceId', type: 'bytes4' }], name: 'supportsInterface', outputs: [{ internalType: 'bool', name: '', type: 'bool' }], stateMutability: 'view', type: 'function' },
     { inputs: [], name: 'unpause', outputs: [], stateMutability: 'nonpayable', type: 'function' },
-    { inputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], name: 'vouchers', outputs: [{ internalType: 'address', name: 'sender', type: 'address' }, { internalType: 'uint256', name: 'amount', type: 'uint256' }, { internalType: 'bytes32', name: 'claimCodeHash', type: 'bytes32' }, { internalType: 'uint256', name: 'expiresAt', type: 'uint256' }, { internalType: 'bool', name: 'claimed', type: 'bool' }, { internalType: 'bool', name: 'refunded', type: 'bool' }], stateMutability: 'view', type: 'function' },
+    { inputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }], name: 'voucherNameExists', outputs: [{ internalType: 'bool', name: '', type: 'bool' }], stateMutability: 'view', type: 'function' },
+    { inputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }, { internalType: 'uint256', name: '', type: 'uint256' }], name: 'voucherNameToIds', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+    { inputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], name: 'vouchers', outputs: [{ internalType: 'address', name: 'sender', type: 'address' }, { internalType: 'uint256', name: 'amount', type: 'uint256' }, { internalType: 'bytes32', name: 'claimCodeHash', type: 'bytes32' }, { internalType: 'uint256', name: 'expiresAt', type: 'uint256' }, { internalType: 'bool', name: 'claimed', type: 'bool' }, { internalType: 'bool', name: 'refunded', type: 'bool' }, { internalType: 'string', name: 'voucherName', type: 'string' }], stateMutability: 'view', type: 'function' },
     { stateMutability: 'payable', type: 'receive' },
   ] as const,
 } as const;
