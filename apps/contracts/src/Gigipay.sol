@@ -10,9 +10,15 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IGigipayErrors} from "./interfaces/IGigipayErrors.sol";
 import {IGigipayEvents} from "./interfaces/IGigipayEvents.sol";
 
-contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable, IGigipayErrors, IGigipayEvents {
+contract Gigipay is
+    Initializable,
+    PausableUpgradeable,
+    AccessControlUpgradeable,
+    IGigipayErrors,
+    IGigipayEvents
+{
     using SafeERC20 for IERC20;
-    
+
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     // Payment Voucher System
@@ -28,19 +34,19 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
 
     // Counter for unique voucher IDs
     uint256 private _voucherIdCounter;
-    
+
     // Mapping from voucher ID to PaymentVoucher
     mapping(uint256 => PaymentVoucher) public vouchers;
-    
+
     // Mapping from sender to their voucher IDs
     mapping(address => uint256[]) public senderVouchers;
-    
+
     // Mapping from voucher name hash to array of voucher IDs (one name, multiple codes)
     mapping(bytes32 => uint256[]) public voucherNameToIds;
-    
+
     // Mapping to check if a voucher name exists
     mapping(bytes32 => bool) public voucherNameExists;
-    
+
     // Reentrancy guard
     uint256 private _status;
     uint256 private constant _NOT_ENTERED = 1;
@@ -56,7 +62,9 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
      * @param _claimCode The claim code to hash
      * @return result The keccak256 hash of the claim code
      */
-    function _hashClaimCode(string memory _claimCode) internal pure returns (bytes32 result) {
+    function _hashClaimCode(
+        string memory _claimCode
+    ) internal pure returns (bytes32 result) {
         bytes memory packed = abi.encodePacked(_claimCode);
         assembly {
             result := keccak256(add(packed, 0x20), mload(packed))
@@ -81,7 +89,10 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
         _status = _NOT_ENTERED;
     }
 
-    function initialize(address defaultAdmin, address pauser) public initializer {
+    function initialize(
+        address defaultAdmin,
+        address pauser
+    ) public initializer {
         __Pausable_init();
         __AccessControl_init();
         _status = _NOT_ENTERED;
@@ -161,7 +172,8 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
 
         for (uint256 i = 0; i < length; i++) {
             if (amounts[i] == 0) revert InvalidAmount();
-            if (expirationTimes[i] <= block.timestamp) revert InvalidExpirationTime();
+            if (expirationTimes[i] <= block.timestamp)
+                revert InvalidExpirationTime();
             if (bytes(claimCodes[i]).length == 0) revert InvalidClaimCode();
 
             uint256 voucherId = _voucherIdCounter++;
@@ -181,7 +193,12 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
             voucherNameToIds[voucherNameHash].push(voucherId);
             voucherIds[i] = voucherId;
 
-            emit VoucherCreated(voucherId, msg.sender, amounts[i], expirationTimes[i]);
+            emit VoucherCreated(
+                voucherId,
+                msg.sender,
+                amounts[i],
+                expirationTimes[i]
+            );
         }
 
         voucherNameExists[voucherNameHash] = true;
@@ -199,39 +216,41 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
     ) public whenNotPaused {
         bytes32 voucherNameHash = keccak256(abi.encodePacked(voucherName));
         uint256[] memory voucherIds = voucherNameToIds[voucherNameHash];
-        
+
         if (voucherIds.length == 0) revert VoucherNotFound();
-        
+
         bytes32 providedCodeHash = _hashClaimCode(claimCode);
-        
+
         // Find the voucher with matching claim code
         for (uint256 i = 0; i < voucherIds.length; i++) {
             PaymentVoucher storage voucher = vouchers[voucherIds[i]];
-            
+
             // Skip if already claimed or refunded
             if (voucher.claimed || voucher.refunded) continue;
-            
+
             // Check if claim code matches
             if (providedCodeHash == voucher.claimCodeHash) {
                 // Check if expired
-                if (block.timestamp > voucher.expiresAt) revert VoucherExpired();
-                
+                if (block.timestamp > voucher.expiresAt)
+                    revert VoucherExpired();
+
                 // Mark as claimed
                 voucher.claimed = true;
-                
+
                 // Transfer funds
-                (bool success, ) = payable(msg.sender).call{value: voucher.amount}("");
+                (bool success, ) = payable(msg.sender).call{
+                    value: voucher.amount
+                }("");
                 if (!success) revert TransferFailed();
-                
+
                 emit VoucherClaimed(voucherIds[i], msg.sender, voucher.amount);
                 return;
             }
         }
-        
+
         // If we get here, no matching unclaimed voucher was found
         revert InvalidClaimCode();
     }
-
 
     /**
      * @notice Refund an expired voucher back to the sender
@@ -239,7 +258,7 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
      */
     function refundVoucher(uint256 voucherId) public whenNotPaused {
         PaymentVoucher storage voucher = vouchers[voucherId];
-        
+
         if (voucher.sender == address(0)) revert VoucherNotFound();
         if (voucher.claimed) revert VoucherAlreadyClaimed();
         if (voucher.refunded) revert VoucherAlreadyRefunded();
@@ -248,7 +267,9 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
 
         voucher.refunded = true;
 
-        (bool success, ) = payable(voucher.sender).call{value: voucher.amount}("");
+        (bool success, ) = payable(voucher.sender).call{value: voucher.amount}(
+            ""
+        );
         if (!success) revert TransferFailed();
 
         emit VoucherRefunded(voucherId, voucher.sender, voucher.amount);
@@ -259,7 +280,9 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
      * @param sender The address of the sender
      * @return Array of voucher IDs
      */
-    function getSenderVouchers(address sender) public view returns (uint256[] memory) {
+    function getSenderVouchers(
+        address sender
+    ) public view returns (uint256[] memory) {
         return senderVouchers[sender];
     }
 
@@ -268,7 +291,9 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
      * @param voucherName The name of the voucher campaign
      * @return Array of voucher IDs
      */
-    function getVouchersByName(string memory voucherName) public view returns (uint256[] memory) {
+    function getVouchersByName(
+        string memory voucherName
+    ) public view returns (uint256[] memory) {
         bytes32 voucherNameHash = keccak256(abi.encodePacked(voucherName));
         return voucherNameToIds[voucherNameHash];
     }
@@ -280,10 +305,11 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
      */
     function isVoucherClaimable(uint256 voucherId) public view returns (bool) {
         PaymentVoucher memory voucher = vouchers[voucherId];
-        return voucher.sender != address(0) &&
-               !voucher.claimed &&
-               !voucher.refunded &&
-               block.timestamp <= voucher.expiresAt;
+        return
+            voucher.sender != address(0) &&
+            !voucher.claimed &&
+            !voucher.refunded &&
+            block.timestamp <= voucher.expiresAt;
     }
 
     /**
@@ -293,10 +319,11 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
      */
     function isVoucherRefundable(uint256 voucherId) public view returns (bool) {
         PaymentVoucher memory voucher = vouchers[voucherId];
-        return voucher.sender != address(0) &&
-               !voucher.claimed &&
-               !voucher.refunded &&
-               block.timestamp > voucher.expiresAt;
+        return
+            voucher.sender != address(0) &&
+            !voucher.claimed &&
+            !voucher.refunded &&
+            block.timestamp > voucher.expiresAt;
     }
 
     /**
@@ -312,36 +339,49 @@ contract Gigipay is Initializable, PausableUpgradeable, AccessControlUpgradeable
     ) external payable nonReentrant whenNotPaused {
         if (recipients.length != amounts.length) revert LengthMismatch();
         if (recipients.length == 0) revert EmptyArray();
-        
+
         uint256 totalAmount = 0;
         for (uint256 i = 0; i < amounts.length; i++) {
             totalAmount += amounts[i];
         }
-        
+
         if (token == address(0)) {
             // Native CELO transfer
             if (msg.value != totalAmount) revert IncorrectNativeAmount();
-            
+
             for (uint256 i = 0; i < recipients.length; i++) {
                 if (recipients[i] == address(0)) revert InvalidRecipient();
-                (bool success, ) = payable(recipients[i]).call{value: amounts[i]}("");
+                (bool success, ) = payable(recipients[i]).call{
+                    value: amounts[i]
+                }("");
                 if (!success) revert TransferFailed();
             }
         } else {
             // ERC20 token transfer
             IERC20 tokenContract = IERC20(token);
-            
-            if (tokenContract.allowance(msg.sender, address(this)) < totalAmount) {
+
+            if (
+                tokenContract.allowance(msg.sender, address(this)) < totalAmount
+            ) {
                 revert InsufficientAllowance();
             }
-            
+
             for (uint256 i = 0; i < recipients.length; i++) {
                 if (recipients[i] == address(0)) revert InvalidRecipient();
-                tokenContract.safeTransferFrom(msg.sender, recipients[i], amounts[i]);
+                tokenContract.safeTransferFrom(
+                    msg.sender,
+                    recipients[i],
+                    amounts[i]
+                );
             }
         }
-        
-        emit BatchTransferCompleted(msg.sender, token, totalAmount, recipients.length);
+
+        emit BatchTransferCompleted(
+            msg.sender,
+            token,
+            totalAmount,
+            recipients.length
+        );
     }
 
     function pause() public onlyRole(PAUSER_ROLE) {

@@ -6,7 +6,7 @@ import CreatePaymentStep2 from "@/components/create-payment/CreatePaymentStep2";
 import CreatePaymentStep3 from "@/components/create-payment/CreatePaymentStep3";
 import { Check } from "lucide-react";
 import { useAccount, useBalance } from "wagmi";
-import { useCreateVoucherBatch } from "@/hooks/useVouchers";
+import { useCreateVoucher, useCreateVoucherBatch } from "@/hooks/useVouchers";
 import { formatUnits } from "viem";
 
 // Token config - only CELO for now
@@ -49,7 +49,14 @@ export default function CreatePage() {
   // Wagmi hooks
   const { address, isConnected, chain } = useAccount();
   const { data: balance } = useBalance({ address });
-  const { createVoucherBatch, isPending: isCreating, isConfirmed, hash, error } = useCreateVoucherBatch();
+  const { createVoucher, isPending: isCreatingSingle, isConfirmed: isConfirmedSingle, hash: hashSingle, error: errorSingle } = useCreateVoucher();
+  const { createVoucherBatch, isPending: isCreatingBatch, isConfirmed: isConfirmedBatch, hash: hashBatch, error: errorBatch } = useCreateVoucherBatch();
+  
+  // Combine states for UI
+  const isCreating = isCreatingSingle || isCreatingBatch;
+  const isConfirmed = isConfirmedSingle || isConfirmedBatch;
+  const hash = hashSingle || hashBatch;
+  const error = errorSingle || errorBatch;
 
   // Inline notice system to replace toast
   const [notice, setNotice] = useState<{
@@ -172,6 +179,16 @@ export default function CreatePage() {
       return false;
     }
 
+    // Validate amounts are valid numbers
+    if (winners.some((w) => isNaN(parseFloat(w.amount)) || parseFloat(w.amount) <= 0)) {
+      toast({
+        title: "Invalid Amount",
+        description: "All winner amounts must be valid positive numbers",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     const totalPrize = parseFloat(formData.totalPrize);
     const totalPrizes = calculateTotalPrizes();
 
@@ -237,15 +254,25 @@ export default function CreatePage() {
       const hoursToExpire = convertToHours(expiryValue, expiryUnit);
       const expirationTime = Math.floor(Date.now() / 1000) + (hoursToExpire * 60 * 60);
       
-      // Prepare vouchers
-      const vouchers = winners.map(w => ({
-        claimCode: w.code,
-        amount: w.amount,
-        expirationTime: expirationTime,
-      }));
-
-      // Pass voucher name from formData
-      await createVoucherBatch(formData.name, vouchers);
+      // Check if single or multiple vouchers
+      if (winners.length === 1) {
+        // Use createVoucher for single voucher
+        const winner = winners[0];
+        await createVoucher(
+          formData.name,
+          winner.code,
+          winner.amount,
+          expirationTime
+        );
+      } else {
+        // Use createVoucherBatch for multiple vouchers
+        const vouchers = winners.map(w => ({
+          claimCode: w.code,
+          amount: w.amount,
+          expirationTime: expirationTime,
+        }));
+        await createVoucherBatch(formData.name, vouchers);
+      }
     } catch (err: any) {
       toast({
         title: "Error",

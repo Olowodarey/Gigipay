@@ -22,6 +22,15 @@ export function useCreateVoucher() {
   const createVoucher = async (voucherName: string, claimCode: string, amount: string, expirationTime: number) => {
     const parsedAmount = parseUnits(amount, 18); // CELO has 18 decimals
 
+    // Debug logging
+    console.log('Creating single voucher:', {
+      voucherName,
+      claimCode,
+      amount,
+      parsedAmount: parsedAmount.toString(),
+      expirationTime,
+    });
+
     writeContract({
       address: BATCH_TRANSFER_CONTRACT.address,
       abi: BATCH_TRANSFER_CONTRACT.abi,
@@ -65,6 +74,15 @@ export function useCreateVoucherBatch() {
     const expirationTimes = vouchers.map((v) => BigInt(v.expirationTime));
 
     const totalAmount = amounts.reduce((sum, amount) => sum + amount, 0n);
+
+    // Debug logging
+    console.log('Creating voucher batch:', {
+      voucherName,
+      claimCodes,
+      amounts: amounts.map(a => a.toString()),
+      expirationTimes: expirationTimes.map(t => t.toString()),
+      totalAmount: totalAmount.toString(),
+    });
 
     writeContract({
       address: BATCH_TRANSFER_CONTRACT.address,
