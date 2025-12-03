@@ -18,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="font-sans">
-        {/* Navbar is included on all pages */}
+      
         <div className="relative flex min-h-screen flex-col">
           <WalletProvider>
             <Navbar />

@@ -79,4 +79,12 @@
   body {
     @apply bg-background text-foreground;
   }
+  input[type="number"],
+  input[type="text"],
+  input {
+    color: var(--foreground) !important;
+  }
+  input::placeholder {
+    color: var(--muted-foreground);
+  }
 }

@@ -383,7 +383,7 @@ export default function ClaimPage() {
           </div>
         </div>
       </div>
-      {/* Footer removed for UI-only page */}
+      
     </div>
   );
 }

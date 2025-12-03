@@ -33,11 +33,11 @@ export default function CreatePage() {
   const [formData, setFormData] = useState<GiveawayData>({
     name: "",
     totalPrize: "",
-    expiryHours: "24",
+    expiryHours: "0",
     selectedToken: "CELO",
   });
   const [neverExpire, setNeverExpire] = useState(false);
-  const [expiryValue, setExpiryValue] = useState("24");
+  const [expiryValue, setExpiryValue] = useState("");
   const [expiryUnit, setExpiryUnit] = useState<"hours" | "days" | "weeks">(
     "hours"
   );
@@ -81,7 +81,7 @@ export default function CreatePage() {
 
   // Shared input styles
   const inputClass =
-    "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+    "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
   // Convert time value to hours based on unit
   const convertToHours = (
@@ -115,20 +115,18 @@ export default function CreatePage() {
 
     if (unit === "hours") {
       if (hours < 24) {
-        return `Expires in ${hours} hour${hours !== 1 ? "s" : ""}`;
+        return `Expires in ${numValue} hour${numValue !== 1 ? "s" : ""}`;
       } else {
-        return `Expires in ${days} day${
-          days !== 1 ? "s" : ""
-        } (${hours} hours)`;
+        if (remainingHours === 0) {
+          return `Expires in ${days} day${days !== 1 ? "s" : ""} (${hours} hours)`;
+        } else {
+          return `Expires in ${days} day${days !== 1 ? "s" : ""} and ${remainingHours} hour${remainingHours !== 1 ? "s" : ""} (${hours} hours)`;
+        }
       }
     } else if (unit === "days") {
-      return `Expires in ${numValue} day${
-        numValue !== 1 ? "s" : ""
-      } (${hours} hours)`;
+      return `Expires in ${numValue} day${numValue !== 1 ? "s" : ""} (${hours} hours)`;
     } else {
-      return `Expires in ${numValue} week${
-        numValue !== 1 ? "s" : ""
-      } (${hours} hours)`;
+      return `Expires in ${numValue} week${numValue !== 1 ? "s" : ""} (${hours} hours)`;
     }
   };
 
