@@ -56,7 +56,7 @@ export default function CreatePaymentStep2({
       <CardContent className="space-y-6">
         <div className="space-y-4 p-4 rounded-lg bg-muted/50">
           <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Giveaway Name</span>
+            <span className="text-muted-foreground">Payment Name</span>
             <span className="font-semibold text-foreground">{formData.name}</span>
           </div>
           <div className="flex justify-between items-center">

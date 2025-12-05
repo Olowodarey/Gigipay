@@ -20,6 +20,20 @@ export function useCreateVoucher() {
    * @param expirationTime - Unix timestamp when voucher expires
    */
   const createVoucher = async (voucherName: string, claimCode: string, amount: string, expirationTime: number) => {
+    // Validate inputs
+    if (!voucherName || voucherName.trim().length === 0) {
+      throw new Error('Voucher name cannot be empty');
+    }
+    if (!claimCode || claimCode.trim().length === 0) {
+      throw new Error('Claim code cannot be empty');
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      throw new Error('Amount must be greater than 0');
+    }
+    if (expirationTime <= Math.floor(Date.now() / 1000)) {
+      throw new Error('Expiration time must be in the future');
+    }
+
     const parsedAmount = parseUnits(amount, 18); // CELO has 18 decimals
 
     // Debug logging
@@ -29,6 +43,7 @@ export function useCreateVoucher() {
       amount,
       parsedAmount: parsedAmount.toString(),
       expirationTime,
+      currentTime: Math.floor(Date.now() / 1000),
     });
 
     writeContract({
@@ -69,6 +84,29 @@ export function useCreateVoucherBatch() {
     voucherName: string,
     vouchers: Array<{ claimCode: string; amount: string; expirationTime: number }>
   ) => {
+    // Validate inputs
+    if (!voucherName || voucherName.trim().length === 0) {
+      throw new Error('Voucher name cannot be empty');
+    }
+    if (!vouchers || vouchers.length === 0) {
+      throw new Error('Must have at least one voucher');
+    }
+
+    const currentTime = Math.floor(Date.now() / 1000);
+    
+    // Validate each voucher
+    vouchers.forEach((v, index) => {
+      if (!v.claimCode || v.claimCode.trim().length === 0) {
+        throw new Error(`Voucher ${index + 1}: Claim code cannot be empty`);
+      }
+      if (!v.amount || parseFloat(v.amount) <= 0) {
+        throw new Error(`Voucher ${index + 1}: Amount must be greater than 0`);
+      }
+      if (v.expirationTime <= currentTime) {
+        throw new Error(`Voucher ${index + 1}: Expiration time must be in the future`);
+      }
+    });
+
     const claimCodes = vouchers.map((v) => v.claimCode);
     const amounts = vouchers.map((v) => parseUnits(v.amount, 18));
     const expirationTimes = vouchers.map((v) => BigInt(v.expirationTime));
@@ -78,10 +116,12 @@ export function useCreateVoucherBatch() {
     // Debug logging
     console.log('Creating voucher batch:', {
       voucherName,
+      voucherCount: vouchers.length,
       claimCodes,
       amounts: amounts.map(a => a.toString()),
       expirationTimes: expirationTimes.map(t => t.toString()),
       totalAmount: totalAmount.toString(),
+      currentTime,
     });
 
     writeContract({

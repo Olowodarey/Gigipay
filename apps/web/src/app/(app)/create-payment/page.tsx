@@ -248,9 +248,22 @@ export default function CreatePage() {
     }
 
     try {
-      // Calculate expiration timestamp
-      const hoursToExpire = convertToHours(expiryValue, expiryUnit);
-      const expirationTime = Math.floor(Date.now() / 1000) + (hoursToExpire * 60 * 60);
+      // Calculate expiration timestamp from formData.expiryHours (which is already in hours)
+      const hoursToExpire = parseFloat(formData.expiryHours) || 0;
+      
+      // For "never expire" (0 hours), set to far future (100 years from now)
+      const expirationTime = hoursToExpire === 0 
+        ? Math.floor(Date.now() / 1000) + (100 * 365 * 24 * 60 * 60)
+        : Math.floor(Date.now() / 1000) + (hoursToExpire * 60 * 60);
+      
+      console.log('Creating vouchers with:', {
+        name: formData.name,
+        winnersCount: winners.length,
+        expiryHours: hoursToExpire,
+        expirationTime,
+        totalAmount,
+        winners: winners.map(w => ({ code: w.code, amount: w.amount }))
+      });
       
       // Check if single or multiple vouchers
       if (winners.length === 1) {
@@ -272,6 +285,7 @@ export default function CreatePage() {
         await createVoucherBatch(formData.name, vouchers);
       }
     } catch (err: any) {
+      console.error('Error creating vouchers:', err);
       toast({
         title: "Error",
         description: err.message || "Failed to create vouchers",
