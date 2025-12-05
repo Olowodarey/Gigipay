@@ -5,9 +5,9 @@ import { Navbar } from "@/components/navbar";
 import { WalletProvider } from "@/components/wallet-provider";
 
 export const metadata: Metadata = {
-  title: "Payflow",
+  title: "Gigi-pay",
   description:
-    "PayFlow is a Celo-powered payment protocol designed to make on-chain transfers faster, cheaper, and more inclusive. With PayFlow, users can send funds to multiple wallet addresses in a single transaction—reducing gas costs, saving time, and simplifying complex payouts. But it goes further: PayFlow introduces claim-code payments, enabling users to send crypto without needing the recipient’s wallet address. Instead, a secure claim code is generated, and the receiver can redeem it at any time, even if they don’t yet have a wallet—making it perfect for giveaways, community rewards, and onboarding new Web3 users.",
+    "Gigi-pay is a Celo-powered payment protocol designed to make on-chain transfers faster, cheaper, and more inclusive. With PayFlow, users can send funds to multiple wallet addresses in a single transaction—reducing gas costs, saving time, and simplifying complex payouts. But it goes further: PayFlow introduces claim-code payments, enabling users to send crypto without needing the recipient’s wallet address. Instead, a secure claim code is generated, and the receiver can redeem it at any time, even if they don’t yet have a wallet—making it perfect for giveaways, community rewards, and onboarding new Web3 users.",
 };
 
 export default function RootLayout({
