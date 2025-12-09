@@ -25,7 +25,7 @@ export function NetworkWarning({ isConnected, isCorrectNetwork, isPaused }: Netw
       {/* Wrong Network Warning */}
       {isConnected && !isCorrectNetwork && (
         <div className="mb-6 rounded-md border border-yellow-500 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
-          ⚠️ Please switch to Celo Sepolia Testnet to use batch payments
+          ⚠️ Please switch to Celo Mainnet to use batch payments
         </div>
       )}
 

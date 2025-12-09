@@ -15,14 +15,14 @@ import { ReviewStep } from "@/components/batch-payment/ReviewStep";
 import { SuccessStep } from "@/components/batch-payment/SuccessStep";
 import { ClientOnly } from "@/components/batch-payment/ClientOnly";
 
-// Define Celo Sepolia chain
-const celoSepolia = defineChain({
-  id: 11142220,
-  name: "Celo Sepolia",
+// Define Celo Mainnet chain
+const celoMainnet = defineChain({
+  id: 42220,
+  name: "Celo",
   nativeCurrency: { decimals: 18, name: "CELO", symbol: "CELO" },
-  rpcUrls: { default: { http: ["https://forno.celo-sepolia.celo-testnet.org"] } },
-  blockExplorers: { default: { name: "Celo Sepolia Blockscout", url: "https://celo-sepolia.blockscout.com" } },
-  testnet: true,
+  rpcUrls: { default: { http: ["https://forno.celo.org"] } },
+  blockExplorers: { default: { name: "Celoscan", url: "https://celoscan.io" } },
+  testnet: false,
 });
 
 // Token configuration
@@ -127,8 +127,8 @@ function BatchPaymentContent() {
       notify({ description: "Please connect your wallet", variant: "destructive" });
       return;
     }
-    if (chain?.id !== celoSepolia.id) {
-      notify({ description: "Please switch to Celo Sepolia Testnet", variant: "destructive" });
+    if (chain?.id !== celoMainnet.id) {
+      notify({ description: "Please switch to Celo Mainnet", variant: "destructive" });
       return;
     }
     if (isPaused) {
@@ -207,7 +207,7 @@ function BatchPaymentContent() {
     }
   }, [error]);
 
-  const isCorrectNetwork = chain?.id === celoSepolia.id;
+  const isCorrectNetwork = chain?.id === celoMainnet.id;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -283,7 +283,7 @@ function BatchPaymentContent() {
   );
 }
 
-// Default export with client-only rendering
+
 export default function BatchPaymentPage() {
   return (
     <ClientOnly>

@@ -40,7 +40,7 @@ function getWagmiConfig() {
     config = getDefaultConfig({
       appName: 'Payflow',
       projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID',
-      chains: [celo, celoAlfajores, celoSepolia],
+      chains: [celo, celoSepolia, celoAlfajores], // Mainnet first for production
       transports: {
         [celo.id]: http(),
         [celoAlfajores.id]: http(),

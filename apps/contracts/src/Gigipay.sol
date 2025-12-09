@@ -102,46 +102,6 @@ contract Gigipay is
     }
 
     /**
-     * @notice Create a single payment voucher with a name and claim code
-     * @param voucherName The name/identifier for this voucher (e.g., "Birthday2024")
-     * @param claimCode The secret code that can be used to claim this voucher
-     * @param expirationTime The timestamp when this voucher expires
-     * @return voucherId The ID of the created voucher
-     */
-    function createVoucher(
-        string memory voucherName,
-        string memory claimCode,
-        uint256 expirationTime
-    ) public payable whenNotPaused returns (uint256) {
-        if (msg.value == 0) revert InvalidAmount();
-        if (expirationTime <= block.timestamp) revert InvalidExpirationTime();
-        if (bytes(claimCode).length == 0) revert InvalidClaimCode();
-        if (bytes(voucherName).length == 0) revert InvalidClaimCode();
-
-        bytes32 voucherNameHash = keccak256(abi.encodePacked(voucherName));
-        uint256 voucherId = _voucherIdCounter++;
-        bytes32 claimCodeHash = _hashClaimCode(claimCode);
-
-        vouchers[voucherId] = PaymentVoucher({
-            sender: msg.sender,
-            amount: msg.value,
-            claimCodeHash: claimCodeHash,
-            expiresAt: expirationTime,
-            claimed: false,
-            refunded: false,
-            voucherName: voucherName
-        });
-
-        senderVouchers[msg.sender].push(voucherId);
-        voucherNameToIds[voucherNameHash].push(voucherId);
-        voucherNameExists[voucherNameHash] = true;
-
-        emit VoucherCreated(voucherId, msg.sender, msg.value, expirationTime);
-
-        return voucherId;
-    }
-
-    /**
      * @notice Create multiple payment vouchers under ONE voucher name (gas efficient!)
      * @param voucherName The shared name for all vouchers (e.g., "Birthday2024")
      * @param claimCodes Array of secret codes for each voucher

@@ -287,7 +287,7 @@ export default function ClaimPage() {
                     </Button>
                   )}
                   <p className="text-xs text-center text-muted-foreground">
-                    Gas fees apply on Celo Sepolia testnet
+                    Gas fees apply on Celo Mainnet
                   </p>
                 </div>
               </CardContent>
@@ -329,7 +329,7 @@ export default function ClaimPage() {
                       Transaction
                     </span>
                     <a
-                      href={`https://alfajores.celoscan.io/tx/${txHash}`}
+                      href={`https://celoscan.io/tx/${txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm font-mono text-accent hover:underline flex items-center gap-1 break-all text-right"
@@ -377,7 +377,7 @@ export default function ClaimPage() {
             </h3>
             <ul className="text-sm text-muted-foreground space-y-1 leading-relaxed">
               <li>• Get voucher name and claim code from the sender</li>
-              <li>• Connect your wallet to Celo Sepolia network</li>
+              <li>• Connect your wallet to Celo Mainnet</li>
               <li>• Enter the voucher name and claim code to receive CELO</li>
             </ul>
           </div>

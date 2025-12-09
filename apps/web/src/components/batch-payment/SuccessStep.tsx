@@ -41,12 +41,12 @@ export function SuccessStep({
           {txHash && (
             <div className="mt-3 pt-3 border-t border-success/20">
               <a
-                href={`https://celo-sepolia.blockscout.com/tx/${txHash}`}
+                href={`https://celoscan.io/tx/${txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm text-primary hover:underline"
               >
-                View on Sepolia Explorer
+                View on Celoscan
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>
