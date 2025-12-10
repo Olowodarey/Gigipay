@@ -46,11 +46,12 @@ export function useCreateVoucher() {
       currentTime: Math.floor(Date.now() / 1000),
     });
 
+    // Use createVoucherBatch with single-element arrays
     writeContract({
       address: BATCH_TRANSFER_CONTRACT.address,
       abi: BATCH_TRANSFER_CONTRACT.abi,
-      functionName: 'createVoucher',
-      args: [voucherName, claimCode, BigInt(expirationTime)],
+      functionName: 'createVoucherBatch',
+      args: [voucherName, [claimCode], [parsedAmount], [BigInt(expirationTime)]],
       value: parsedAmount,
     });
   };

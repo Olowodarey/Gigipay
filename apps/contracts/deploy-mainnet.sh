@@ -64,7 +64,7 @@ forge build
 echo ""
 echo "📤 Deploying contracts to MAINNET..."
 forge script script/DeployGigipay.s.sol:DeployGigipay \
-  --rpc-url celo \
+  --rpc-url https://forno.celo.org \
   --private-key $PRIVATE_KEY \
   --broadcast \
   --verify \
