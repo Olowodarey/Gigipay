@@ -34,7 +34,7 @@ export function Navbar() {
             <SheetContent side="left" className="w-80">
               <div className="flex items-center gap-2 mb-8">
                 <Image
-                  src="/logo/logo.png"
+                  src="/logo.png"
                   alt="Payflow Logo"
                   width={32}
                   height={32}
@@ -69,10 +69,10 @@ export function Navbar() {
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
             <Image
-              src="/logo/logo.png"
+              src="/logo.png"
               alt="Payflow Logo"
-              width={40}
-              height={40}
+              width={100}
+              height={100}
               className="rounded-md"
             />
             <span className="hidden font-bold text-xl sm:inline-block">
