@@ -3,11 +3,15 @@ import "./globals.css";
 
 import { Navbar } from "@/components/navbar";
 import { WalletProvider } from "@/components/wallet-provider";
+import { FarcasterProvider } from "@/components/farcaster-provider";
 
 export const metadata: Metadata = {
   title: "Gigi-pay",
   description:
     "Gigi-pay is a Celo-powered payment protocol designed to make on-chain transfers faster, cheaper, and more inclusive. With PayFlow, users can send funds to multiple wallet addresses in a single transaction—reducing gas costs, saving time, and simplifying complex payouts. But it goes further: PayFlow introduces claim-code payments, enabling users to send crypto without needing the recipient’s wallet address. Instead, a secure claim code is generated, and the receiver can redeem it at any time, even if they don’t yet have a wallet—making it perfect for giveaways, community rewards, and onboarding new Web3 users.",
+  other: {
+    "base:app_id": "696fa940f22fe462e74c16ed",
+  },
 };
 
 export default function RootLayout({
@@ -18,13 +22,14 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="font-sans">
-      
-        <div className="relative flex min-h-screen flex-col">
-          <WalletProvider>
-            <Navbar />
-            <main className="flex-1">{children}</main>
-          </WalletProvider>
-        </div>
+        <FarcasterProvider>
+          <div className="relative flex min-h-screen flex-col">
+            <WalletProvider>
+              <Navbar />
+              <main className="flex-1">{children}</main>
+            </WalletProvider>
+          </div>
+        </FarcasterProvider>
       </body>
     </html>
   );
