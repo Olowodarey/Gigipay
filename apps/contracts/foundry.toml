@@ -13,6 +13,7 @@ remappings = [
 [rpc_endpoints]
 celo-sepolia = "https://forno.celo-sepolia.celo-testnet.org/"
 celo = "https://forno.celo.org"
+base = "https://mainnet.base.org"
 
 
 
