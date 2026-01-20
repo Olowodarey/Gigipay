@@ -1,6 +1,10 @@
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
-import { Address, parseUnits, erc20Abi } from 'viem';
-import { BATCH_TRANSFER_CONTRACT } from '@/lib/contracts/batchTransfer';
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useReadContract,
+} from "wagmi";
+import { Address, parseUnits, erc20Abi } from "viem";
+import { BATCH_TRANSFER_CONTRACT } from "@/lib/contracts/celocontract";
 
 /**
  * Hook for approving ERC20 tokens for batch transfer
@@ -8,9 +12,10 @@ import { BATCH_TRANSFER_CONTRACT } from '@/lib/contracts/batchTransfer';
 export function useTokenApproval(tokenAddress: Address) {
   const { data: hash, writeContract, isPending, error } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    });
 
   /**
    * Approve tokens for batch transfer
@@ -23,7 +28,7 @@ export function useTokenApproval(tokenAddress: Address) {
     writeContract({
       address: tokenAddress,
       abi: erc20Abi,
-      functionName: 'approve',
+      functionName: "approve",
       args: [BATCH_TRANSFER_CONTRACT.address, parsedAmount],
     });
   };
@@ -41,12 +46,21 @@ export function useTokenApproval(tokenAddress: Address) {
 /**
  * Hook to check current allowance
  */
-export function useTokenAllowance(tokenAddress: Address, ownerAddress?: Address) {
-  const { data: allowance, isLoading, refetch } = useReadContract({
+export function useTokenAllowance(
+  tokenAddress: Address,
+  ownerAddress?: Address,
+) {
+  const {
+    data: allowance,
+    isLoading,
+    refetch,
+  } = useReadContract({
     address: tokenAddress,
     abi: erc20Abi,
-    functionName: 'allowance',
-    args: ownerAddress ? [ownerAddress, BATCH_TRANSFER_CONTRACT.address] : undefined,
+    functionName: "allowance",
+    args: ownerAddress
+      ? [ownerAddress, BATCH_TRANSFER_CONTRACT.address]
+      : undefined,
     query: {
       enabled: !!ownerAddress,
     },
@@ -59,10 +73,14 @@ export function useTokenAllowance(tokenAddress: Address, ownerAddress?: Address)
  * Hook to get token balance
  */
 export function useTokenBalance(tokenAddress: Address, ownerAddress?: Address) {
-  const { data: balance, isLoading, refetch } = useReadContract({
+  const {
+    data: balance,
+    isLoading,
+    refetch,
+  } = useReadContract({
     address: tokenAddress,
     abi: erc20Abi,
-    functionName: 'balanceOf',
+    functionName: "balanceOf",
     args: ownerAddress ? [ownerAddress] : undefined,
     query: {
       enabled: !!ownerAddress,

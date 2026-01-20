@@ -3,8 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { useAccount, useBalance } from "wagmi";
 import { useBatchTransfer, useContractPaused } from "@/hooks/useBatchTransfer";
-import { useTokenApproval, useTokenAllowance, useTokenBalance } from "@/hooks/useTokenApproval";
-import { TOKEN_ADDRESSES } from "@/lib/contracts/batchTransfer";
+import {
+  useTokenApproval,
+  useTokenAllowance,
+  useTokenBalance,
+} from "@/hooks/useTokenApproval";
+import { TOKEN_ADDRESSES } from "@/lib/contracts/celocontract";
 import { Address, formatUnits, parseUnits } from "viem";
 import { defineChain } from "viem";
 import { UploadRecipient } from "@/components/batch-payment/UploadRecipients";
@@ -27,10 +31,34 @@ const celoMainnet = defineChain({
 
 // Token configuration
 const TOKENS = {
-  CELO: { symbol: "CELO", name: "Celo", icon: "🟡", address: TOKEN_ADDRESSES.CELO, decimals: 18 },
-  cUSD: { symbol: "cUSD", name: "Celo Dollar", icon: "💵", address: TOKEN_ADDRESSES.cUSD, decimals: 18 },
-  USDC: { symbol: "USDC", name: "USD Coin", icon: "💰", address: TOKEN_ADDRESSES.USDC, decimals: 6 },
-  cEUR: { symbol: "cEUR", name: "Celo Euro", icon: "💶", address: TOKEN_ADDRESSES.cEUR, decimals: 18 },
+  CELO: {
+    symbol: "CELO",
+    name: "Celo",
+    icon: "🟡",
+    address: TOKEN_ADDRESSES.CELO,
+    decimals: 18,
+  },
+  cUSD: {
+    symbol: "cUSD",
+    name: "Celo Dollar",
+    icon: "💵",
+    address: TOKEN_ADDRESSES.cUSD,
+    decimals: 18,
+  },
+  USDC: {
+    symbol: "USDC",
+    name: "USD Coin",
+    icon: "💰",
+    address: TOKEN_ADDRESSES.USDC,
+    decimals: 6,
+  },
+  cEUR: {
+    symbol: "cEUR",
+    name: "Celo Euro",
+    icon: "💶",
+    address: TOKEN_ADDRESSES.cEUR,
+    decimals: 18,
+  },
 } as const;
 type TokenSymbol = keyof typeof TOKENS;
 type Recipient = { id: string; address: string; amount: string };
@@ -38,10 +66,15 @@ type Recipient = { id: string; address: string; amount: string };
 function BatchPaymentContent() {
   const [step, setStep] = useState(1);
   const [selectedToken, setSelectedToken] = useState<TokenSymbol>("CELO");
-  const [recipients, setRecipients] = useState<Recipient[]>([{ id: "1", address: "", amount: "" }]);
+  const [recipients, setRecipients] = useState<Recipient[]>([
+    { id: "1", address: "", amount: "" },
+  ]);
   const [showUpload, setShowUpload] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
-  const [notice, setNotice] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
+  const [notice, setNotice] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
 
   // Wagmi hooks
   const { address, isConnected, chain } = useAccount();
@@ -51,44 +84,75 @@ function BatchPaymentContent() {
 
   // Balance hooks
   const { data: nativeBalance } = useBalance({ address });
-  const { balance: tokenBalance, refetch: refetchTokenBalance } = useTokenBalance(
-    selectedTokenConfig.address,
-    address
-  );
+  const { balance: tokenBalance, refetch: refetchTokenBalance } =
+    useTokenBalance(selectedTokenConfig.address, address);
 
   // Contract interaction hooks
-  const { executeBatchTransfer, hash, isPending, isConfirming, isConfirmed, error } = useBatchTransfer();
+  const {
+    executeBatchTransfer,
+    hash,
+    isPending,
+    isConfirming,
+    isConfirmed,
+    error,
+  } = useBatchTransfer();
   const {
     approve,
     isPending: isApproving,
     isConfirming: isApprovingConfirming,
     isConfirmed: isApproved,
   } = useTokenApproval(selectedTokenConfig.address);
-  const { allowance, refetch: refetchAllowance } = useTokenAllowance(selectedTokenConfig.address, address);
+  const { allowance, refetch: refetchAllowance } = useTokenAllowance(
+    selectedTokenConfig.address,
+    address,
+  );
 
-  const notify = ({ description, variant }: { description: string; variant?: "destructive" }) => {
-    setNotice({ type: variant === "destructive" ? "error" : "success", message: description });
+  const notify = ({
+    description,
+    variant,
+  }: {
+    description: string;
+    variant?: "destructive";
+  }) => {
+    setNotice({
+      type: variant === "destructive" ? "error" : "success",
+      message: description,
+    });
     setTimeout(() => setNotice(null), 2500);
   };
 
   // Recipient management
   const addRecipient = () => {
-    const newId = (Math.max(...recipients.map((r) => parseInt(r.id)), 0) + 1).toString();
+    const newId = (
+      Math.max(...recipients.map((r) => parseInt(r.id)), 0) + 1
+    ).toString();
     setRecipients([...recipients, { id: newId, address: "", amount: "" }]);
   };
 
   const removeRecipient = (id: string) => {
-    if (recipients.length > 1) setRecipients(recipients.filter((r) => r.id !== id));
+    if (recipients.length > 1)
+      setRecipients(recipients.filter((r) => r.id !== id));
   };
 
-  const updateRecipient = (id: string, field: keyof Recipient, value: string) => {
-    setRecipients(recipients.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+  const updateRecipient = (
+    id: string,
+    field: keyof Recipient,
+    value: string,
+  ) => {
+    setRecipients(
+      recipients.map((r) => (r.id === id ? { ...r, [field]: value } : r)),
+    );
   };
 
-  const totalAmount = () => recipients.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+  const totalAmount = () =>
+    recipients.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
 
   const handleImported = (rows: UploadRecipient[]) => {
-    const mapped: Recipient[] = rows.map((r, idx) => ({ id: String(idx + 1), address: r.address, amount: r.amount }));
+    const mapped: Recipient[] = rows.map((r, idx) => ({
+      id: String(idx + 1),
+      address: r.address,
+      amount: r.amount,
+    }));
     setRecipients(mapped);
     setShowUpload(false);
     notify({ description: `Imported ${mapped.length} recipients.` });
@@ -96,15 +160,24 @@ function BatchPaymentContent() {
 
   const validateForm = () => {
     if (recipients.some((r) => !r.address.trim() || !r.amount.trim())) {
-      notify({ description: "Please fill in every recipient address and amount.", variant: "destructive" });
+      notify({
+        description: "Please fill in every recipient address and amount.",
+        variant: "destructive",
+      });
       return false;
     }
     if (recipients.some((r) => (parseFloat(r.amount) || 0) <= 0)) {
-      notify({ description: "All amounts must be greater than 0.", variant: "destructive" });
+      notify({
+        description: "All amounts must be greater than 0.",
+        variant: "destructive",
+      });
       return false;
     }
     if (recipients.some((r) => r.address.length < 6)) {
-      notify({ description: "One or more wallet addresses look invalid.", variant: "destructive" });
+      notify({
+        description: "One or more wallet addresses look invalid.",
+        variant: "destructive",
+      });
       return false;
     }
     return true;
@@ -113,7 +186,10 @@ function BatchPaymentContent() {
   const needsApproval = () => {
     if (isNativeCELO) return false;
     const total = totalAmount();
-    const totalInWei = parseUnits(total.toString(), selectedTokenConfig.decimals);
+    const totalInWei = parseUnits(
+      total.toString(),
+      selectedTokenConfig.decimals,
+    );
     return allowance < totalInWei;
   };
 
@@ -124,42 +200,75 @@ function BatchPaymentContent() {
 
   const handleSubmit = async () => {
     if (!address) {
-      notify({ description: "Please connect your wallet", variant: "destructive" });
+      notify({
+        description: "Please connect your wallet",
+        variant: "destructive",
+      });
       return;
     }
     if (chain?.id !== celoMainnet.id) {
-      notify({ description: "Please switch to Celo Mainnet", variant: "destructive" });
+      notify({
+        description: "Please switch to Celo Mainnet",
+        variant: "destructive",
+      });
       return;
     }
     if (isPaused) {
-      notify({ description: "Contract is currently paused", variant: "destructive" });
+      notify({
+        description: "Contract is currently paused",
+        variant: "destructive",
+      });
       return;
     }
 
     const total = totalAmount();
-    const totalInWei = parseUnits(total.toString(), selectedTokenConfig.decimals);
-    const currentBalance = isNativeCELO ? nativeBalance?.value ?? 0n : tokenBalance;
+    const totalInWei = parseUnits(
+      total.toString(),
+      selectedTokenConfig.decimals,
+    );
+    const currentBalance = isNativeCELO
+      ? (nativeBalance?.value ?? 0n)
+      : tokenBalance;
 
     if (currentBalance < totalInWei) {
-      notify({ description: `Insufficient ${selectedToken} balance`, variant: "destructive" });
+      notify({
+        description: `Insufficient ${selectedToken} balance`,
+        variant: "destructive",
+      });
       return;
     }
 
     if (!isNativeCELO && needsApproval()) {
-      notify({ description: "Please approve token spending first", variant: "destructive" });
+      notify({
+        description: "Please approve token spending first",
+        variant: "destructive",
+      });
       return;
     }
 
     try {
-      const batchRecipients = recipients.map((r) => ({ address: r.address as Address, amount: r.amount }));
-      executeBatchTransfer(selectedTokenConfig.address, batchRecipients, selectedTokenConfig.decimals);
+      const batchRecipients = recipients.map((r) => ({
+        address: r.address as Address,
+        amount: r.amount,
+      }));
+      executeBatchTransfer(
+        selectedTokenConfig.address,
+        batchRecipients,
+        selectedTokenConfig.decimals,
+      );
     } catch (err: any) {
-      notify({ description: err.message || "Failed to submit batch", variant: "destructive" });
+      notify({
+        description: err.message || "Failed to submit batch",
+        variant: "destructive",
+      });
     }
   };
 
   const downloadCSV = () => {
-    const csv = ["Address,Amount\n", ...recipients.map((r) => `${r.address},${r.amount}\n`)].join("");
+    const csv = [
+      "Address,Amount\n",
+      ...recipients.map((r) => `${r.address},${r.amount}\n`),
+    ].join("");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -179,16 +288,22 @@ function BatchPaymentContent() {
 
   const getBalance = () => {
     if (isNativeCELO) {
-      return nativeBalance?.formatted ? `${parseFloat(nativeBalance.formatted).toFixed(4)} ${selectedToken}` : "Loading...";
+      return nativeBalance?.formatted
+        ? `${parseFloat(nativeBalance.formatted).toFixed(4)} ${selectedToken}`
+        : "Loading...";
     }
-    return tokenBalance ? `${parseFloat(formatUnits(tokenBalance, selectedTokenConfig.decimals)).toFixed(4)} ${selectedToken}` : "Loading...";
+    return tokenBalance
+      ? `${parseFloat(formatUnits(tokenBalance, selectedTokenConfig.decimals)).toFixed(4)} ${selectedToken}`
+      : "Loading...";
   };
 
   // Effects
   useEffect(() => {
     if (isApproved) {
       refetchAllowance();
-      notify({ description: "Token approval confirmed! You can now submit the batch." });
+      notify({
+        description: "Token approval confirmed! You can now submit the batch.",
+      });
     }
   }, [isApproved]);
 
@@ -203,7 +318,10 @@ function BatchPaymentContent() {
 
   useEffect(() => {
     if (error) {
-      notify({ description: error.message || "Transaction failed", variant: "destructive" });
+      notify({
+        description: error.message || "Transaction failed",
+        variant: "destructive",
+      });
     }
   }, [error]);
 
@@ -213,7 +331,11 @@ function BatchPaymentContent() {
     <div className="flex flex-col min-h-screen">
       <div className="flex-1 py-8 md:py-12 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-2xl">
-          <NetworkWarning isConnected={isConnected} isCorrectNetwork={isCorrectNetwork} isPaused={isPaused} />
+          <NetworkWarning
+            isConnected={isConnected}
+            isCorrectNetwork={isCorrectNetwork}
+            isPaused={isPaused}
+          />
 
           {notice && (
             <div
@@ -282,7 +404,6 @@ function BatchPaymentContent() {
     </div>
   );
 }
-
 
 export default function BatchPaymentPage() {
   return (

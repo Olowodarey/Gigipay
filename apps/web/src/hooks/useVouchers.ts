@@ -1,6 +1,10 @@
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
-import { parseUnits, Address } from 'viem';
-import { BATCH_TRANSFER_CONTRACT } from '@/lib/contracts/batchTransfer';
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useReadContract,
+} from "wagmi";
+import { parseUnits, Address } from "viem";
+import { BATCH_TRANSFER_CONTRACT } from "@/lib/contracts/celocontract";
 
 /**
  * Hook for creating payment vouchers
@@ -8,9 +12,10 @@ import { BATCH_TRANSFER_CONTRACT } from '@/lib/contracts/batchTransfer';
 export function useCreateVoucher() {
   const { data: hash, writeContract, isPending, error } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    });
 
   /**
    * Create a single payment voucher
@@ -19,25 +24,30 @@ export function useCreateVoucher() {
    * @param amount - Amount in CELO (e.g., "10.5")
    * @param expirationTime - Unix timestamp when voucher expires
    */
-  const createVoucher = async (voucherName: string, claimCode: string, amount: string, expirationTime: number) => {
+  const createVoucher = async (
+    voucherName: string,
+    claimCode: string,
+    amount: string,
+    expirationTime: number,
+  ) => {
     // Validate inputs
     if (!voucherName || voucherName.trim().length === 0) {
-      throw new Error('Voucher name cannot be empty');
+      throw new Error("Voucher name cannot be empty");
     }
     if (!claimCode || claimCode.trim().length === 0) {
-      throw new Error('Claim code cannot be empty');
+      throw new Error("Claim code cannot be empty");
     }
     if (!amount || parseFloat(amount) <= 0) {
-      throw new Error('Amount must be greater than 0');
+      throw new Error("Amount must be greater than 0");
     }
     if (expirationTime <= Math.floor(Date.now() / 1000)) {
-      throw new Error('Expiration time must be in the future');
+      throw new Error("Expiration time must be in the future");
     }
 
     const parsedAmount = parseUnits(amount, 18); // CELO has 18 decimals
 
     // Debug logging
-    console.log('Creating single voucher:', {
+    console.log("Creating single voucher:", {
       voucherName,
       claimCode,
       amount,
@@ -50,8 +60,13 @@ export function useCreateVoucher() {
     writeContract({
       address: BATCH_TRANSFER_CONTRACT.address,
       abi: BATCH_TRANSFER_CONTRACT.abi,
-      functionName: 'createVoucherBatch',
-      args: [voucherName, [claimCode], [parsedAmount], [BigInt(expirationTime)]],
+      functionName: "createVoucherBatch",
+      args: [
+        voucherName,
+        [claimCode],
+        [parsedAmount],
+        [BigInt(expirationTime)],
+      ],
       value: parsedAmount,
     });
   };
@@ -72,9 +87,10 @@ export function useCreateVoucher() {
 export function useCreateVoucherBatch() {
   const { data: hash, writeContract, isPending, error } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    });
 
   /**
    * Create multiple vouchers in one transaction
@@ -83,18 +99,22 @@ export function useCreateVoucherBatch() {
    */
   const createVoucherBatch = async (
     voucherName: string,
-    vouchers: Array<{ claimCode: string; amount: string; expirationTime: number }>
+    vouchers: Array<{
+      claimCode: string;
+      amount: string;
+      expirationTime: number;
+    }>,
   ) => {
     // Validate inputs
     if (!voucherName || voucherName.trim().length === 0) {
-      throw new Error('Voucher name cannot be empty');
+      throw new Error("Voucher name cannot be empty");
     }
     if (!vouchers || vouchers.length === 0) {
-      throw new Error('Must have at least one voucher');
+      throw new Error("Must have at least one voucher");
     }
 
     const currentTime = Math.floor(Date.now() / 1000);
-    
+
     // Validate each voucher
     vouchers.forEach((v, index) => {
       if (!v.claimCode || v.claimCode.trim().length === 0) {
@@ -104,7 +124,9 @@ export function useCreateVoucherBatch() {
         throw new Error(`Voucher ${index + 1}: Amount must be greater than 0`);
       }
       if (v.expirationTime <= currentTime) {
-        throw new Error(`Voucher ${index + 1}: Expiration time must be in the future`);
+        throw new Error(
+          `Voucher ${index + 1}: Expiration time must be in the future`,
+        );
       }
     });
 
@@ -115,12 +137,12 @@ export function useCreateVoucherBatch() {
     const totalAmount = amounts.reduce((sum, amount) => sum + amount, 0n);
 
     // Debug logging
-    console.log('Creating voucher batch:', {
+    console.log("Creating voucher batch:", {
       voucherName,
       voucherCount: vouchers.length,
       claimCodes,
-      amounts: amounts.map(a => a.toString()),
-      expirationTimes: expirationTimes.map(t => t.toString()),
+      amounts: amounts.map((a) => a.toString()),
+      expirationTimes: expirationTimes.map((t) => t.toString()),
       totalAmount: totalAmount.toString(),
       currentTime,
     });
@@ -128,7 +150,7 @@ export function useCreateVoucherBatch() {
     writeContract({
       address: BATCH_TRANSFER_CONTRACT.address,
       abi: BATCH_TRANSFER_CONTRACT.abi,
-      functionName: 'createVoucherBatch',
+      functionName: "createVoucherBatch",
       args: [voucherName, claimCodes, amounts, expirationTimes],
       value: totalAmount,
     });
@@ -150,9 +172,10 @@ export function useCreateVoucherBatch() {
 export function useClaimVoucher() {
   const { data: hash, writeContract, isPending, error } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    });
 
   /**
    * Claim a voucher using voucher name and claim code
@@ -163,7 +186,7 @@ export function useClaimVoucher() {
     writeContract({
       address: BATCH_TRANSFER_CONTRACT.address,
       abi: BATCH_TRANSFER_CONTRACT.abi,
-      functionName: 'claimVoucher',
+      functionName: "claimVoucher",
       args: [voucherName, claimCode],
     });
   };
@@ -184,9 +207,10 @@ export function useClaimVoucher() {
 export function useRefundVoucher() {
   const { data: hash, writeContract, isPending, error } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    });
 
   /**
    * Refund an expired voucher
@@ -196,7 +220,7 @@ export function useRefundVoucher() {
     writeContract({
       address: BATCH_TRANSFER_CONTRACT.address,
       abi: BATCH_TRANSFER_CONTRACT.abi,
-      functionName: 'refundVoucher',
+      functionName: "refundVoucher",
       args: [BigInt(voucherId)],
     });
   };
@@ -218,7 +242,7 @@ export function useVoucherDetails(voucherId: number) {
   const { data, isLoading, refetch } = useReadContract({
     address: BATCH_TRANSFER_CONTRACT.address,
     abi: BATCH_TRANSFER_CONTRACT.abi,
-    functionName: 'vouchers',
+    functionName: "vouchers",
     args: [BigInt(voucherId)],
   });
 
@@ -246,7 +270,7 @@ export function useSenderVouchers(senderAddress?: Address) {
   const { data, isLoading, refetch } = useReadContract({
     address: BATCH_TRANSFER_CONTRACT.address,
     abi: BATCH_TRANSFER_CONTRACT.abi,
-    functionName: 'getSenderVouchers',
+    functionName: "getSenderVouchers",
     args: senderAddress ? [senderAddress] : undefined,
     query: {
       enabled: !!senderAddress,
@@ -267,7 +291,7 @@ export function useVouchersByName(voucherName?: string) {
   const { data, isLoading, refetch } = useReadContract({
     address: BATCH_TRANSFER_CONTRACT.address,
     abi: BATCH_TRANSFER_CONTRACT.abi,
-    functionName: 'getVouchersByName',
+    functionName: "getVouchersByName",
     args: voucherName ? [voucherName] : undefined,
     query: {
       enabled: !!voucherName,
@@ -288,7 +312,7 @@ export function useIsVoucherClaimable(voucherId: number) {
   const { data, isLoading } = useReadContract({
     address: BATCH_TRANSFER_CONTRACT.address,
     abi: BATCH_TRANSFER_CONTRACT.abi,
-    functionName: 'isVoucherClaimable',
+    functionName: "isVoucherClaimable",
     args: [BigInt(voucherId)],
   });
 
@@ -305,7 +329,7 @@ export function useIsVoucherRefundable(voucherId: number) {
   const { data, isLoading } = useReadContract({
     address: BATCH_TRANSFER_CONTRACT.address,
     abi: BATCH_TRANSFER_CONTRACT.abi,
-    functionName: 'isVoucherRefundable',
+    functionName: "isVoucherRefundable",
     args: [BigInt(voucherId)],
   });
 

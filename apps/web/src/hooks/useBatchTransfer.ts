@@ -1,6 +1,13 @@
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
-import { parseUnits, Address } from 'viem';
-import { BATCH_TRANSFER_CONTRACT, TOKEN_ADDRESSES } from '@/lib/contracts/batchTransfer';
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useReadContract,
+} from "wagmi";
+import { parseUnits, Address } from "viem";
+import {
+  BATCH_TRANSFER_CONTRACT,
+  TOKEN_ADDRESSES,
+} from "@/lib/contracts/celocontract";
 
 export type BatchTransferRecipient = {
   address: Address;
@@ -13,9 +20,10 @@ export type BatchTransferRecipient = {
 export function useBatchTransfer() {
   const { data: hash, writeContract, isPending, error } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    });
 
   /**
    * Execute batch transfer
@@ -26,7 +34,7 @@ export function useBatchTransfer() {
   const executeBatchTransfer = async (
     tokenAddress: Address,
     recipients: BatchTransferRecipient[],
-    decimals: number = 18
+    decimals: number = 18,
   ) => {
     const addresses = recipients.map((r) => r.address);
     const amounts = recipients.map((r) => parseUnits(r.amount, decimals));
@@ -39,7 +47,7 @@ export function useBatchTransfer() {
     writeContract({
       address: BATCH_TRANSFER_CONTRACT.address,
       abi: BATCH_TRANSFER_CONTRACT.abi,
-      functionName: 'batchTransfer',
+      functionName: "batchTransfer",
       args: [tokenAddress, addresses, amounts],
       value: isNativeCELO ? totalAmount : 0n,
     });
@@ -62,7 +70,7 @@ export function useContractPaused() {
   const { data: isPaused, isLoading } = useReadContract({
     address: BATCH_TRANSFER_CONTRACT.address,
     abi: BATCH_TRANSFER_CONTRACT.abi,
-    functionName: 'paused',
+    functionName: "paused",
   });
 
   return { isPaused: isPaused ?? false, isLoading };
