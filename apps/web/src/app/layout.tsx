@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { WalletProvider } from "@/components/wallet-provider";
 import { FarcasterProvider } from "@/components/farcaster-provider";
+import { PaymasterProvider } from "@/components/paymaster-provider";
 
 export const metadata: Metadata = {
   title: "Gigi-pay",
@@ -18,16 +19,17 @@ export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
-  
-})  {
+}) {
   return (
     <html lang="en" className="dark">
       <body className="font-sans">
         <FarcasterProvider>
           <div className="relative flex min-h-screen flex-col">
             <WalletProvider>
-              <Navbar />
-              <main className="flex-1">{children}</main>
+              <PaymasterProvider>
+                <Navbar />
+                <main className="flex-1">{children}</main>
+              </PaymasterProvider>
             </WalletProvider>
           </div>
         </FarcasterProvider>
