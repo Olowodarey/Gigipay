@@ -18,46 +18,44 @@ import { ReviewStep } from "@/components/batch-payment/ReviewStep";
 import { SuccessStep } from "@/components/batch-payment/SuccessStep";
 import { ClientOnly } from "@/components/batch-payment/ClientOnly";
 
-// Get token addresses for current chain
-const getTokensForChain = (chainId?: number) => {
-  if (!chainId) return null;
+// Get available tokens for the current chain
+const getAvailableTokens = (chainId?: number) => {
+  if (!chainId) return [];
+
   try {
-    const addresses = getTokenAddresses(chainId);
-    // Map to token config format
-    return Object.entries(addresses).map(([symbol, address]) => ({
-      symbol,
-      address,
-      decimals: symbol === "USDC" ? 6 : 18,
-    }));
+    const tokenAddresses = getTokenAddresses(chainId);
+
+    // Map token addresses to token configs with proper metadata
+    return Object.entries(tokenAddresses).map(([symbol, address]) => {
+      // Determine decimals based on token symbol
+      const decimals = symbol === "USDC" || symbol === "USDbC" ? 6 : 18;
+
+      // Set icon based on token type
+      let icon = "💰";
+      if (symbol.includes("USD")) icon = "💵";
+      if (symbol.includes("EUR")) icon = "💶";
+      if (symbol === "CELO") icon = "🟡";
+      if (symbol === "ETH") icon = "💎";
+
+      return {
+        symbol,
+        name: symbol,
+        icon,
+        address: address as Address,
+        decimals,
+      };
+    });
   } catch {
-    return null;
+    return [];
   }
 };
 
-// Default token configuration
-const DEFAULT_TOKENS = {
-  CELO: {
-    symbol: "CELO",
-    name: "Celo",
-    icon: "🟡",
-    address: "0x0000000000000000000000000000000000000000" as Address,
-    decimals: 18,
-  },
-  USDC: {
-    symbol: "USDC",
-    name: "USD Coin",
-    icon: "💰",
-    address: "0xcebA9300f2b948710d2653dD7B07f33A8B32118C" as Address,
-    decimals: 6,
-  },
-} as const;
-
-type TokenSymbol = keyof typeof DEFAULT_TOKENS;
+type TokenSymbol = string;
 type Recipient = { id: string; address: string; amount: string };
 
 function BatchPaymentContent() {
   const [step, setStep] = useState(1);
-  const [selectedToken, setSelectedToken] = useState<TokenSymbol>("CELO");
+  const [selectedToken, setSelectedToken] = useState<TokenSymbol>("USDC");
   const [recipients, setRecipients] = useState<Recipient[]>([
     { id: "1", address: "", amount: "" },
   ]);
@@ -71,17 +69,23 @@ function BatchPaymentContent() {
   // Wagmi hooks
   const { address, isConnected, chain } = useAccount();
   const { isPaused } = useContractPaused();
+
+  // Get available tokens for current chain
+  const availableTokens = getAvailableTokens(chain?.id);
   const selectedTokenConfig =
-    DEFAULT_TOKENS[selectedToken as keyof typeof DEFAULT_TOKENS] ||
-    DEFAULT_TOKENS.CELO;
+    availableTokens.find((t) => t.symbol === selectedToken) ||
+    availableTokens[0];
   const isNativeToken =
-    selectedTokenConfig.address ===
+    selectedTokenConfig?.address ===
     "0x0000000000000000000000000000000000000000";
 
   // Balance hooks
   const { data: nativeBalance } = useBalance({ address });
   const { balance: tokenBalance, refetch: refetchTokenBalance } =
-    useTokenBalance(selectedTokenConfig.address, address);
+    useTokenBalance(
+      selectedTokenConfig?.address || ("0x0" as Address),
+      address,
+    );
 
   // Contract interaction hooks
   const {
@@ -97,9 +101,9 @@ function BatchPaymentContent() {
     isPending: isApproving,
     isConfirming: isApprovingConfirming,
     isConfirmed: isApproved,
-  } = useTokenApproval(selectedTokenConfig.address);
+  } = useTokenApproval(selectedTokenConfig?.address || ("0x0" as Address));
   const { allowance, refetch: refetchAllowance } = useTokenAllowance(
-    selectedTokenConfig.address,
+    selectedTokenConfig?.address || ("0x0" as Address),
     address,
   );
 
@@ -283,14 +287,21 @@ function BatchPaymentContent() {
   };
 
   const getBalance = () => {
+    if (!selectedTokenConfig) return "0.0000";
+
     if (isNativeToken) {
-      return nativeBalance?.formatted
-        ? `${parseFloat(nativeBalance.formatted).toFixed(4)} ${selectedToken}`
-        : "Loading...";
+      // For native tokens, show balance if available, otherwise 0
+      if (nativeBalance?.formatted !== undefined) {
+        return `${parseFloat(nativeBalance.formatted).toFixed(4)} ${selectedToken}`;
+      }
+      return `0.0000 ${selectedToken}`;
     }
-    return tokenBalance
-      ? `${parseFloat(formatUnits(tokenBalance, selectedTokenConfig.decimals)).toFixed(4)} ${selectedToken}`
-      : "Loading...";
+
+    // For ERC20 tokens, show balance if available, otherwise 0
+    if (tokenBalance !== undefined) {
+      return `${parseFloat(formatUnits(tokenBalance, selectedTokenConfig.decimals)).toFixed(4)} ${selectedToken}`;
+    }
+    return `0.0000 ${selectedToken}`;
   };
 
   // Effects
@@ -363,7 +374,7 @@ function BatchPaymentContent() {
               onToggleUpload={() => setShowUpload((v) => !v)}
               onImported={handleImported}
               onNext={handleNext}
-              tokens={Object.values(DEFAULT_TOKENS)}
+              tokens={availableTokens}
             />
           )}
 
