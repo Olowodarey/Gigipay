@@ -35,12 +35,11 @@ export function Navbar() {
               <div className="flex items-center gap-2 mb-8">
                 <Image
                   src="/logo.png"
-                  alt="Payflow Logo"
+                  alt="Gigi pay Logo"
                   width={32}
                   height={32}
                   className="rounded-md"
                 />
-                <span className="font-bold text-lg">Gigipay</span>
               </div>
               <nav className="flex flex-col gap-4">
                 {navLinks.map((link) => (
@@ -70,14 +69,11 @@ export function Navbar() {
           >
             <Image
               src="/logo.png"
-              alt="Payflow Logo"
+              alt="Gigipay Logo"
               width={100}
               height={100}
               className="rounded-md"
             />
-            <span className="hidden font-bold text-xl sm:inline-block">
-              Payflow
-            </span>
           </Link>
         </div>
 

@@ -60,7 +60,7 @@ function getWagmiConfig() {
         },
       ],
       {
-        appName: 'Payflow',
+        appName: 'Gigipay',
         projectId,
       }
     )
