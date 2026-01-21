@@ -64,9 +64,9 @@ forge build
 echo ""
 echo "📤 Deploying contracts to Base Mainnet..."
 
-# Check if BASESCAN_API_KEY is set for verification
-if [ -z "$BASESCAN_API_KEY" ]; then
-    echo "⚠️  Warning: BASESCAN_API_KEY not set - contract verification will be skipped"
+# Check if ETHERSCAN_API_KEY is set for verification
+if [ -z "$ETHERSCAN_API_KEY" ]; then
+    echo "⚠️  Warning: ETHERSCAN_API_KEY not set - contract verification will be skipped"
     echo "   You can verify manually later on BaseScan"
     forge script script/DeployGigipay.s.sol:DeployGigipay \
       --rpc-url https://mainnet.base.org \
@@ -74,13 +74,13 @@ if [ -z "$BASESCAN_API_KEY" ]; then
       --broadcast \
       -vvvv
 else
-    echo "✅ BASESCAN_API_KEY found - will attempt automatic verification"
+    echo "✅ ETHERSCAN_API_KEY found - will attempt automatic verification"
     forge script script/DeployGigipay.s.sol:DeployGigipay \
       --rpc-url https://mainnet.base.org \
       --private-key $PRIVATE_KEY \
       --broadcast \
       --verify \
-      --etherscan-api-key $BASESCAN_API_KEY \
+      --etherscan-api-key $ETHERSCAN_API_KEY \
       -vvvv
 fi
 

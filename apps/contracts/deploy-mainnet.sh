@@ -62,13 +62,27 @@ echo "🔨 Compiling contracts..."
 forge build
 
 echo ""
-echo "📤 Deploying contracts to MAINNET..."
-forge script script/DeployGigipay.s.sol:DeployGigipay \
-  --rpc-url https://forno.celo.org \
-  --private-key $PRIVATE_KEY \
-  --broadcast \
-  --verify \
-  -vvvv
+echo "📤 Deploying contracts to Celo Mainnet..."
+
+# Check if ETHERSCAN_API_KEY is set for verification
+if [ -z "$ETHERSCAN_API_KEY" ]; then
+    echo "⚠️  Warning: ETHERSCAN_API_KEY not set - contract verification will be skipped"
+    echo "   You can verify manually later on Celoscan"
+    forge script script/DeployGigipay.s.sol:DeployGigipay \
+      --rpc-url https://forno.celo.org \
+      --private-key $PRIVATE_KEY \
+      --broadcast \
+      -vvvv
+else
+    echo "✅ ETHERSCAN_API_KEY found - will attempt automatic verification"
+    forge script script/DeployGigipay.s.sol:DeployGigipay \
+      --rpc-url https://forno.celo.org \
+      --private-key $PRIVATE_KEY \
+      --broadcast \
+      --verify \
+      --etherscan-api-key $ETHERSCAN_API_KEY \
+      -vvvv
+fi
 
 echo ""
 echo "✅ Deployment complete!"

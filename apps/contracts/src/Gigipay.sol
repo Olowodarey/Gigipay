@@ -112,7 +112,7 @@ contract Gigipay is
 
     /**
      * @notice Create multiple payment vouchers under ONE voucher name (gas efficient!)
-     * @param voucherName The shared name for all vouchers (e.g., "Birthday2024")
+     * @param voucherName The shared name for all vouchers (e.g., "december2024")
      * @param claimCodes Array of secret codes for each voucher
      * @param amounts Array of amounts for each voucher
      * @param expirationTimes Array of expiration timestamps for each voucher
@@ -136,19 +136,16 @@ contract Gigipay is
             totalAmount += amounts[i];
         }
 
-        // Handle payment based on token type
         if (token == address(0)) {
-            // Native token - check msg.value
             if (msg.value != totalAmount) revert InvalidAmount();
         } else {
-            // ERC20 token - check allowance and transfer from sender
             IERC20 tokenContract = IERC20(token);
             if (
                 tokenContract.allowance(msg.sender, address(this)) < totalAmount
             ) {
                 revert InsufficientAllowance();
             }
-            // Transfer tokens from sender to contract
+
             tokenContract.safeTransferFrom(
                 msg.sender,
                 address(this),
