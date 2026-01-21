@@ -401,11 +401,18 @@ export default function CreatePage() {
           tokenDecimals,
         );
 
-        // Refetch current allowance
-        await refetchAllowance();
+        // Refetch current allowance and get the fresh value
+        const { data: currentAllowance } = await refetchAllowance();
+        const allowanceToCheck = currentAllowance ?? allowance;
+
+        console.log("Allowance check:", {
+          currentAllowance: allowanceToCheck.toString(),
+          required: totalAmountBigInt.toString(),
+          sufficient: allowanceToCheck >= totalAmountBigInt,
+        });
 
         // If allowance is insufficient, request approval first
-        if (allowance < totalAmountBigInt) {
+        if (allowanceToCheck < totalAmountBigInt) {
           console.log("Insufficient allowance, requesting approval...");
           setNeedsApproval(true);
           showToast({
@@ -425,6 +432,9 @@ export default function CreatePage() {
           return; // Exit and let user try again after approval
         } else {
           // Allowance is sufficient, no approval needed
+          console.log(
+            "Allowance sufficient, proceeding with voucher creation...",
+          );
           setNeedsApproval(false);
         }
       }
