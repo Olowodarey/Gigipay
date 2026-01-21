@@ -2,14 +2,17 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
   useReadContract,
+  useAccount,
 } from "wagmi";
 import { Address, parseUnits, erc20Abi } from "viem";
-import { BATCH_TRANSFER_CONTRACT } from "@/lib/contracts/celocontract";
+import { getContractConfig } from "@/lib/contracts/gigipay";
 
 /**
  * Hook for approving ERC20 tokens for batch transfer
+ * Works on both Celo and Base networks
  */
 export function useTokenApproval(tokenAddress: Address) {
+  const { chain } = useAccount();
   const { data: hash, writeContract, isPending, error } = useWriteContract();
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
@@ -23,13 +26,18 @@ export function useTokenApproval(tokenAddress: Address) {
    * @param decimals - Token decimals (default 18)
    */
   const approve = (amount: string, decimals: number = 18) => {
+    if (!chain) {
+      throw new Error("No chain connected");
+    }
+
+    const contractConfig = getContractConfig(chain.id);
     const parsedAmount = parseUnits(amount, decimals);
 
     writeContract({
       address: tokenAddress,
       abi: erc20Abi,
       functionName: "approve",
-      args: [BATCH_TRANSFER_CONTRACT.address, parsedAmount],
+      args: [contractConfig.address, parsedAmount],
     });
   };
 
@@ -45,11 +53,15 @@ export function useTokenApproval(tokenAddress: Address) {
 
 /**
  * Hook to check current allowance
+ * Works on both Celo and Base networks
  */
 export function useTokenAllowance(
   tokenAddress: Address,
   ownerAddress?: Address,
 ) {
+  const { chain } = useAccount();
+  const contractConfig = chain?.id ? getContractConfig(chain.id) : null;
+
   const {
     data: allowance,
     isLoading,
@@ -58,11 +70,12 @@ export function useTokenAllowance(
     address: tokenAddress,
     abi: erc20Abi,
     functionName: "allowance",
-    args: ownerAddress
-      ? [ownerAddress, BATCH_TRANSFER_CONTRACT.address]
-      : undefined,
+    args:
+      ownerAddress && contractConfig
+        ? [ownerAddress, contractConfig.address]
+        : undefined,
     query: {
-      enabled: !!ownerAddress,
+      enabled: !!ownerAddress && !!contractConfig,
     },
   });
 

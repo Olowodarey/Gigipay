@@ -7,7 +7,11 @@ interface NetworkWarningProps {
   isPaused: boolean;
 }
 
-export function NetworkWarning({ isConnected, isCorrectNetwork, isPaused }: NetworkWarningProps) {
+export function NetworkWarning({
+  isConnected,
+  isCorrectNetwork,
+  isPaused,
+}: NetworkWarningProps) {
   return (
     <>
       {/* Wallet Connection */}
@@ -15,7 +19,9 @@ export function NetworkWarning({ isConnected, isCorrectNetwork, isPaused }: Netw
         <Card className="mb-6">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center gap-4">
-              <p className="text-sm text-muted-foreground">Connect your wallet to start batch payments</p>
+              <p className="text-sm text-muted-foreground">
+                Connect your wallet to start batch payments
+              </p>
               <ConnectButton />
             </div>
           </CardContent>
@@ -25,7 +31,7 @@ export function NetworkWarning({ isConnected, isCorrectNetwork, isPaused }: Netw
       {/* Wrong Network Warning */}
       {isConnected && !isCorrectNetwork && (
         <div className="mb-6 rounded-md border border-yellow-500 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
-          ⚠️ Please switch to Celo Mainnet to use batch payments
+          ⚠️ Please switch to Celo or Base network to use batch payments
         </div>
       )}
 

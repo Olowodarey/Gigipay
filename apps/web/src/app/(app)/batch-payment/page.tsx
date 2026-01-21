@@ -8,9 +8,8 @@ import {
   useTokenAllowance,
   useTokenBalance,
 } from "@/hooks/useTokenApproval";
-import { TOKEN_ADDRESSES } from "@/lib/contracts/celocontract";
+import { getTokenAddresses, isContractDeployed } from "@/lib/contracts/gigipay";
 import { Address, formatUnits, parseUnits } from "viem";
-import { defineChain } from "viem";
 import { UploadRecipient } from "@/components/batch-payment/UploadRecipients";
 import { NetworkWarning } from "@/components/batch-payment/NetworkWarning";
 import { ProgressIndicator } from "@/components/batch-payment/ProgressIndicator";
@@ -19,48 +18,41 @@ import { ReviewStep } from "@/components/batch-payment/ReviewStep";
 import { SuccessStep } from "@/components/batch-payment/SuccessStep";
 import { ClientOnly } from "@/components/batch-payment/ClientOnly";
 
-// Define Celo Mainnet chain
-const celoMainnet = defineChain({
-  id: 42220,
-  name: "Celo",
-  nativeCurrency: { decimals: 18, name: "CELO", symbol: "CELO" },
-  rpcUrls: { default: { http: ["https://forno.celo.org"] } },
-  blockExplorers: { default: { name: "Celoscan", url: "https://celoscan.io" } },
-  testnet: false,
-});
+// Get token addresses for current chain
+const getTokensForChain = (chainId?: number) => {
+  if (!chainId) return null;
+  try {
+    const addresses = getTokenAddresses(chainId);
+    // Map to token config format
+    return Object.entries(addresses).map(([symbol, address]) => ({
+      symbol,
+      address,
+      decimals: symbol === "USDC" ? 6 : 18,
+    }));
+  } catch {
+    return null;
+  }
+};
 
-// Token configuration
-const TOKENS = {
+// Default token configuration
+const DEFAULT_TOKENS = {
   CELO: {
     symbol: "CELO",
     name: "Celo",
     icon: "🟡",
-    address: TOKEN_ADDRESSES.CELO,
-    decimals: 18,
-  },
-  cUSD: {
-    symbol: "cUSD",
-    name: "Celo Dollar",
-    icon: "💵",
-    address: TOKEN_ADDRESSES.cUSD,
+    address: "0x0000000000000000000000000000000000000000" as Address,
     decimals: 18,
   },
   USDC: {
     symbol: "USDC",
     name: "USD Coin",
     icon: "💰",
-    address: TOKEN_ADDRESSES.USDC,
+    address: "0xcebA9300f2b948710d2653dD7B07f33A8B32118C" as Address,
     decimals: 6,
   },
-  cEUR: {
-    symbol: "cEUR",
-    name: "Celo Euro",
-    icon: "💶",
-    address: TOKEN_ADDRESSES.cEUR,
-    decimals: 18,
-  },
 } as const;
-type TokenSymbol = keyof typeof TOKENS;
+
+type TokenSymbol = keyof typeof DEFAULT_TOKENS;
 type Recipient = { id: string; address: string; amount: string };
 
 function BatchPaymentContent() {
@@ -79,8 +71,12 @@ function BatchPaymentContent() {
   // Wagmi hooks
   const { address, isConnected, chain } = useAccount();
   const { isPaused } = useContractPaused();
-  const selectedTokenConfig = TOKENS[selectedToken];
-  const isNativeCELO = selectedTokenConfig.address === TOKEN_ADDRESSES.CELO;
+  const selectedTokenConfig =
+    DEFAULT_TOKENS[selectedToken as keyof typeof DEFAULT_TOKENS] ||
+    DEFAULT_TOKENS.CELO;
+  const isNativeToken =
+    selectedTokenConfig.address ===
+    "0x0000000000000000000000000000000000000000";
 
   // Balance hooks
   const { data: nativeBalance } = useBalance({ address });
@@ -184,7 +180,7 @@ function BatchPaymentContent() {
   };
 
   const needsApproval = () => {
-    if (isNativeCELO) return false;
+    if (isNativeToken) return false;
     const total = totalAmount();
     const totalInWei = parseUnits(
       total.toString(),
@@ -206,9 +202,9 @@ function BatchPaymentContent() {
       });
       return;
     }
-    if (chain?.id !== celoMainnet.id) {
+    if (!isCorrectNetwork) {
       notify({
-        description: "Please switch to Celo Mainnet",
+        description: "Please switch to Celo or Base network",
         variant: "destructive",
       });
       return;
@@ -226,7 +222,7 @@ function BatchPaymentContent() {
       total.toString(),
       selectedTokenConfig.decimals,
     );
-    const currentBalance = isNativeCELO
+    const currentBalance = isNativeToken
       ? (nativeBalance?.value ?? 0n)
       : tokenBalance;
 
@@ -238,7 +234,7 @@ function BatchPaymentContent() {
       return;
     }
 
-    if (!isNativeCELO && needsApproval()) {
+    if (!isNativeToken && needsApproval()) {
       notify({
         description: "Please approve token spending first",
         variant: "destructive",
@@ -287,7 +283,7 @@ function BatchPaymentContent() {
   };
 
   const getBalance = () => {
-    if (isNativeCELO) {
+    if (isNativeToken) {
       return nativeBalance?.formatted
         ? `${parseFloat(nativeBalance.formatted).toFixed(4)} ${selectedToken}`
         : "Loading...";
@@ -325,7 +321,9 @@ function BatchPaymentContent() {
     }
   }, [error]);
 
-  const isCorrectNetwork = chain?.id === celoMainnet.id;
+  const isCorrectNetwork: boolean = chain?.id
+    ? isContractDeployed(chain.id)
+    : false;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -365,7 +363,7 @@ function BatchPaymentContent() {
               onToggleUpload={() => setShowUpload((v) => !v)}
               onImported={handleImported}
               onNext={handleNext}
-              tokens={Object.values(TOKENS)}
+              tokens={Object.values(DEFAULT_TOKENS)}
             />
           )}
 
