@@ -246,12 +246,6 @@ export const GIGIPAY_ABI = [
         name: "amount",
         type: "uint256",
       },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "expiresAt",
-        type: "uint256",
-      },
     ],
     name: "VoucherRefunded",
     type: "event",
@@ -293,6 +287,7 @@ export const GIGIPAY_ABI = [
   },
   {
     inputs: [
+      { internalType: "address", name: "token", type: "address" },
       { internalType: "string", name: "voucherName", type: "string" },
       { internalType: "string[]", name: "claimCodes", type: "string[]" },
       { internalType: "uint256[]", name: "amounts", type: "uint256[]" },
@@ -383,9 +378,9 @@ export const GIGIPAY_ABI = [
     type: "function",
   },
   {
-    inputs: [{ internalType: "uint256", name: "voucherId", type: "uint256" }],
-    name: "refundVoucher",
-    outputs: [],
+    inputs: [{ internalType: "string", name: "voucherName", type: "string" }],
+    name: "refundVouchersByName",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "nonpayable",
     type: "function",
   },
@@ -455,6 +450,7 @@ export const GIGIPAY_ABI = [
     name: "vouchers",
     outputs: [
       { internalType: "address", name: "sender", type: "address" },
+      { internalType: "address", name: "token", type: "address" },
       { internalType: "uint256", name: "amount", type: "uint256" },
       { internalType: "bytes32", name: "claimCodeHash", type: "bytes32" },
       { internalType: "uint256", name: "expiresAt", type: "uint256" },
@@ -472,8 +468,8 @@ export const GIGIPAY_ABI = [
  * Contract addresses by chain
  */
 export const CONTRACT_ADDRESSES = {
-  [celo.id]: "0xd81462e64951De7395e572D1a157EB9170E1f0Cb" as Address, // Celo Mainnet
-  [base.id]: "0x4a7cbbb72768d39f32eb5b3765a135743d6ccb8c" as Address, // Base Mainnet
+  [celo.id]: "0x7B7750Fb5f0ce9C908fCc0674F8B35782F6d40B3" as Address, // Celo Mainnet
+  [base.id]: "0xEdc6abb2f1A25A191dAf8B648c1A3686EfFE6Dd6" as Address, // Base Mainnet
 } as const;
 
 /**

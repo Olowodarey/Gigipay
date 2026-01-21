@@ -2,14 +2,20 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
   useReadContract,
+  useAccount,
 } from "wagmi";
 import { parseUnits, Address } from "viem";
-import { BATCH_TRANSFER_CONTRACT } from "@/lib/contracts/celocontract";
+import {
+  getContractConfig,
+  getTokenAddresses,
+  getNativeTokenSymbol,
+} from "@/lib/contracts/gigipay";
 
 /**
  * Hook for creating payment vouchers
  */
 export function useCreateVoucher() {
+  const { chain } = useAccount();
   const { data: hash, writeContract, isPending, error } = useWriteContract();
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
@@ -19,16 +25,20 @@ export function useCreateVoucher() {
 
   /**
    * Create a single payment voucher
+   * @param tokenAddress - Token contract address (use address(0) for native token)
    * @param voucherName - Name identifier for the voucher
    * @param claimCode - Secret code to claim the voucher
-   * @param amount - Amount in CELO (e.g., "10.5")
+   * @param amount - Amount in tokens (e.g., "10.5")
    * @param expirationTime - Unix timestamp when voucher expires
+   * @param decimals - Token decimals (default: 18)
    */
   const createVoucher = async (
+    tokenAddress: Address,
     voucherName: string,
     claimCode: string,
     amount: string,
     expirationTime: number,
+    decimals: number = 18,
   ) => {
     // Validate inputs
     if (!voucherName || voucherName.trim().length === 0) {
@@ -44,10 +54,13 @@ export function useCreateVoucher() {
       throw new Error("Expiration time must be in the future");
     }
 
-    const parsedAmount = parseUnits(amount, 18); // CELO has 18 decimals
+    const parsedAmount = parseUnits(amount, decimals);
+    const isNativeToken =
+      tokenAddress === "0x0000000000000000000000000000000000000000";
 
     // Debug logging
     console.log("Creating single voucher:", {
+      tokenAddress,
       voucherName,
       claimCode,
       amount,
@@ -58,16 +71,17 @@ export function useCreateVoucher() {
 
     // Use createVoucherBatch with single-element arrays
     writeContract({
-      address: BATCH_TRANSFER_CONTRACT.address,
-      abi: BATCH_TRANSFER_CONTRACT.abi,
+      address: getContractConfig(chain?.id || 0).address,
+      abi: getContractConfig(chain?.id || 0).abi,
       functionName: "createVoucherBatch",
       args: [
+        tokenAddress,
         voucherName,
         [claimCode],
         [parsedAmount],
         [BigInt(expirationTime)],
       ],
-      value: parsedAmount,
+      value: isNativeToken ? parsedAmount : 0n,
     });
   };
 
@@ -85,6 +99,7 @@ export function useCreateVoucher() {
  * Hook for creating multiple vouchers in batch
  */
 export function useCreateVoucherBatch() {
+  const { chain } = useAccount();
   const { data: hash, writeContract, isPending, error } = useWriteContract();
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
@@ -94,16 +109,20 @@ export function useCreateVoucherBatch() {
 
   /**
    * Create multiple vouchers in one transaction
+   * @param tokenAddress - Token contract address (use address(0) for native token)
    * @param voucherName - Name identifier for all vouchers in this batch
    * @param vouchers - Array of { claimCode, amount, expirationTime }
+   * @param decimals - Token decimals (default: 18)
    */
   const createVoucherBatch = async (
+    tokenAddress: Address,
     voucherName: string,
     vouchers: Array<{
       claimCode: string;
       amount: string;
       expirationTime: number;
     }>,
+    decimals: number = 18,
   ) => {
     // Validate inputs
     if (!voucherName || voucherName.trim().length === 0) {
@@ -131,13 +150,16 @@ export function useCreateVoucherBatch() {
     });
 
     const claimCodes = vouchers.map((v) => v.claimCode);
-    const amounts = vouchers.map((v) => parseUnits(v.amount, 18));
+    const amounts = vouchers.map((v) => parseUnits(v.amount, decimals));
     const expirationTimes = vouchers.map((v) => BigInt(v.expirationTime));
 
     const totalAmount = amounts.reduce((sum, amount) => sum + amount, 0n);
+    const isNativeToken =
+      tokenAddress === "0x0000000000000000000000000000000000000000";
 
     // Debug logging
     console.log("Creating voucher batch:", {
+      tokenAddress,
       voucherName,
       voucherCount: vouchers.length,
       claimCodes,
@@ -148,11 +170,11 @@ export function useCreateVoucherBatch() {
     });
 
     writeContract({
-      address: BATCH_TRANSFER_CONTRACT.address,
-      abi: BATCH_TRANSFER_CONTRACT.abi,
+      address: getContractConfig(chain?.id || 0).address,
+      abi: getContractConfig(chain?.id || 0).abi,
       functionName: "createVoucherBatch",
-      args: [voucherName, claimCodes, amounts, expirationTimes],
-      value: totalAmount,
+      args: [tokenAddress, voucherName, claimCodes, amounts, expirationTimes],
+      value: isNativeToken ? totalAmount : 0n,
     });
   };
 
@@ -170,6 +192,7 @@ export function useCreateVoucherBatch() {
  * Hook for claiming a voucher
  */
 export function useClaimVoucher() {
+  const { chain } = useAccount();
   const { data: hash, writeContract, isPending, error } = useWriteContract();
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
@@ -184,8 +207,8 @@ export function useClaimVoucher() {
    */
   const claimVoucher = async (voucherName: string, claimCode: string) => {
     writeContract({
-      address: BATCH_TRANSFER_CONTRACT.address,
-      abi: BATCH_TRANSFER_CONTRACT.abi,
+      address: getContractConfig(chain?.id || 0).address,
+      abi: getContractConfig(chain?.id || 0).abi,
       functionName: "claimVoucher",
       args: [voucherName, claimCode],
     });
@@ -205,6 +228,7 @@ export function useClaimVoucher() {
  * Hook for refunding an expired voucher
  */
 export function useRefundVoucher() {
+  const { chain } = useAccount();
   const { data: hash, writeContract, isPending, error } = useWriteContract();
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
@@ -213,20 +237,20 @@ export function useRefundVoucher() {
     });
 
   /**
-   * Refund an expired voucher
-   * @param voucherId - The voucher ID to refund
+   * Refund all expired vouchers by name
+   * @param voucherName - The voucher name to refund
    */
-  const refundVoucher = async (voucherId: number) => {
+  const refundVouchersByName = async (voucherName: string) => {
     writeContract({
-      address: BATCH_TRANSFER_CONTRACT.address,
-      abi: BATCH_TRANSFER_CONTRACT.abi,
-      functionName: "refundVoucher",
-      args: [BigInt(voucherId)],
+      address: getContractConfig(chain?.id || 0).address,
+      abi: getContractConfig(chain?.id || 0).abi,
+      functionName: "refundVouchersByName",
+      args: [voucherName],
     });
   };
 
   return {
-    refundVoucher,
+    refundVouchersByName,
     hash,
     isPending,
     isConfirming,
@@ -239,9 +263,10 @@ export function useRefundVoucher() {
  * Hook to get voucher details
  */
 export function useVoucherDetails(voucherId: number) {
+  const { chain } = useAccount();
   const { data, isLoading, refetch } = useReadContract({
-    address: BATCH_TRANSFER_CONTRACT.address,
-    abi: BATCH_TRANSFER_CONTRACT.abi,
+    address: getContractConfig(chain?.id || 0).address,
+    abi: getContractConfig(chain?.id || 0).abi,
     functionName: "vouchers",
     args: [BigInt(voucherId)],
   });
@@ -267,9 +292,10 @@ export function useVoucherDetails(voucherId: number) {
  * Hook to get all vouchers created by a sender
  */
 export function useSenderVouchers(senderAddress?: Address) {
+  const { chain } = useAccount();
   const { data, isLoading, refetch } = useReadContract({
-    address: BATCH_TRANSFER_CONTRACT.address,
-    abi: BATCH_TRANSFER_CONTRACT.abi,
+    address: getContractConfig(chain?.id || 0).address,
+    abi: getContractConfig(chain?.id || 0).abi,
     functionName: "getSenderVouchers",
     args: senderAddress ? [senderAddress] : undefined,
     query: {
@@ -288,9 +314,10 @@ export function useSenderVouchers(senderAddress?: Address) {
  * Hook to get all vouchers by name
  */
 export function useVouchersByName(voucherName?: string) {
+  const { chain } = useAccount();
   const { data, isLoading, refetch } = useReadContract({
-    address: BATCH_TRANSFER_CONTRACT.address,
-    abi: BATCH_TRANSFER_CONTRACT.abi,
+    address: getContractConfig(chain?.id || 0).address,
+    abi: getContractConfig(chain?.id || 0).abi,
     functionName: "getVouchersByName",
     args: voucherName ? [voucherName] : undefined,
     query: {
@@ -309,9 +336,10 @@ export function useVouchersByName(voucherName?: string) {
  * Hook to check if a voucher is claimable
  */
 export function useIsVoucherClaimable(voucherId: number) {
+  const { chain } = useAccount();
   const { data, isLoading } = useReadContract({
-    address: BATCH_TRANSFER_CONTRACT.address,
-    abi: BATCH_TRANSFER_CONTRACT.abi,
+    address: getContractConfig(chain?.id || 0).address,
+    abi: getContractConfig(chain?.id || 0).abi,
     functionName: "isVoucherClaimable",
     args: [BigInt(voucherId)],
   });
@@ -326,9 +354,10 @@ export function useIsVoucherClaimable(voucherId: number) {
  * Hook to check if a voucher is refundable
  */
 export function useIsVoucherRefundable(voucherId: number) {
+  const { chain } = useAccount();
   const { data, isLoading } = useReadContract({
-    address: BATCH_TRANSFER_CONTRACT.address,
-    abi: BATCH_TRANSFER_CONTRACT.abi,
+    address: getContractConfig(chain?.id || 0).address,
+    abi: getContractConfig(chain?.id || 0).abi,
     functionName: "isVoucherRefundable",
     args: [BigInt(voucherId)],
   });

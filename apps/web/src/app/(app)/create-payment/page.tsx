@@ -7,8 +7,12 @@ import CreatePaymentStep3 from "@/components/create-payment/CreatePaymentStep3";
 import { Check } from "lucide-react";
 import { useAccount, useBalance } from "wagmi";
 import { useCreateVoucher, useCreateVoucherBatch } from "@/hooks/useVouchers";
-import { useTokenBalance } from "@/hooks/useTokenApproval";
-import { formatUnits, Address } from "viem";
+import {
+  useTokenBalance,
+  useTokenApproval,
+  useTokenAllowance,
+} from "@/hooks/useTokenApproval";
+import { formatUnits, parseUnits, Address } from "viem";
 import {
   getTokenAddresses,
   getNativeTokenSymbol,
@@ -81,6 +85,17 @@ export default function CreatePage() {
   const nativeSymbol = chain?.id ? getNativeTokenSymbol(chain.id) : "ETH";
   const defaultToken = Object.keys(availableTokens)[0] || nativeSymbol;
 
+  // Get token addresses for the current chain
+  const tokenAddresses: Record<string, Address> = chain?.id
+    ? getTokenAddresses(chain.id)
+    : {};
+
+  // Helper to get token decimals
+  const getTokenDecimals = (symbol: string) => {
+    if (symbol === "USDC" || symbol === "USDbC") return 6;
+    return 18;
+  };
+
   const [formData, setFormData] = useState<GiveawayData>({
     name: "",
     totalPrize: "",
@@ -96,9 +111,9 @@ export default function CreatePage() {
     { id: "1", code: "", amount: "" },
   ]);
   const [createdVoucherIds, setCreatedVoucherIds] = useState<number[]>([]);
+  const [needsApproval, setNeedsApproval] = useState(false);
 
-  // Get token addresses for balance checking
-  const tokenAddresses = chain?.id ? getTokenAddresses(chain.id) : {};
+  // Get token address and decimals for balance checking
   const selectedTokenAddress = tokenAddresses[formData.selectedToken] as
     | Address
     | undefined;
@@ -106,11 +121,6 @@ export default function CreatePage() {
     !selectedTokenAddress ||
     selectedTokenAddress === "0x0000000000000000000000000000000000000000";
 
-  // Get token decimals
-  const getTokenDecimals = (symbol: string) => {
-    if (symbol === "USDC" || symbol === "USDbC") return 6;
-    return 18;
-  };
   const selectedTokenDecimals = getTokenDecimals(formData.selectedToken);
 
   // Balance hooks - native and ERC20
@@ -135,18 +145,31 @@ export default function CreatePage() {
     error: errorBatch,
   } = useCreateVoucherBatch();
 
+  // Token approval hooks (for ERC20 tokens)
+  const {
+    approve,
+    isPending: isApproving,
+    isConfirmed: isApprovalConfirmed,
+  } = useTokenApproval(selectedTokenAddress || ("0x0" as Address));
+
+  const { allowance, refetch: refetchAllowance } = useTokenAllowance(
+    selectedTokenAddress || ("0x0" as Address),
+    address,
+  );
+
   // Combine states for UI
   const isCreating = isCreatingSingle || isCreatingBatch;
   const isConfirmed = isConfirmedSingle || isConfirmedBatch;
   const hash = hashSingle || hashBatch;
   const error = errorSingle || errorBatch;
 
-  // Inline notice system to replace toast
+  // Inline notice system
   const [notice, setNotice] = useState<{
     type: "success" | "error" | "info";
     message: string;
   } | null>(null);
-  const toast = ({
+
+  const showToast = ({
     title,
     description,
     variant,
@@ -241,7 +264,7 @@ export default function CreatePage() {
 
   const validateForm = () => {
     if (!formData.name || !formData.totalPrize || !formData.expiryHours) {
-      toast({
+      showToast({
         title: "Missing Information",
         description:
           "Please fill in giveaway name, total prize and expiry time",
@@ -251,7 +274,7 @@ export default function CreatePage() {
     }
 
     if (winners.some((w) => !w.code || !w.amount)) {
-      toast({
+      showToast({
         title: "Incomplete Winners",
         description: "Please fill in all winner codes and amounts",
         variant: "destructive",
@@ -265,7 +288,7 @@ export default function CreatePage() {
         (w) => isNaN(parseFloat(w.amount)) || parseFloat(w.amount) <= 0,
       )
     ) {
-      toast({
+      showToast({
         title: "Invalid Amount",
         description: "All winner amounts must be valid positive numbers",
         variant: "destructive",
@@ -277,7 +300,7 @@ export default function CreatePage() {
     const totalPrizes = calculateTotalPrizes();
 
     if (Math.abs(totalPrize - totalPrizes) > 0.01) {
-      toast({
+      showToast({
         title: "Amount Mismatch",
         description: `Total prizes (${totalPrizes} ${formData.selectedToken}) must equal total prize pool (${totalPrize} ${formData.selectedToken})`,
         variant: "destructive",
@@ -289,7 +312,7 @@ export default function CreatePage() {
     const codes = winners.map((w) => w.code);
     const uniqueCodes = new Set(codes);
     if (codes.length !== uniqueCodes.size) {
-      toast({
+      showToast({
         title: "Duplicate Codes",
         description: "Each winner must have a unique claim code",
         variant: "destructive",
@@ -314,7 +337,7 @@ export default function CreatePage() {
 
   const handleCreateGiveaway = async () => {
     if (!isConnected) {
-      toast({
+      showToast({
         title: "Wallet Not Connected",
         description: "Please connect your wallet to create vouchers",
         variant: "destructive",
@@ -336,7 +359,7 @@ export default function CreatePage() {
     }
 
     if (currentBalance < totalAmount) {
-      toast({
+      showToast({
         title: "Insufficient Balance",
         description: `You need ${totalAmount} ${formData.selectedToken} but only have ${currentBalance.toFixed(selectedTokenDecimals === 6 ? 6 : 4)} ${formData.selectedToken}`,
         variant: "destructive",
@@ -364,14 +387,58 @@ export default function CreatePage() {
       });
 
       // Check if single or multiple vouchers
+      // Get token address and decimals
+      const selectedTokenAddress = (tokenAddresses[formData.selectedToken] ||
+        "0x0000000000000000000000000000000000000000") as Address;
+      const tokenDecimals = getTokenDecimals(formData.selectedToken);
+      const isERC20 =
+        selectedTokenAddress !== "0x0000000000000000000000000000000000000000";
+
+      // For ERC20 tokens, check allowance and approve if needed
+      if (isERC20) {
+        const totalAmountBigInt = parseUnits(
+          totalAmount.toString(),
+          tokenDecimals,
+        );
+
+        // Refetch current allowance
+        await refetchAllowance();
+
+        // If allowance is insufficient, request approval first
+        if (allowance < totalAmountBigInt) {
+          console.log("Insufficient allowance, requesting approval...");
+          setNeedsApproval(true);
+          showToast({
+            title: "Approval Required",
+            description: `Please approve the contract to spend ${totalAmount} ${formData.selectedToken}`,
+          });
+
+          // Request approval
+          await approve(totalAmount.toString(), tokenDecimals);
+
+          // Wait for approval confirmation
+          showToast({
+            title: "Waiting for Approval",
+            description:
+              "Please confirm the approval transaction in your wallet",
+          });
+          return; // Exit and let user try again after approval
+        } else {
+          // Allowance is sufficient, no approval needed
+          setNeedsApproval(false);
+        }
+      }
+
       if (winners.length === 1) {
         // Use createVoucher for single voucher
         const winner = winners[0];
         await createVoucher(
+          selectedTokenAddress,
           formData.name,
           winner.code,
           winner.amount,
           expirationTime,
+          tokenDecimals,
         );
       } else {
         // Use createVoucherBatch for multiple vouchers
@@ -380,11 +447,16 @@ export default function CreatePage() {
           amount: w.amount,
           expirationTime: expirationTime,
         }));
-        await createVoucherBatch(formData.name, vouchers);
+        await createVoucherBatch(
+          selectedTokenAddress,
+          formData.name,
+          vouchers,
+          tokenDecimals,
+        );
       }
     } catch (err: any) {
       console.error("Error creating vouchers:", err);
-      toast({
+      showToast({
         title: "Error",
         description: err.message || "Failed to create vouchers",
         variant: "destructive",
@@ -395,18 +467,30 @@ export default function CreatePage() {
   // Handle successful creation
   useEffect(() => {
     if (isConfirmed && hash) {
-      toast({
+      showToast({
         title: "Success!",
         description: "Vouchers created successfully!",
       });
       setStep(3);
+      setNeedsApproval(false); // Reset approval state
     }
   }, [isConfirmed, hash]);
+
+  // Handle approval confirmation - update UI state
+  useEffect(() => {
+    if (isApprovalConfirmed) {
+      showToast({
+        title: "Approval Confirmed!",
+        description: "You can now send the payment",
+      });
+      setNeedsApproval(false);
+    }
+  }, [isApprovalConfirmed]);
 
   // Handle errors
   useEffect(() => {
     if (error) {
-      toast({
+      showToast({
         title: "Error",
         description: error.message || "Transaction failed",
         variant: "destructive",
@@ -416,7 +500,7 @@ export default function CreatePage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast({
+    showToast({
       title: "Copied!",
       description: "Code copied to clipboard",
     });
@@ -433,7 +517,7 @@ export default function CreatePage() {
     a.href = url;
     a.download = "giveaway-codes.csv";
     a.click();
-    toast({
+    showToast({
       title: "Downloaded!",
       description: "Codes exported to CSV",
     });
@@ -542,6 +626,9 @@ Use your voucher ID and code to claim!
               tokens={availableTokens}
               winners={winners}
               isCreating={isCreating}
+              isApproving={isApproving}
+              needsApproval={needsApproval}
+              isNativeToken={isNativeToken}
               onBack={() => setStep(1)}
               onConfirm={handleNextStep}
             />

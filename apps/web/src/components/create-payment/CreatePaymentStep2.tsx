@@ -14,10 +14,18 @@ type TokenInfo = { symbol: string; name: string; icon: string };
 type Winner = { id: string; code: string; amount: string };
 
 interface Props {
-  formData: { name: string; totalPrize: string; expiryHours: string; selectedToken: string };
+  formData: {
+    name: string;
+    totalPrize: string;
+    expiryHours: string;
+    selectedToken: string;
+  };
   tokens: Record<string, TokenInfo>;
   winners: Winner[];
   isCreating: boolean;
+  isApproving: boolean;
+  needsApproval: boolean;
+  isNativeToken: boolean;
   onBack: () => void;
   onConfirm: () => void;
 }
@@ -44,20 +52,53 @@ export default function CreatePaymentStep2({
   tokens,
   winners,
   isCreating,
+  isApproving,
+  needsApproval,
+  isNativeToken,
   onBack,
   onConfirm,
 }: Props) {
+  // Determine button text and state
+  const getButtonText = () => {
+    if (isApproving) {
+      return (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Approving...
+        </>
+      );
+    }
+    if (isCreating) {
+      return (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Sending...
+        </>
+      );
+    }
+    if (needsApproval && !isNativeToken) {
+      return `Approve ${formData.selectedToken}`;
+    }
+    return `Send Payment`;
+  };
+
+  const isButtonDisabled = isCreating || isApproving;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Preview & Confirm</CardTitle>
-        <CardDescription>Review your payment details before creating</CardDescription>
+        <CardDescription>
+          Review your payment details before creating
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4 p-4 rounded-lg bg-muted/50">
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Payment Name</span>
-            <span className="font-semibold text-foreground">{formData.name}</span>
+            <span className="font-semibold text-foreground">
+              {formData.name}
+            </span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Token</span>
@@ -73,7 +114,9 @@ export default function CreatePaymentStep2({
           </div>
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Number of Winners</span>
-            <span className="font-semibold text-foreground">{winners.length}</span>
+            <span className="font-semibold text-foreground">
+              {winners.length}
+            </span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Expires In</span>
@@ -84,14 +127,18 @@ export default function CreatePaymentStep2({
         </div>
 
         <div>
-          <h4 className="font-semibold text-foreground mb-3">Winners & Prizes</h4>
+          <h4 className="font-semibold text-foreground mb-3">
+            Winners & Prizes
+          </h4>
           <div className="space-y-2 max-h-64 overflow-y-auto p-3 rounded-lg border border-border">
             {winners.map((winner) => (
               <div
                 key={winner.id}
                 className="flex justify-between items-center text-sm p-2 rounded bg-muted/30"
               >
-                <span className="text-muted-foreground font-mono">{winner.code}</span>
+                <span className="text-muted-foreground font-mono">
+                  {winner.code}
+                </span>
                 <span className="font-medium text-foreground">
                   {winner.amount} {formData.selectedToken}
                 </span>
@@ -101,19 +148,21 @@ export default function CreatePaymentStep2({
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button onClick={onBack} variant="outline" className="flex-1">
+          <Button
+            onClick={onBack}
+            variant="outline"
+            className="flex-1"
+            disabled={isButtonDisabled}
+          >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
-          <Button onClick={onConfirm} className="flex-1" disabled={isCreating}>
-            {isCreating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              `Create Payment with ${formData.selectedToken}`
-            )}
+          <Button
+            onClick={onConfirm}
+            className="flex-1"
+            disabled={isButtonDisabled}
+          >
+            {getButtonText()}
           </Button>
         </div>
       </CardContent>
