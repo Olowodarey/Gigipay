@@ -7,13 +7,54 @@ import CreatePaymentStep3 from "@/components/create-payment/CreatePaymentStep3";
 import { Check } from "lucide-react";
 import { useAccount, useBalance } from "wagmi";
 import { useCreateVoucher, useCreateVoucherBatch } from "@/hooks/useVouchers";
-import { formatUnits } from "viem";
+import { useTokenBalance } from "@/hooks/useTokenApproval";
+import { formatUnits, Address } from "viem";
+import {
+  getTokenAddresses,
+  getNativeTokenSymbol,
+} from "@/lib/contracts/gigipay";
 
-// Token config - only CELO for now
-const TOKENS = {
-  CELO: { symbol: "CELO", name: "Celo", icon: "🟡" },
-} as const;
-type TokenSymbol = keyof typeof TOKENS;
+// Get available tokens for the current chain
+const getAvailableTokens = (
+  chainId?: number,
+): Record<string, { symbol: string; name: string; icon: string }> => {
+  if (!chainId) return {};
+
+  try {
+    const tokenAddresses = getTokenAddresses(chainId);
+
+    // Map token addresses to token configs with proper metadata
+    const tokensArray = Object.entries(tokenAddresses).map(
+      ([symbol, address]) => {
+        // Set icon based on token type
+        let icon = "💰";
+        if (symbol.includes("USD")) icon = "💵";
+        if (symbol.includes("EUR")) icon = "💶";
+        if (symbol === "CELO") icon = "🟡";
+        if (symbol === "ETH") icon = "💎";
+
+        return {
+          symbol,
+          name: symbol,
+          icon,
+        };
+      },
+    );
+
+    // Convert array to object with symbol as key
+    return tokensArray.reduce(
+      (acc, token) => {
+        acc[token.symbol] = token;
+        return acc;
+      },
+      {} as Record<string, { symbol: string; name: string; icon: string }>,
+    );
+  } catch {
+    return {};
+  }
+};
+
+type TokenSymbol = string;
 
 interface Winner {
   id: string;
@@ -30,28 +71,70 @@ interface GiveawayData {
 
 export default function CreatePage() {
   const [step, setStep] = useState(1);
+
+  // Wagmi hooks - moved up to get chain info
+  const { address, isConnected, chain } = useAccount();
+  const { data: balance } = useBalance({ address });
+
+  // Get available tokens for current chain
+  const availableTokens = getAvailableTokens(chain?.id);
+  const nativeSymbol = chain?.id ? getNativeTokenSymbol(chain.id) : "ETH";
+  const defaultToken = Object.keys(availableTokens)[0] || nativeSymbol;
+
   const [formData, setFormData] = useState<GiveawayData>({
     name: "",
     totalPrize: "",
     expiryHours: "0",
-    selectedToken: "CELO",
+    selectedToken: defaultToken,
   });
   const [neverExpire, setNeverExpire] = useState(false);
   const [expiryValue, setExpiryValue] = useState("");
   const [expiryUnit, setExpiryUnit] = useState<"hours" | "days" | "weeks">(
-    "hours"
+    "hours",
   );
   const [winners, setWinners] = useState<Winner[]>([
     { id: "1", code: "", amount: "" },
   ]);
   const [createdVoucherIds, setCreatedVoucherIds] = useState<number[]>([]);
-  
-  // Wagmi hooks
-  const { address, isConnected, chain } = useAccount();
-  const { data: balance } = useBalance({ address });
-  const { createVoucher, isPending: isCreatingSingle, isConfirmed: isConfirmedSingle, hash: hashSingle, error: errorSingle } = useCreateVoucher();
-  const { createVoucherBatch, isPending: isCreatingBatch, isConfirmed: isConfirmedBatch, hash: hashBatch, error: errorBatch } = useCreateVoucherBatch();
-  
+
+  // Get token addresses for balance checking
+  const tokenAddresses = chain?.id ? getTokenAddresses(chain.id) : {};
+  const selectedTokenAddress = tokenAddresses[formData.selectedToken] as
+    | Address
+    | undefined;
+  const isNativeToken =
+    !selectedTokenAddress ||
+    selectedTokenAddress === "0x0000000000000000000000000000000000000000";
+
+  // Get token decimals
+  const getTokenDecimals = (symbol: string) => {
+    if (symbol === "USDC" || symbol === "USDbC") return 6;
+    return 18;
+  };
+  const selectedTokenDecimals = getTokenDecimals(formData.selectedToken);
+
+  // Balance hooks - native and ERC20
+  const { balance: tokenBalance } = useTokenBalance(
+    selectedTokenAddress || ("0x0" as Address),
+    address,
+  );
+
+  // Voucher creation hooks
+  const {
+    createVoucher,
+    isPending: isCreatingSingle,
+    isConfirmed: isConfirmedSingle,
+    hash: hashSingle,
+    error: errorSingle,
+  } = useCreateVoucher();
+  const {
+    createVoucherBatch,
+    isPending: isCreatingBatch,
+    isConfirmed: isConfirmedBatch,
+    hash: hashBatch,
+    error: errorBatch,
+  } = useCreateVoucherBatch();
+
   // Combine states for UI
   const isCreating = isCreatingSingle || isCreatingBatch;
   const isConfirmed = isConfirmedSingle || isConfirmedBatch;
@@ -86,7 +169,7 @@ export default function CreatePage() {
   // Convert time value to hours based on unit
   const convertToHours = (
     value: string,
-    unit: "hours" | "days" | "weeks"
+    unit: "hours" | "days" | "weeks",
   ): number => {
     const numValue = parseFloat(value) || 0;
     switch (unit) {
@@ -101,10 +184,9 @@ export default function CreatePage() {
     }
   };
 
-
   const getExpiryDescription = (
     value: string,
-    unit: "hours" | "days" | "weeks"
+    unit: "hours" | "days" | "weeks",
   ): string => {
     const numValue = parseFloat(value) || 0;
     if (numValue === 0) return "No expiry set";
@@ -149,7 +231,7 @@ export default function CreatePage() {
 
   const updateWinner = (id: string, field: keyof Winner, value: string) => {
     setWinners(
-      winners.map((w) => (w.id === id ? { ...w, [field]: value } : w))
+      winners.map((w) => (w.id === id ? { ...w, [field]: value } : w)),
     );
   };
 
@@ -178,7 +260,11 @@ export default function CreatePage() {
     }
 
     // Validate amounts are valid numbers
-    if (winners.some((w) => isNaN(parseFloat(w.amount)) || parseFloat(w.amount) <= 0)) {
+    if (
+      winners.some(
+        (w) => isNaN(parseFloat(w.amount)) || parseFloat(w.amount) <= 0,
+      )
+    ) {
       toast({
         title: "Invalid Amount",
         description: "All winner amounts must be valid positive numbers",
@@ -238,10 +324,21 @@ export default function CreatePage() {
 
     // Check balance
     const totalAmount = calculateTotalPrizes();
-    if (balance && parseFloat(formatUnits(balance.value, 18)) < totalAmount) {
+
+    // Get current balance based on selected token
+    let currentBalance = 0;
+    if (isNativeToken) {
+      currentBalance = balance ? parseFloat(formatUnits(balance.value, 18)) : 0;
+    } else {
+      currentBalance = tokenBalance
+        ? parseFloat(formatUnits(tokenBalance, selectedTokenDecimals))
+        : 0;
+    }
+
+    if (currentBalance < totalAmount) {
       toast({
         title: "Insufficient Balance",
-        description: `You need ${totalAmount} CELO but only have ${formatUnits(balance.value, 18)} CELO`,
+        description: `You need ${totalAmount} ${formData.selectedToken} but only have ${currentBalance.toFixed(selectedTokenDecimals === 6 ? 6 : 4)} ${formData.selectedToken}`,
         variant: "destructive",
       });
       return;
@@ -250,21 +347,22 @@ export default function CreatePage() {
     try {
       // Calculate expiration timestamp from formData.expiryHours (which is already in hours)
       const hoursToExpire = parseFloat(formData.expiryHours) || 0;
-      
+
       // For "never expire" (0 hours), set to far future (100 years from now)
-      const expirationTime = hoursToExpire === 0 
-        ? Math.floor(Date.now() / 1000) + (100 * 365 * 24 * 60 * 60)
-        : Math.floor(Date.now() / 1000) + (hoursToExpire * 60 * 60);
-      
-      console.log('Creating vouchers with:', {
+      const expirationTime =
+        hoursToExpire === 0
+          ? Math.floor(Date.now() / 1000) + 100 * 365 * 24 * 60 * 60
+          : Math.floor(Date.now() / 1000) + hoursToExpire * 60 * 60;
+
+      console.log("Creating vouchers with:", {
         name: formData.name,
         winnersCount: winners.length,
         expiryHours: hoursToExpire,
         expirationTime,
         totalAmount,
-        winners: winners.map(w => ({ code: w.code, amount: w.amount }))
+        winners: winners.map((w) => ({ code: w.code, amount: w.amount })),
       });
-      
+
       // Check if single or multiple vouchers
       if (winners.length === 1) {
         // Use createVoucher for single voucher
@@ -273,11 +371,11 @@ export default function CreatePage() {
           formData.name,
           winner.code,
           winner.amount,
-          expirationTime
+          expirationTime,
         );
       } else {
         // Use createVoucherBatch for multiple vouchers
-        const vouchers = winners.map(w => ({
+        const vouchers = winners.map((w) => ({
           claimCode: w.code,
           amount: w.amount,
           expirationTime: expirationTime,
@@ -285,7 +383,7 @@ export default function CreatePage() {
         await createVoucherBatch(formData.name, vouchers);
       }
     } catch (err: any) {
-      console.error('Error creating vouchers:', err);
+      console.error("Error creating vouchers:", err);
       toast({
         title: "Error",
         description: err.message || "Failed to create vouchers",
@@ -365,7 +463,9 @@ Use your voucher ID and code to claim!
           {notice && (
             <div
               className={`mb-6 rounded-md border p-3 text-sm ${
-                notice.type === "error" ? "border-destructive text-destructive-foreground bg-destructive/10" : "border-border bg-muted/50 text-foreground"
+                notice.type === "error"
+                  ? "border-destructive text-destructive-foreground bg-destructive/10"
+                  : "border-border bg-muted/50 text-foreground"
               }`}
             >
               {notice.message}
@@ -389,8 +489,8 @@ Use your voucher ID and code to claim!
                         s < step
                           ? "bg-success text-success-foreground"
                           : s === step
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground"
                       } ${s === 1 ? "ml-0" : "mx-2"} ${s === 3 ? "mr-0" : ""}`}
                     >
                       {s < step ? <Check className="h-4 w-4" /> : s}
@@ -416,7 +516,7 @@ Use your voucher ID and code to claim!
             <CreatePaymentStep1
               formData={formData}
               onChange={handleInputChange}
-              tokens={TOKENS}
+              tokens={availableTokens}
               neverExpire={neverExpire}
               expiryValue={expiryValue}
               expiryUnit={expiryUnit}
@@ -439,7 +539,7 @@ Use your voucher ID and code to claim!
           {step === 2 && (
             <CreatePaymentStep2
               formData={formData}
-              tokens={TOKENS}
+              tokens={availableTokens}
               winners={winners}
               isCreating={isCreating}
               onBack={() => setStep(1)}
