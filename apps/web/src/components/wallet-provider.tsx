@@ -7,8 +7,7 @@ import {
   connectorsForWallets,
 } from "@rainbow-me/rainbowkit";
 import { WagmiProvider, createConfig } from "wagmi";
-import { celo, celoAlfajores, base, baseSepolia } from "wagmi/chains";
-import { defineChain } from "viem";
+import { celo, celoAlfajores, base } from "wagmi/chains";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { http } from "wagmi";
 import {
@@ -19,28 +18,7 @@ import {
   injectedWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 
-// Define Celo Sepolia chain
-const celoSepolia = defineChain({
-  id: 11142220,
-  name: "Celo Sepolia",
-  nativeCurrency: {
-    decimals: 18,
-    name: "CELO",
-    symbol: "CELO",
-  },
-  rpcUrls: {
-    default: {
-      http: ["https://forno.celo-sepolia.celo-testnet.org"],
-    },
-  },
-  blockExplorers: {
-    default: {
-      name: "Celo Sepolia Blockscout",
-      url: "https://celo-sepolia.blockscout.com",
-    },
-  },
-  testnet: true,
-});
+// Mainnet chains only - no testnets
 
 // Create config with proper SSR handling
 let config: any = null;
@@ -71,13 +49,11 @@ function getWagmiConfig() {
 
     config = createConfig({
       connectors,
-      chains: [celo, celoSepolia, celoAlfajores, base, baseSepolia], // Added Base chains
+      chains: [celo, celoAlfajores, base], // Mainnet chains only
       transports: {
         [celo.id]: http(),
         [celoAlfajores.id]: http(),
-        [celoSepolia.id]: http(),
         [base.id]: http(),
-        [baseSepolia.id]: http(),
       },
       ssr: true,
     });
