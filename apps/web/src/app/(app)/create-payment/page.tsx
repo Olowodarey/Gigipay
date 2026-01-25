@@ -535,7 +535,7 @@ export default function CreatePage() {
 
   const getTweetTemplate = () => {
     const hoursToExpire = convertToHours(expiryValue, expiryUnit);
-    return `🎉 ${formData.name} - Payment Giveaway! 🎁
+    return `🎉 ${formData.name} - Payment created 🎁
 
 I'm giving away ${formData.totalPrize} ${formData.selectedToken} to ${
       winners.length
