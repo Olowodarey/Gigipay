@@ -163,6 +163,39 @@ function ClaimPageContent() {
       return;
     }
 
+    // Check if voucher is already claimed
+    if (voucher?.claimed) {
+      toast({
+        title: "Already Claimed",
+        description: "This voucher has already been claimed",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if voucher is expired
+    if (voucher?.expiresAt) {
+      const now = BigInt(Math.floor(Date.now() / 1000));
+      if (voucher.expiresAt < now) {
+        toast({
+          title: "Voucher Expired",
+          description: "This voucher has expired and can no longer be claimed",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Check if voucher is refunded
+    if (voucher?.refunded) {
+      toast({
+        title: "Voucher Refunded",
+        description: "This voucher has been refunded by the sender",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await claimVoucher(voucherName, claimCode);
     } catch (err: any) {
@@ -446,6 +479,53 @@ function ClaimPageContent() {
                   </div>
                 )}
 
+                {/* Voucher Status Warnings */}
+                {voucher && (
+                  <>
+                    {voucher.claimed && (
+                      <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                        <div className="flex items-center gap-2 text-destructive">
+                          <AlertCircle className="h-5 w-5" />
+                          <span className="font-semibold">Already Claimed</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          This voucher has already been claimed and cannot be
+                          claimed again.
+                        </p>
+                      </div>
+                    )}
+                    {voucher.expiresAt &&
+                      voucher.expiresAt <
+                        BigInt(Math.floor(Date.now() / 1000)) && (
+                        <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                          <div className="flex items-center gap-2 text-destructive">
+                            <AlertCircle className="h-5 w-5" />
+                            <span className="font-semibold">
+                              Voucher Expired
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            This voucher has expired and can no longer be
+                            claimed.
+                          </p>
+                        </div>
+                      )}
+                    {voucher.refunded && (
+                      <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                        <div className="flex items-center gap-2 text-destructive">
+                          <AlertCircle className="h-5 w-5" />
+                          <span className="font-semibold">
+                            Voucher Refunded
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          This voucher has been refunded by the sender.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+
                 <div className="space-y-3">
                   {!isConnected ? (
                     <p className="text-sm text-center text-muted-foreground">
@@ -456,9 +536,26 @@ function ClaimPageContent() {
                       onClick={handleClaim}
                       className="w-full"
                       size="lg"
-                      disabled={isClaiming}
+                      disabled={
+                        isClaiming ||
+                        voucher?.claimed ||
+                        voucher?.refunded ||
+                        (voucher?.expiresAt &&
+                          voucher.expiresAt <
+                            BigInt(Math.floor(Date.now() / 1000)))
+                      }
                     >
-                      {isClaiming ? "Claiming..." : "Claim Payment"}
+                      {isClaiming
+                        ? "Claiming..."
+                        : voucher?.claimed
+                          ? "Already Claimed"
+                          : voucher?.refunded
+                            ? "Refunded"
+                            : voucher?.expiresAt &&
+                                voucher.expiresAt <
+                                  BigInt(Math.floor(Date.now() / 1000))
+                              ? "Expired"
+                              : "Claim Payment"}
                     </Button>
                   )}
                   <p className="text-xs text-center text-muted-foreground">
