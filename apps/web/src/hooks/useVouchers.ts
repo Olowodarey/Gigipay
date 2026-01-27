@@ -275,12 +275,13 @@ export function useVoucherDetails(voucherId: number) {
     voucher: data
       ? {
           sender: data[0] as Address,
-          amount: data[1] as unknown as bigint,
-          claimCodeHash: data[2] as unknown as string,
-          expiresAt: data[3] as unknown as bigint,
-          claimed: data[4] as unknown as boolean,
-          refunded: data[5] as boolean,
-          voucherName: data[6] as unknown as string,
+          token: data[1] as Address,
+          amount: data[2] as unknown as bigint,
+          claimCodeHash: data[3] as unknown as string,
+          expiresAt: data[4] as unknown as bigint,
+          claimed: data[5] as unknown as boolean,
+          refunded: data[6] as boolean,
+          voucherName: data[7] as unknown as string,
         }
       : null,
     isLoading,

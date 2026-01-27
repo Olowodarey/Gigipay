@@ -1,5 +1,8 @@
 "use client";
 
+// Force dynamic rendering for this page
+export const dynamic = "force-dynamic";
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,32 +14,75 @@ import {
 } from "@/components/ui/card";
 import { Gift, Sparkles, ExternalLink, AlertCircle, Copy } from "lucide-react";
 import Confetti from "react-confetti";
-import { useAccount } from "wagmi";
-import { useClaimVoucher, useVouchersByName } from "@/hooks/useVouchers";
-import { formatUnits } from "viem";
+import { useAccount, useBalance } from "wagmi";
+import {
+  useClaimVoucher,
+  useVouchersByName,
+  useVoucherDetails,
+} from "@/hooks/useVouchers";
+import { formatUnits, Address } from "viem";
+import { useTokenBalance } from "@/hooks/useTokenApproval";
+import {
+  getTokenAddresses,
+  getNativeTokenSymbol,
+} from "@/lib/contracts/gigipay";
+import { ClientOnly } from "@/components/batch-payment/ClientOnly";
 
 type ClaimState = "initial" | "valid" | "invalid" | "claimed";
 
-export default function ClaimPage() {
+function ClaimPageContent() {
   const [claimCode, setClaimCode] = useState("");
   const [claimState, setClaimState] = useState<ClaimState>("initial");
   const [prizeAmount, setPrizeAmount] = useState("");
   const [txHash, setTxHash] = useState("");
   const [showConfetti, setShowConfetti] = useState(false);
   const [voucherName, setVoucherName] = useState("");
-  
+  const [voucherId, setVoucherId] = useState<number | null>(null);
+  const [tokenAddress, setTokenAddress] = useState<Address | null>(null);
+  const [tokenSymbol, setTokenSymbol] = useState("CELO");
+
   // Wagmi hooks
-  const { address, isConnected } = useAccount();
-  const { claimVoucher, isPending: isClaiming, isConfirmed, hash, error } = useClaimVoucher();
-  const { voucherIds, isLoading: isLoadingVouchers } = useVouchersByName(voucherName);
+  const { address, isConnected, chain } = useAccount();
+  const {
+    claimVoucher,
+    isPending: isClaiming,
+    isConfirmed,
+    hash,
+    error,
+  } = useClaimVoucher();
+  const { voucherIds, isLoading: isLoadingVouchers } =
+    useVouchersByName(voucherName);
+
+  // Get voucher details when we have a voucher ID
+  const { voucher, refetch: refetchVoucher } = useVoucherDetails(
+    voucherId || 0,
+  );
+
+  // Balance hooks
+  const { data: nativeBalance, refetch: refetchNativeBalance } = useBalance({
+    address,
+  });
+  const { balance: tokenBalance, refetch: refetchTokenBalance } =
+    useTokenBalance(tokenAddress || ("0x0" as Address), address);
 
   // Inline notice to replace toasts
   const [notice, setNotice] = useState<{
     type: "success" | "error" | "info";
     message: string;
   } | null>(null);
-  const toast = ({ title, description, variant }: { title?: string; description: string; variant?: "destructive" }) => {
-    setNotice({ type: variant === "destructive" ? "error" : "success", message: description || title || "" });
+  const toast = ({
+    title,
+    description,
+    variant,
+  }: {
+    title?: string;
+    description: string;
+    variant?: "destructive";
+  }) => {
+    setNotice({
+      type: variant === "destructive" ? "error" : "success",
+      message: description || title || "",
+    });
     // auto-hide after 3s
     setTimeout(() => setNotice(null), 3000);
   };
@@ -44,7 +90,8 @@ export default function ClaimPage() {
   // Local window size for confetti (replaces useWindowSize hook)
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
-    const update = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    const update = () =>
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
@@ -59,7 +106,8 @@ export default function ClaimPage() {
     toast({ description: "Copied to clipboard" });
   };
 
-  const getShareTemplate = () => `🎊 I just received ${prizeAmount} CELO on Gigipay! 🎉\n\nGigipay makes crypto payments simple and secure on Celo blockchain! \n\nTry Gigipay for seamless crypto payments! 🎁\n\n#Gigipay #Celo #CryptoPayments`;
+  const getShareTemplate = () =>
+    `🎊 I just received ${prizeAmount} CELO on Gigipay! 🎉\n\nGigipay makes crypto payments simple and secure on Celo blockchain! \n\nTry Gigipay for seamless crypto payments! 🎁\n\n#Gigipay #Celo #CryptoPayments`;
 
   const validateCode = () => {
     if (!voucherName.trim()) {
@@ -91,8 +139,9 @@ export default function ClaimPage() {
       return;
     }
 
+    // Set the first voucher ID to fetch details
+    setVoucherId(Number(voucherIds[0]));
     setClaimState("valid");
-    // Note: Amount will be revealed after claiming
     setPrizeAmount("???");
   };
 
@@ -125,6 +174,11 @@ export default function ClaimPage() {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 4000);
       toast({ description: "Your payment has been successfully received!" });
+
+      // Refresh balances
+      refetchNativeBalance();
+      refetchTokenBalance();
+      refetchVoucher();
     }
   }, [isConfirmed, hash]);
 
@@ -140,10 +194,90 @@ export default function ClaimPage() {
     }
   }, [error]);
 
+  // Fetch voucher details when voucher ID is set
+  useEffect(() => {
+    if (voucher && voucher.amount && voucher.token && chain?.id) {
+      try {
+        // Determine token info
+        const chainId = chain.id;
+        const tokenAddresses = getTokenAddresses(chainId);
+        const nativeSymbol = getNativeTokenSymbol(chainId);
+
+        // Find which token this voucher uses by matching the address
+        let symbol = nativeSymbol;
+        let decimals = 18;
+        const voucherTokenAddress = voucher.token.toLowerCase();
+
+        // Check if it's the native token (address(0))
+        const isNativeToken =
+          voucherTokenAddress === "0x0000000000000000000000000000000000000000";
+
+        if (isNativeToken) {
+          symbol = nativeSymbol;
+          decimals = 18;
+        } else {
+          // Find the matching token from the token addresses
+          for (const [tokenSymbol, address] of Object.entries(tokenAddresses)) {
+            if ((address as string).toLowerCase() === voucherTokenAddress) {
+              symbol = tokenSymbol;
+              // Set decimals based on token type
+              decimals =
+                tokenSymbol === "USDC" ||
+                tokenSymbol === "USDbC" ||
+                tokenSymbol === "USDT"
+                  ? 6
+                  : 18;
+              break;
+            }
+          }
+        }
+
+        setTokenAddress(voucher.token);
+        setTokenSymbol(symbol);
+
+        // Format the amount
+        const formattedAmount = formatUnits(voucher.amount, decimals);
+        setPrizeAmount(formattedAmount);
+      } catch (error) {
+        console.error("Error fetching voucher details:", error);
+        setPrizeAmount("???");
+      }
+    }
+  }, [voucher, chain]);
+
+  // Get current balance display
+  const getBalanceDisplay = () => {
+    if (!address) return "Connect wallet";
+
+    const isNativeToken =
+      !tokenAddress ||
+      tokenAddress === "0x0000000000000000000000000000000000000000";
+
+    if (isNativeToken) {
+      if (nativeBalance?.formatted !== undefined) {
+        return `${parseFloat(nativeBalance.formatted).toFixed(4)} ${tokenSymbol}`;
+      }
+      return `0.0000 ${tokenSymbol}`;
+    }
+
+    if (tokenBalance !== undefined) {
+      const decimals =
+        tokenSymbol === "USDC" || tokenSymbol === "USDbC" ? 6 : 18;
+      return `${parseFloat(formatUnits(tokenBalance, decimals)).toFixed(4)} ${tokenSymbol}`;
+    }
+
+    return `0.0000 ${tokenSymbol}`;
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       {showConfetti && (
-        <Confetti width={windowSize.width} height={windowSize.height} recycle={false} numberOfPieces={500} />
+        <Confetti
+          width={windowSize.width}
+          height={windowSize.height}
+          recycle={false}
+          numberOfPieces={500}
+        />
       )}
 
       <div className="flex-1 py-8 md:py-12 lg:py-16 px-4 sm:px-6 lg:px-8">
@@ -151,7 +285,9 @@ export default function ClaimPage() {
           {notice && (
             <div
               className={`mb-6 rounded-md border p-3 text-sm ${
-                notice.type === "error" ? "border-destructive text-destructive-foreground bg-destructive/10" : "border-border bg-muted/50 text-foreground"
+                notice.type === "error"
+                  ? "border-destructive text-destructive-foreground bg-destructive/10"
+                  : "border-border bg-muted/50 text-foreground"
               }`}
             >
               {notice.message}
@@ -171,13 +307,17 @@ export default function ClaimPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <label htmlFor="voucherName" className="text-sm font-medium">Voucher Name</label>
+                  <label htmlFor="voucherName" className="text-sm font-medium">
+                    Voucher Name
+                  </label>
                   <input
                     id="voucherName"
                     type="text"
                     placeholder="e.g., Summer Giveaway"
                     value={voucherName}
-                    onChange={(e) => setVoucherName((e.target as HTMLInputElement).value)}
+                    onChange={(e) =>
+                      setVoucherName((e.target as HTMLInputElement).value)
+                    }
                     className={`${inputClass} text-center`}
                   />
                   <p className="text-xs text-muted-foreground">
@@ -185,12 +325,16 @@ export default function ClaimPage() {
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="claimCode" className="text-sm font-medium">Claim Code</label>
+                  <label htmlFor="claimCode" className="text-sm font-medium">
+                    Claim Code
+                  </label>
                   <input
                     id="claimCode"
                     placeholder="STRK-XXXXXXXX"
                     value={claimCode}
-                    onChange={(e) => setClaimCode((e.target as HTMLInputElement).value)}
+                    onChange={(e) =>
+                      setClaimCode((e.target as HTMLInputElement).value)
+                    }
                     className={`${inputClass} font-mono text-center text-lg`}
                   />
                 </div>
@@ -272,9 +416,27 @@ export default function ClaimPage() {
                   <div className="text-sm text-muted-foreground mb-2">
                     Payment Amount
                   </div>
-                  <div className="text-5xl font-bold text-accent mb-2">???</div>
-                  <div className="text-sm text-muted-foreground">CELO</div>
+                  <div className="text-5xl font-bold text-accent mb-2">
+                    {prizeAmount !== "???" ? prizeAmount : "???"}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {tokenSymbol}
+                  </div>
                 </div>
+
+                {/* Show current balance */}
+                {isConnected && (
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">
+                        Your Balance
+                      </span>
+                      <span className="text-sm font-semibold">
+                        {getBalanceDisplay()}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-3">
                   {!isConnected ? (
@@ -282,7 +444,12 @@ export default function ClaimPage() {
                       Please connect your wallet to claim
                     </p>
                   ) : (
-                    <Button onClick={handleClaim} className="w-full" size="lg" disabled={isClaiming}>
+                    <Button
+                      onClick={handleClaim}
+                      className="w-full"
+                      size="lg"
+                      disabled={isClaiming}
+                    >
                       {isClaiming ? "Claiming..." : "Claim Payment"}
                     </Button>
                   )}
@@ -316,10 +483,25 @@ export default function ClaimPage() {
                       <div className="text-2xl font-bold text-success mb-1">
                         Payment Received!
                       </div>
+                      <div className="text-4xl font-bold text-accent my-3">
+                        +{prizeAmount} {tokenSymbol}
+                      </div>
                       <div className="text-sm text-muted-foreground">
                         Your payment has been successfully claimed
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Show updated balance */}
+                <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">
+                      Updated Balance
+                    </span>
+                    <span className="text-sm font-semibold">
+                      {getBalanceDisplay()}
+                    </span>
                   </div>
                 </div>
 
@@ -342,13 +524,19 @@ export default function ClaimPage() {
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-foreground">Share Template</h4>
+                  <h4 className="font-semibold text-foreground">
+                    Share Template
+                  </h4>
                   <div className="p-4 rounded-lg bg-muted/50 border border-border">
                     <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
                       {getShareTemplate()}
                     </p>
                   </div>
-                  <Button onClick={() => copyToClipboard(getShareTemplate())} variant="outline" className="w-full">
+                  <Button
+                    onClick={() => copyToClipboard(getShareTemplate())}
+                    variant="outline"
+                    className="w-full"
+                  >
                     <Copy className="mr-2 h-4 w-4" />
                     Copy Template
                   </Button>
@@ -383,7 +571,14 @@ export default function ClaimPage() {
           </div>
         </div>
       </div>
-      
     </div>
+  );
+}
+
+export default function ClaimPage() {
+  return (
+    <ClientOnly>
+      <ClaimPageContent />
+    </ClientOnly>
   );
 }
