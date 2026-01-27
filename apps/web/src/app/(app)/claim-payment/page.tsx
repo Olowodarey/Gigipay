@@ -540,9 +540,11 @@ function ClaimPageContent() {
                         isClaiming ||
                         voucher?.claimed ||
                         voucher?.refunded ||
-                        (voucher?.expiresAt &&
+                        Boolean(
+                          voucher?.expiresAt &&
                           voucher.expiresAt <
-                            BigInt(Math.floor(Date.now() / 1000)))
+                            BigInt(Math.floor(Date.now() / 1000)),
+                        )
                       }
                     >
                       {isClaiming
