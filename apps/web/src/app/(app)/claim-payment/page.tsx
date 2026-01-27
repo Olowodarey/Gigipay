@@ -101,13 +101,21 @@ function ClaimPageContent() {
   const inputClass =
     "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
+  // Get chain name for display
+  const getChainName = () => {
+    if (!chain?.id) return "supported network";
+    if (chain.id === 42220) return "Celo Mainnet";
+    if (chain.id === 8453) return "Base Mainnet";
+    return chain.name || "supported network";
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({ description: "Copied to clipboard" });
   };
 
   const getShareTemplate = () =>
-    `🎊 I just received ${prizeAmount} CELO on Gigipay! 🎉\n\nGigipay makes crypto payments simple and secure on Celo blockchain! \n\nTry Gigipay for seamless crypto payments! 🎁\n\n#Gigipay #Celo #CryptoPayments`;
+    `🎊 I just received ${prizeAmount} ${tokenSymbol} on Gigipay! 🎉\n\nGigipay makes crypto payments simple and secure on ${getChainName()}! \n\nTry Gigipay for seamless crypto payments! 🎁\n\n#Gigipay #CryptoPayments`;
 
   const validateCode = () => {
     if (!voucherName.trim()) {
@@ -416,10 +424,10 @@ function ClaimPageContent() {
                   <div className="text-sm text-muted-foreground mb-2">
                     Payment Amount
                   </div>
-                  <div className="text-5xl font-bold text-accent mb-2">
+                  <div className="text-5xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent mb-2">
                     {prizeAmount !== "???" ? prizeAmount : "???"}
                   </div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-lg font-bold bg-gradient-to-r from-emerald-400 to-green-500 bg-clip-text text-transparent">
                     {tokenSymbol}
                   </div>
                 </div>
@@ -454,7 +462,7 @@ function ClaimPageContent() {
                     </Button>
                   )}
                   <p className="text-xs text-center text-muted-foreground">
-                    Gas fees apply on Celo Mainnet
+                    Gas fees apply on {getChainName()}
                   </p>
                 </div>
               </CardContent>
@@ -565,8 +573,10 @@ function ClaimPageContent() {
             </h3>
             <ul className="text-sm text-muted-foreground space-y-1 leading-relaxed">
               <li>• Get voucher name and claim code from the sender</li>
-              <li>• Connect your wallet to Celo Mainnet</li>
-              <li>• Enter the voucher name and claim code to receive CELO</li>
+              <li>• Connect your wallet to {getChainName()}</li>
+              <li>
+                • Enter the voucher name and claim code to receive {tokenSymbol}
+              </li>
             </ul>
           </div>
         </div>

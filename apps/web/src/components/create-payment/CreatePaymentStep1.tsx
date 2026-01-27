@@ -155,7 +155,7 @@ export default function CreatePaymentStep1({
                 className={`${inputClass} flex-1`}
               />
               <select
-                className={`${inputClass} w-[220px]`}
+                className={`${inputClass} w-[150px]`}
                 value={expiryUnit}
                 onChange={(e) => {
                   const value = (e.target as HTMLSelectElement).value as ExpiryUnit;
