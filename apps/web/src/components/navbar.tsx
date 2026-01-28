@@ -14,6 +14,7 @@ const navLinks = [
   { name: "Batch payment", href: "/batch-payment" },
   { name: "Create payment", href: "/create-payment" },
   { name: "Claim payment", href: "/claim-payment" },
+  { name: "Reclaim payment", href: "/reclaim-payment" },
 ];
 
 export function Navbar() {
@@ -78,12 +79,12 @@ export function Navbar() {
         </div>
 
         {/* Desktop navigation (centered) */}
-        <nav className="hidden md:flex items-center justify-center gap-8">
+        <nav className="hidden md:flex items-center justify-center gap-4 lg:gap-6">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary ${
+              className={`flex items-center gap-1.5 text-xs lg:text-sm font-medium transition-colors hover:text-primary whitespace-nowrap ${
                 pathname === link.href
                   ? "text-foreground"
                   : "text-foreground/70"
