@@ -22,7 +22,7 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
-      <div className="container grid h-16 max-w-screen-2xl grid-cols-3 items-center px-4">
+      <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4">
         <div className="flex items-center gap-2">
           {/* Mobile menu button */}
           <Sheet>
@@ -35,11 +35,11 @@ export function Navbar() {
             <SheetContent side="left" className="w-80">
               <div className="flex items-center gap-2 mb-8">
                 <Image
-                  src="/newlogo.png"
+                  src="/newlogo-cropped.png"
                   alt="Gigi pay Logo"
-                  width={32}
-                  height={32}
-                  className="rounded-md"
+                  width={120}
+                  height={40}
+                  className="h-8 w-auto"
                 />
               </div>
               <nav className="flex flex-col gap-4">
@@ -66,20 +66,20 @@ export function Navbar() {
           {/* Logo */}
           <Link
             href="/"
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            className="flex items-center hover:opacity-80 transition-opacity"
           >
             <Image
-              src="/newlogo.png"
+              src="/newlogo-cropped.png"
               alt="Gigipay Logo"
-              width={200}
-              height={200}
-              className="rounded-md"
+              width={120}
+              height={40}
+              className="h-8 w-auto"
             />
           </Link>
         </div>
 
         {/* Desktop navigation (centered) */}
-        <nav className="hidden md:flex items-center justify-center gap-4 lg:gap-6">
+        <nav className="hidden md:flex items-center gap-4 lg:gap-6">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -94,8 +94,9 @@ export function Navbar() {
             </Link>
           ))}
         </nav>
+
         {/* Right actions */}
-        <div className="hidden md:flex items-center justify-end gap-3">
+        <div className="hidden md:flex items-center gap-3">
           <WalletConnectButton />
         </div>
       </div>
