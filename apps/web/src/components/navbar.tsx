@@ -35,7 +35,7 @@ export function Navbar() {
             <SheetContent side="left" className="w-80">
               <div className="flex items-center gap-2 mb-8">
                 <Image
-                  src="/logo.png"
+                  src="/newlogo.png"
                   alt="Gigi pay Logo"
                   width={32}
                   height={32}
@@ -69,10 +69,10 @@ export function Navbar() {
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
             <Image
-              src="/logo.png"
+              src="/newlogo.png"
               alt="Gigipay Logo"
-              width={100}
-              height={100}
+              width={200}
+              height={200}
               className="rounded-md"
             />
           </Link>
