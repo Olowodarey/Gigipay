@@ -37,9 +37,9 @@ export function Navbar() {
                 <Image
                   src="/newlogo-cropped.png"
                   alt="Gigi pay Logo"
-                  width={120}
-                  height={40}
-                  className="h-8 w-auto"
+                  width={250}
+                  height={250}
+                  className="h-50 w-auto"
                 />
               </div>
               <nav className="flex flex-col gap-4">
@@ -71,9 +71,9 @@ export function Navbar() {
             <Image
               src="/newlogo-cropped.png"
               alt="Gigipay Logo"
-              width={120}
-              height={40}
-              className="h-8 w-auto"
+              width={250}
+              height={250}
+              className="h-100 w-auto"
             />
           </Link>
         </div>
