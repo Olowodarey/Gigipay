@@ -1,77 +1,88 @@
 
 
-#  GigiPay
+# GigiPay
 
-**GigiPay** is a **Celo-powered payment protocol** designed to make on-chain transfers **faster, cheaper, and more inclusive**.  
-With GigiPay, users can send funds to multiple wallets in a single transaction — significantly reducing gas costs and simplifying large-scale payouts.
+**GigiPay** is a **multichain payment protocol** designed to make on-chain transfers **faster, cheaper, and more inclusive**.
+It currently supports **Celo and Base**, with a flexible architecture that allows easy expansion to additional chains.
 
-GigiPay also introduces **claim-code payments**, allowing users to send crypto **without needing the recipient’s wallet address**.  
+With GigiPay, users can send funds to **multiple wallets in a single transaction**, significantly reducing gas costs and simplifying large-scale payouts across supported networks.
+
+GigiPay also introduces **claim-code payments**, allowing users to send crypto **without needing the recipient’s wallet address**.
 Instead, a secure claim code or shareable link is generated, which the recipient can redeem at any time — even if they don’t yet have a wallet.
 
 ---
 
-##  Key Features
+## Key Features
 
-- **CSV Batch Uploads:**  
-  Organizations can upload wallet addresses to execute mass payments effortlessly.  
+* **Multichain Support (Celo & Base):**
+  Execute payments seamlessly on **Celo** and **Base**, choosing the network that best fits your use case.
 
-- **Giveaway & Rewards Dashboard:**  
-  Track who has claimed rewards and reclaim unclaimed funds after expiration.  
+* **CSV Batch Uploads:**
+  Organizations can upload wallet addresses to execute mass payments effortlessly across supported chains.
 
-- **Optional Gasless Redemption:**  
-  Users can redeem claim codes without paying gas, lowering barriers for first-time users.  
+* **Giveaway & Rewards Dashboard:**
+  Track who has claimed rewards, monitor payouts per chain, and reclaim unclaimed funds after expiration.
 
-- **Wallet Abstraction via Gmail:**  
-  New users can create a wallet using just their Gmail, avoiding seed phrase complexity.  
+* **Claim-Code Payments:**
+  Send funds using a secure code or link — no wallet address required at the time of sending.
 
-- **Future Off-Ramp Integration:**  
-  Planned integration of APIs enabling stablecoins like **cUSD** to be converted into local currencies such as **Naira**.  
+* **Optional Gasless Redemption:**
+  First-time users can redeem claim codes without paying gas, lowering onboarding friction.
+
+* **Wallet Abstraction via Gmail:**
+  New users can create a wallet using just their Gmail, avoiding seed phrase complexity.
+
+* **Future Off-Ramp Integration:**
+  Planned API integrations enabling stablecoins like **cUSD** and **USDC** to be converted into local currencies such as **Naira**.
 
 ---
 
-##  Built on Celo
+## Built for Multichain Payments
 
-GigiPay is built on **Celo’s mobile-first, carbon-negative blockchain**, leveraging stablecoins for **price stability** and a smooth user experie
+GigiPay is built with a **chain-agnostic architecture**, enabling fast, low-cost payments across multiple ecosystems.
+
+* **Celo:**
+  Mobile-first, carbon-negative blockchain with stablecoins optimized for everyday payments.
+
+* **Base:**
+  A secure, low-cost Ethereum L2 designed for scalable consumer and developer applications.
+
+This multichain approach allows GigiPay to serve **global users, DAOs, startups, and organizations** with diverse payment needs.
+
+---
 
 ## Getting Started
 
 1. Install dependencies:
+
    ```bash
    npm install
    ```
 
 2. Start the development server:
+
    ```bash
    npm run dev
    ```
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+---
+
 ## Project Structure
 
-This is a monorepo managed by Turborepo with the following structure:
+This is a monorepo managed by **Turborepo** with the following structure:
 
-- `apps/web` - Next.js application with embedded UI components and utilities
+* `apps/web` — Next.js application with embedded UI components and utilities
 
-## Available Scripts
 
-- `pnpm dev` - Start development servers
-- `pnpm build` - Build all packages and apps
-- `pnpm lint` - Lint all packages and apps
-- `pnpm type-check` - Run TypeScript type checking
-
-## Tech Stack
-
-- **Framework**: Next.js 14 with App Router
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui
-- **Monorepo**: Turborepo
-- **Package Manager**: NPM
+---
 
 ## Learn More
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Celo Documentation](https://docs.celo.org/)
-- [Turborepo Documentation](https://turbo.build/repo/docs)
-- [shadcn/ui Documentation](https://ui.shadcn.com/)
+* [Next.js Documentation](https://nextjs.org/docs)
+* [Celo Documentation](https://docs.celo.org/)
+* [Base Documentation](https://docs.base.org/)
+* [Turborepo Documentation](https://turbo.build/repo/docs)
+* [shadcn/ui Documentation](https://ui.shadcn.com/)
+
