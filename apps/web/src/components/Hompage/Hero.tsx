@@ -32,7 +32,7 @@ const Hero = () => {
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button asChild size="lg" className="text-base">
-                  <Link href="/create">
+                  <Link href="/create-payment">
                     Pay Team / Create Giveaway
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
@@ -43,7 +43,7 @@ const Hero = () => {
                   size="lg"
                   className="text-base bg-transparent"
                 >
-                  <Link href="/claim">Claim Payment</Link>
+                  <Link href="/claim-payment">Claim Payment</Link>
                 </Button>
               </div>
             </div>
