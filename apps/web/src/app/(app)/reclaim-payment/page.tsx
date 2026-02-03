@@ -347,7 +347,7 @@ function ReclaimPageContent() {
                <div className="space-y-3">
                  {!isConnected ? (
                    <p className="text-sm text-center text-muted-foreground">
-                     Please connect your wallet to reclaim
+                     Please connect your wallet to reclaim vocher
                    </p>
                  ) : (
                    <Button
