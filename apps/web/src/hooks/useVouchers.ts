@@ -146,8 +146,8 @@ export function useClaimVoucher() {
 
   const claimVoucher = async (voucherName: string, claimCode: string) => {
     writeContract({
-      address: getContractConfig(chain?.id || 0).address,
-      abi: getContractConfig(chain?.id || 0).abi,
+      address: getContractAddress(chain?.id),
+      abi: GIGIPAY_ABI,
       functionName: "claimVoucher",
       args: [voucherName, claimCode],
     });
@@ -164,8 +164,8 @@ export function useRefundVoucher() {
 
   const refundVouchersByName = async (voucherName: string) => {
     writeContract({
-      address: getContractConfig(chain?.id || 0).address,
-      abi: getContractConfig(chain?.id || 0).abi,
+      address: getContractAddress(chain?.id),
+      abi: GIGIPAY_ABI,
       functionName: "refundVouchersByName",
       args: [voucherName],
     });
