@@ -4,9 +4,27 @@ import {
   useAccount,
 } from "wagmi";
 import { parseUnits, Address } from "viem";
-import { getContractConfig } from "@/lib/contracts/gigipay";
 import { useEffect, useState } from "react";
 import { isContractPaused } from "@/lib/api";
+
+const CONTRACT_ADDRESSES: Record<number, Address> = {
+  42220: "0x7B7750Fb5f0ce9C908fCc0674F8B35782F6d40B3",
+  8453: "0xEdc6abb2f1A25A191dAf8B648c1A3686EfFE6Dd6",
+};
+
+const BATCH_TRANSFER_ABI = [
+  {
+    inputs: [
+      { internalType: "address", name: "token", type: "address" },
+      { internalType: "address[]", name: "recipients", type: "address[]" },
+      { internalType: "uint256[]", name: "amounts", type: "uint256[]" },
+    ],
+    name: "batchTransfer",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+] as const;
 
 export type BatchTransferRecipient = {
   address: Address;
@@ -30,7 +48,9 @@ export function useBatchTransfer() {
   ) => {
     if (!chain) throw new Error("No chain connected");
 
-    const contractConfig = getContractConfig(chain.id);
+    const address = CONTRACT_ADDRESSES[chain.id];
+    if (!address) throw new Error(`Unsupported chain: ${chain.id}`);
+
     const addresses = recipients.map((r) => r.address);
     const amounts = recipients.map((r) => parseUnits(r.amount, decimals));
     const totalAmount = amounts.reduce((sum, amount) => sum + amount, 0n);
@@ -38,8 +58,8 @@ export function useBatchTransfer() {
       tokenAddress === "0x0000000000000000000000000000000000000000";
 
     writeContract({
-      address: contractConfig.address,
-      abi: contractConfig.abi,
+      address,
+      abi: BATCH_TRANSFER_ABI,
       functionName: "batchTransfer",
       args: [tokenAddress, addresses, amounts],
       value: isNativeToken ? totalAmount : 0n,
