@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import CreatePaymentStep1 from "@/components/create-payment/CreatePaymentStep1";
 import CreatePaymentStep2 from "@/components/create-payment/CreatePaymentStep2";
 import CreatePaymentStep3 from "@/components/create-payment/CreatePaymentStep3";
+import { ClientOnly } from "@/components/batch-payment/ClientOnly";
 import { Check } from "lucide-react";
 import { useAccount, useBalance } from "wagmi";
 import { useCreateVoucher, useCreateVoucherBatch } from "@/hooks/useVouchers";
@@ -65,6 +66,14 @@ interface GiveawayData {
 }
 
 export default function CreatePage() {
+  return (
+    <ClientOnly>
+      <CreatePageContent />
+    </ClientOnly>
+  );
+}
+
+function CreatePageContent() {
   const [step, setStep] = useState(1);
 
   // Wagmi hooks - moved up to get chain info
