@@ -7,20 +7,16 @@ import {
   connectorsForWallets,
 } from "@rainbow-me/rainbowkit";
 import { WagmiProvider, createConfig } from "wagmi";
-import { celo, celoAlfajores, base } from "wagmi/chains";
+import { celo, base } from "wagmi/chains";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { http } from "wagmi";
 import {
   metaMaskWallet,
   rainbowWallet,
   walletConnectWallet,
-  coinbaseWallet,
   injectedWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 
-// Mainnet chains only - no testnets
-
-// Create config with proper SSR handling
 let config: any = null;
 
 function getWagmiConfig() {
@@ -31,28 +27,22 @@ function getWagmiConfig() {
     const connectors = connectorsForWallets(
       [
         {
-          groupName: "Popular",
-          wallets: [
-            injectedWallet,
-            metaMaskWallet,
-            rainbowWallet,
-            coinbaseWallet,
-            walletConnectWallet,
-          ],
+          groupName: "MiniPay",
+          wallets: [injectedWallet], // MiniPay injects itself here automatically
+        },
+        {
+          groupName: "Other Wallets",
+          wallets: [metaMaskWallet, rainbowWallet, walletConnectWallet],
         },
       ],
-      {
-        appName: "Gigipay",
-        projectId,
-      },
+      { appName: "Gigipay", projectId },
     );
 
     config = createConfig({
       connectors,
-      chains: [celo, celoAlfajores, base], // Mainnet chains only
+      chains: [celo, base],
       transports: {
         [celo.id]: http(),
-        [celoAlfajores.id]: http(),
         [base.id]: http(),
       },
       ssr: true,
@@ -62,11 +52,7 @@ function getWagmiConfig() {
 }
 
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-    },
-  },
+  defaultOptions: { queries: { staleTime: 1000 * 60 * 5 } },
 });
 
 function WalletProviderInner({ children }: { children: React.ReactNode }) {
@@ -86,7 +72,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Don't render wallet provider during SSR
   if (!mounted) {
     return <div suppressHydrationWarning>{children}</div>;
   }

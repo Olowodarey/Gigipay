@@ -80,3 +80,56 @@ export function isContractPaused(chainId: number): Promise<boolean> {
 export function isBatchContractPaused(chainId: number): Promise<boolean> {
   return apiFetch(`/batch-transfer/paused?chainId=${chainId}`);
 }
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+export function getNonce(
+  address: string,
+): Promise<{ nonce: string; message: string }> {
+  return apiFetch(`/auth/nonce?address=${address}`);
+}
+
+export function verifySignature(payload: {
+  address: string;
+  signature: string;
+  message: string;
+  isMiniPay?: boolean;
+}): Promise<{ token: string; user: UserProfile }> {
+  return apiFetch("/auth/verify", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getMyProfile(token: string): Promise<UserProfile> {
+  return apiFetch("/users/me", {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function updateProfile(
+  token: string,
+  data: Partial<{ email: string; phone: string; displayName: string }>,
+): Promise<UserProfile> {
+  return apiFetch("/users", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+}
+
+export interface UserProfile {
+  address: string;
+  email?: string;
+  phone?: string;
+  displayName?: string;
+  isMiniPay: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
