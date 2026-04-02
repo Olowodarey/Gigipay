@@ -4,8 +4,51 @@ import {
   useAccount,
 } from "wagmi";
 import { parseUnits, Address } from "viem";
-import { getContractConfig } from "@/lib/contracts/gigipay";
 import { useEffect, useState, useCallback } from "react";
+
+const CONTRACT_ADDRESSES: Record<number, Address> = {
+  42220: "0x7B7750Fb5f0ce9C908fCc0674F8B35782F6d40B3", // Celo
+  8453: "0xEdc6abb2f1A25A191dAf8B648c1A3686EfFE6Dd6", // Base
+};
+
+const GIGIPAY_ABI = [
+  {
+    inputs: [
+      { internalType: "address", name: "token", type: "address" },
+      { internalType: "string", name: "voucherName", type: "string" },
+      { internalType: "string[]", name: "claimCodes", type: "string[]" },
+      { internalType: "uint256[]", name: "amounts", type: "uint256[]" },
+      { internalType: "uint256[]", name: "expirationTimes", type: "uint256[]" },
+    ],
+    name: "createVoucherBatch",
+    outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "string", name: "voucherName", type: "string" },
+      { internalType: "string", name: "claimCode", type: "string" },
+    ],
+    name: "claimVoucher",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "string", name: "voucherName", type: "string" }],
+    name: "refundVouchersByName",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+] as const;
+
+function getContractAddress(chainId?: number): Address {
+  const address = chainId ? CONTRACT_ADDRESSES[chainId] : undefined;
+  if (!address) throw new Error(`Unsupported chain: ${chainId}`);
+  return address;
+}
 import {
   getVoucher,
   getVouchersByName,
@@ -36,8 +79,8 @@ export function useCreateVoucher() {
       tokenAddress === "0x0000000000000000000000000000000000000000";
 
     writeContract({
-      address: getContractConfig(chain?.id || 0).address,
-      abi: getContractConfig(chain?.id || 0).abi,
+      address: getContractAddress(chain?.id),
+      abi: GIGIPAY_ABI,
       functionName: "createVoucherBatch",
       args: [
         tokenAddress,
@@ -77,8 +120,8 @@ export function useCreateVoucherBatch() {
       tokenAddress === "0x0000000000000000000000000000000000000000";
 
     writeContract({
-      address: getContractConfig(chain?.id || 0).address,
-      abi: getContractConfig(chain?.id || 0).abi,
+      address: getContractAddress(chain?.id),
+      abi: GIGIPAY_ABI,
       functionName: "createVoucherBatch",
       args: [tokenAddress, voucherName, claimCodes, amounts, expirationTimes],
       value: isNativeToken ? totalAmount : 0n,
