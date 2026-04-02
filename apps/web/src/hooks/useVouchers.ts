@@ -1,37 +1,28 @@
 import {
   useWriteContract,
   useWaitForTransactionReceipt,
-  useReadContract,
   useAccount,
 } from "wagmi";
 import { parseUnits, Address } from "viem";
+import { getContractConfig } from "@/lib/contracts/gigipay";
+import { useEffect, useState, useCallback } from "react";
 import {
-  getContractConfig,
-  getTokenAddresses,
-  getNativeTokenSymbol,
-} from "@/lib/contracts/gigipay";
+  getVoucher,
+  getVouchersByName,
+  getSenderVouchers,
+  isVoucherClaimable,
+  isVoucherRefundable,
+  type VoucherDetail,
+} from "@/lib/api";
 
-/**
- * Hook for creating payment vouchers
- */
+// ─── Write Hooks (still need wallet signing) ─────────────────────────────────
+
 export function useCreateVoucher() {
   const { chain } = useAccount();
   const { data: hash, writeContract, isPending, error } = useWriteContract();
-
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({
-      hash,
-    });
+    useWaitForTransactionReceipt({ hash });
 
-  /**
-   * Create a single payment voucher
-   * @param tokenAddress - Token contract address (use address(0) for native token)
-   * @param voucherName - Name identifier for the voucher
-   * @param claimCode - Secret code to claim the voucher
-   * @param amount - Amount in tokens (e.g., "10.5")
-   * @param expirationTime - Unix timestamp when voucher expires
-   * @param decimals - Token decimals (default: 18)
-   */
   const createVoucher = async (
     tokenAddress: Address,
     voucherName: string,
@@ -40,36 +31,10 @@ export function useCreateVoucher() {
     expirationTime: number,
     decimals: number = 18,
   ) => {
-    // Validate inputs
-    if (!voucherName || voucherName.trim().length === 0) {
-      throw new Error("Voucher name cannot be empty");
-    }
-    if (!claimCode || claimCode.trim().length === 0) {
-      throw new Error("Claim code cannot be empty");
-    }
-    if (!amount || parseFloat(amount) <= 0) {
-      throw new Error("Amount must be greater than 0");
-    }
-    if (expirationTime <= Math.floor(Date.now() / 1000)) {
-      throw new Error("Expiration time must be in the future");
-    }
-
     const parsedAmount = parseUnits(amount, decimals);
     const isNativeToken =
       tokenAddress === "0x0000000000000000000000000000000000000000";
 
-    // Debug logging
-    console.log("Creating single voucher:", {
-      tokenAddress,
-      voucherName,
-      claimCode,
-      amount,
-      parsedAmount: parsedAmount.toString(),
-      expirationTime,
-      currentTime: Math.floor(Date.now() / 1000),
-    });
-
-    // Use createVoucherBatch with single-element arrays
     writeContract({
       address: getContractConfig(chain?.id || 0).address,
       abi: getContractConfig(chain?.id || 0).abi,
@@ -85,35 +50,15 @@ export function useCreateVoucher() {
     });
   };
 
-  return {
-    createVoucher,
-    hash,
-    isPending,
-    isConfirming,
-    isConfirmed,
-    error,
-  };
+  return { createVoucher, hash, isPending, isConfirming, isConfirmed, error };
 }
 
-/**
- * Hook for creating multiple vouchers in batch
- */
 export function useCreateVoucherBatch() {
   const { chain } = useAccount();
   const { data: hash, writeContract, isPending, error } = useWriteContract();
-
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({
-      hash,
-    });
+    useWaitForTransactionReceipt({ hash });
 
-  /**
-   * Create multiple vouchers in one transaction
-   * @param tokenAddress - Token contract address (use address(0) for native token)
-   * @param voucherName - Name identifier for all vouchers in this batch
-   * @param vouchers - Array of { claimCode, amount, expirationTime }
-   * @param decimals - Token decimals (default: 18)
-   */
   const createVoucherBatch = async (
     tokenAddress: Address,
     voucherName: string,
@@ -124,50 +69,12 @@ export function useCreateVoucherBatch() {
     }>,
     decimals: number = 18,
   ) => {
-    // Validate inputs
-    if (!voucherName || voucherName.trim().length === 0) {
-      throw new Error("Voucher name cannot be empty");
-    }
-    if (!vouchers || vouchers.length === 0) {
-      throw new Error("Must have at least one voucher");
-    }
-
-    const currentTime = Math.floor(Date.now() / 1000);
-
-    // Validate each voucher
-    vouchers.forEach((v, index) => {
-      if (!v.claimCode || v.claimCode.trim().length === 0) {
-        throw new Error(`Voucher ${index + 1}: Claim code cannot be empty`);
-      }
-      if (!v.amount || parseFloat(v.amount) <= 0) {
-        throw new Error(`Voucher ${index + 1}: Amount must be greater than 0`);
-      }
-      if (v.expirationTime <= currentTime) {
-        throw new Error(
-          `Voucher ${index + 1}: Expiration time must be in the future`,
-        );
-      }
-    });
-
     const claimCodes = vouchers.map((v) => v.claimCode);
     const amounts = vouchers.map((v) => parseUnits(v.amount, decimals));
     const expirationTimes = vouchers.map((v) => BigInt(v.expirationTime));
-
     const totalAmount = amounts.reduce((sum, amount) => sum + amount, 0n);
     const isNativeToken =
       tokenAddress === "0x0000000000000000000000000000000000000000";
-
-    // Debug logging
-    console.log("Creating voucher batch:", {
-      tokenAddress,
-      voucherName,
-      voucherCount: vouchers.length,
-      claimCodes,
-      amounts: amounts.map((a) => a.toString()),
-      expirationTimes: expirationTimes.map((t) => t.toString()),
-      totalAmount: totalAmount.toString(),
-      currentTime,
-    });
 
     writeContract({
       address: getContractConfig(chain?.id || 0).address,
@@ -188,23 +95,12 @@ export function useCreateVoucherBatch() {
   };
 }
 
-/**
- * Hook for claiming a voucher
- */
 export function useClaimVoucher() {
   const { chain } = useAccount();
   const { data: hash, writeContract, isPending, error } = useWriteContract();
-
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({
-      hash,
-    });
+    useWaitForTransactionReceipt({ hash });
 
-  /**
-   * Claim a voucher using voucher name and claim code
-   * @param voucherName - The voucher name identifier
-   * @param claimCode - The secret claim code
-   */
   const claimVoucher = async (voucherName: string, claimCode: string) => {
     writeContract({
       address: getContractConfig(chain?.id || 0).address,
@@ -214,32 +110,15 @@ export function useClaimVoucher() {
     });
   };
 
-  return {
-    claimVoucher,
-    hash,
-    isPending,
-    isConfirming,
-    isConfirmed,
-    error,
-  };
+  return { claimVoucher, hash, isPending, isConfirming, isConfirmed, error };
 }
 
-/**
- * Hook for refunding an expired voucher
- */
 export function useRefundVoucher() {
   const { chain } = useAccount();
   const { data: hash, writeContract, isPending, error } = useWriteContract();
-
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({
-      hash,
-    });
+    useWaitForTransactionReceipt({ hash });
 
-  /**
-   * Refund all expired vouchers by name
-   * @param voucherName - The voucher name to refund
-   */
   const refundVouchersByName = async (voucherName: string) => {
     writeContract({
       address: getContractConfig(chain?.id || 0).address,
@@ -259,112 +138,106 @@ export function useRefundVoucher() {
   };
 }
 
-/**
- * Hook to get voucher details
- */
+// ─── Read Hooks — now call backend API instead of direct RPC ─────────────────
+
 export function useVoucherDetails(voucherId: number) {
   const { chain } = useAccount();
-  const { data, isLoading, refetch } = useReadContract({
-    address: getContractConfig(chain?.id || 0).address,
-    abi: getContractConfig(chain?.id || 0).abi,
-    functionName: "vouchers",
-    args: [BigInt(voucherId)],
-  });
+  const [voucher, setVoucher] = useState<VoucherDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  return {
-    voucher: data
-      ? {
-          sender: data[0] as Address,
-          token: data[1] as Address,
-          amount: data[2] as unknown as bigint,
-          claimCodeHash: data[3] as unknown as string,
-          expiresAt: data[4] as unknown as bigint,
-          claimed: data[5] as unknown as boolean,
-          refunded: data[6] as boolean,
-          voucherName: data[7] as unknown as string,
-        }
-      : null,
-    isLoading,
-    refetch,
-  };
+  const refetch = useCallback(() => {
+    if (!chain?.id || !voucherId) return;
+    setIsLoading(true);
+    getVoucher(chain.id, String(voucherId))
+      .then(setVoucher)
+      .catch(() => setVoucher(null))
+      .finally(() => setIsLoading(false));
+  }, [chain?.id, voucherId]);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  // Normalise: pages compare voucher.expiresAt as bigint
+  const normalised = voucher
+    ? {
+        ...voucher,
+        amount: BigInt(voucher.amount),
+        expiresAt: BigInt(voucher.expiresAt),
+      }
+    : null;
+
+  return { voucher: normalised, isLoading, refetch };
 }
 
-/**
- * Hook to get all vouchers created by a sender
- */
-export function useSenderVouchers(senderAddress?: Address) {
-  const { chain } = useAccount();
-  const { data, isLoading, refetch } = useReadContract({
-    address: getContractConfig(chain?.id || 0).address,
-    abi: getContractConfig(chain?.id || 0).abi,
-    functionName: "getSenderVouchers",
-    args: senderAddress ? [senderAddress] : undefined,
-    query: {
-      enabled: !!senderAddress,
-    },
-  });
-
-  return {
-    voucherIds: (data as bigint[]) ?? [],
-    isLoading,
-    refetch,
-  };
-}
-
-/**
- * Hook to get all vouchers by name
- */
 export function useVouchersByName(voucherName?: string) {
   const { chain } = useAccount();
-  const { data, isLoading, refetch } = useReadContract({
-    address: getContractConfig(chain?.id || 0).address,
-    abi: getContractConfig(chain?.id || 0).abi,
-    functionName: "getVouchersByName",
-    args: voucherName ? [voucherName] : undefined,
-    query: {
-      enabled: !!voucherName,
-    },
-  });
+  const [voucherIds, setVoucherIds] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  return {
-    voucherIds: (data as bigint[]) ?? [],
-    isLoading,
-    refetch,
-  };
+  useEffect(() => {
+    if (!chain?.id || !voucherName) return;
+    setIsLoading(true);
+    getVouchersByName(chain.id, voucherName)
+      .then(setVoucherIds)
+      .catch(() => setVoucherIds([]))
+      .finally(() => setIsLoading(false));
+  }, [chain?.id, voucherName]);
+
+  return { voucherIds, isLoading };
 }
 
-/**
- * Hook to check if a voucher is claimable
- */
+export function useSenderVouchers(senderAddress?: Address) {
+  const { chain } = useAccount();
+  const [voucherIds, setVoucherIds] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const refetch = useCallback(() => {
+    if (!chain?.id || !senderAddress) return;
+    setIsLoading(true);
+    getSenderVouchers(chain.id, senderAddress)
+      .then(setVoucherIds)
+      .catch(() => setVoucherIds([]))
+      .finally(() => setIsLoading(false));
+  }, [chain?.id, senderAddress]);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  return { voucherIds, isLoading, refetch };
+}
+
 export function useIsVoucherClaimable(voucherId: number) {
   const { chain } = useAccount();
-  const { data, isLoading } = useReadContract({
-    address: getContractConfig(chain?.id || 0).address,
-    abi: getContractConfig(chain?.id || 0).abi,
-    functionName: "isVoucherClaimable",
-    args: [BigInt(voucherId)],
-  });
+  const [isClaimable, setIsClaimable] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  return {
-    isClaimable: data ?? false,
-    isLoading,
-  };
+  useEffect(() => {
+    if (!chain?.id || !voucherId) return;
+    setIsLoading(true);
+    isVoucherClaimable(chain.id, String(voucherId))
+      .then(setIsClaimable)
+      .catch(() => setIsClaimable(false))
+      .finally(() => setIsLoading(false));
+  }, [chain?.id, voucherId]);
+
+  return { isClaimable, isLoading };
 }
 
-/**
- * Hook to check if a voucher is refundable
- */
 export function useIsVoucherRefundable(voucherId: number) {
   const { chain } = useAccount();
-  const { data, isLoading } = useReadContract({
-    address: getContractConfig(chain?.id || 0).address,
-    abi: getContractConfig(chain?.id || 0).abi,
-    functionName: "isVoucherRefundable",
-    args: [BigInt(voucherId)],
-  });
+  const [isRefundable, setIsRefundable] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  return {
-    isRefundable: data ?? false,
-    isLoading,
-  };
+  useEffect(() => {
+    if (!chain?.id || !voucherId) return;
+    setIsLoading(true);
+    isVoucherRefundable(chain.id, String(voucherId))
+      .then(setIsRefundable)
+      .catch(() => setIsRefundable(false))
+      .finally(() => setIsLoading(false));
+  }, [chain?.id, voucherId]);
+
+  return { isRefundable, isLoading };
 }
