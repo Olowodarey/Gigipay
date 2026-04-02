@@ -11,8 +11,24 @@ import {
   useTokenAllowance,
   useTokenBalance,
 } from "@/hooks/useTokenApproval";
-import { getTokenAddresses, isContractDeployed } from "@/lib/contracts/gigipay";
 import { Address, formatUnits, parseUnits } from "viem";
+
+const SUPPORTED_CHAIN_IDS = [42220, 8453]; // Celo, Base
+
+const TOKEN_ADDRESSES: Record<number, Record<string, Address>> = {
+  42220: {
+    CELO: "0x0000000000000000000000000000000000000000",
+    cUSD: "0x765DE816845861e75A25fCA122bb6898B8B1282a",
+    cEUR: "0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73",
+    USDC: "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
+    USDT: "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
+  },
+  8453: {
+    ETH: "0x0000000000000000000000000000000000000000",
+    USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    USDbC: "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
+  },
+};
 import { UploadRecipient } from "@/components/batch-payment/UploadRecipients";
 import { NetworkWarning } from "@/components/batch-payment/NetworkWarning";
 import { ProgressIndicator } from "@/components/batch-payment/ProgressIndicator";
@@ -23,34 +39,16 @@ import { ClientOnly } from "@/components/batch-payment/ClientOnly";
 
 // Get available tokens for the current chain
 const getAvailableTokens = (chainId?: number) => {
-  if (!chainId) return [];
-
-  try {
-    const tokenAddresses = getTokenAddresses(chainId);
-
-    // Map token addresses to token configs with proper metadata
-    return Object.entries(tokenAddresses).map(([symbol, address]) => {
-      // Determine decimals based on token symbol
-      const decimals = symbol === "USDC" || symbol === "USDbC" ? 6 : 18;
-
-      // Set icon based on token type
-      let icon = "💰";
-      if (symbol.includes("USD")) icon = "💵";
-      if (symbol.includes("EUR")) icon = "💶";
-      if (symbol === "CELO") icon = "🟡";
-      if (symbol === "ETH") icon = "💎";
-
-      return {
-        symbol,
-        name: symbol,
-        icon,
-        address: address as Address,
-        decimals,
-      };
-    });
-  } catch {
-    return [];
-  }
+  if (!chainId || !TOKEN_ADDRESSES[chainId]) return [];
+  return Object.entries(TOKEN_ADDRESSES[chainId]).map(([symbol, address]) => {
+    const decimals = symbol === "USDC" || symbol === "USDbC" ? 6 : 18;
+    let icon = "💰";
+    if (symbol.includes("USD")) icon = "💵";
+    if (symbol.includes("EUR")) icon = "💶";
+    if (symbol === "CELO") icon = "🟡";
+    if (symbol === "ETH") icon = "💎";
+    return { symbol, name: symbol, icon, address, decimals };
+  });
 };
 
 type TokenSymbol = string;
@@ -336,7 +334,7 @@ function BatchPaymentContent() {
   }, [error]);
 
   const isCorrectNetwork: boolean = chain?.id
-    ? isContractDeployed(chain.id)
+    ? SUPPORTED_CHAIN_IDS.includes(chain.id)
     : false;
 
   return (
