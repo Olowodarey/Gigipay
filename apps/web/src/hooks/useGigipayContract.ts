@@ -1,13 +1,12 @@
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import { getContractConfig } from "@/lib/contracts/gigipay";
 
 /**
- * Hook to interact with Gigipay contract on the current chain
- * Automatically uses the correct contract address based on connected chain
+ * Lightweight hook — only exposes write capability.
+ * All reads are handled by the backend API (see src/lib/api.ts).
  */
 export function useGigipayContract() {
   const { chain } = useAccount();
-
   const contractConfig = chain?.id ? getContractConfig(chain.id) : null;
 
   return {
@@ -17,34 +16,13 @@ export function useGigipayContract() {
   };
 }
 
-/**
- * Hook to read from Gigipay contract
- */
-export function useGigipayRead<T = unknown>(
-  functionName: string,
-  args?: unknown[],
-) {
-  const { contractConfig } = useGigipayContract();
-
-  return useReadContract({
-    ...contractConfig,
-    functionName,
-    args,
-  } as any);
-}
-
-/**
- * Hook to write to Gigipay contract
- */
 export function useGigipayWrite() {
   const { contractConfig } = useGigipayContract();
   const { writeContract, ...rest } = useWriteContract();
 
   const write = (functionName: string, args?: unknown[], value?: bigint) => {
-    if (!contractConfig) {
+    if (!contractConfig)
       throw new Error("Contract not available on current chain");
-    }
-
     return writeContract({
       ...contractConfig,
       functionName,
@@ -53,8 +31,5 @@ export function useGigipayWrite() {
     } as any);
   };
 
-  return {
-    write,
-    ...rest,
-  };
+  return { write, ...rest };
 }
