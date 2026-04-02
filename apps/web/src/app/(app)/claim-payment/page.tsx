@@ -22,11 +22,24 @@ import {
 } from "@/hooks/useVouchers";
 import { formatUnits, Address } from "viem";
 import { useTokenBalance } from "@/hooks/useTokenApproval";
-import {
-  getTokenAddresses,
-  getNativeTokenSymbol,
-} from "@/lib/contracts/gigipay";
 import { ClientOnly } from "@/components/batch-payment/ClientOnly";
+
+const TOKEN_ADDRESSES: Record<number, Record<string, Address>> = {
+  42220: {
+    CELO: "0x0000000000000000000000000000000000000000",
+    cUSD: "0x765DE816845861e75A25fCA122bb6898B8B1282a",
+    cEUR: "0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73",
+    USDC: "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
+    USDT: "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
+  },
+  8453: {
+    ETH: "0x0000000000000000000000000000000000000000",
+    USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    USDbC: "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
+  },
+};
+
+const NATIVE_SYMBOLS: Record<number, string> = { 42220: "CELO", 8453: "ETH" };
 
 type ClaimState = "initial" | "valid" | "invalid" | "claimed";
 
@@ -241,8 +254,8 @@ function ClaimPageContent() {
       try {
         // Determine token info
         const chainId = chain.id;
-        const tokenAddresses = getTokenAddresses(chainId);
-        const nativeSymbol = getNativeTokenSymbol(chainId);
+        const tokenAddresses = TOKEN_ADDRESSES[chainId] ?? {};
+        const nativeSymbol = NATIVE_SYMBOLS[chainId] ?? "ETH";
 
         // Find which token this voucher uses by matching the address
         let symbol = nativeSymbol;
@@ -273,7 +286,7 @@ function ClaimPageContent() {
           }
         }
 
-        setTokenAddress(voucher.token);
+        setTokenAddress(voucher.token as Address);
         setTokenSymbol(symbol);
 
         // Format the amount
