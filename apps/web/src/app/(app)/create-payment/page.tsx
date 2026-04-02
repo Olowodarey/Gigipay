@@ -13,49 +13,40 @@ import {
   useTokenAllowance,
 } from "@/hooks/useTokenApproval";
 import { formatUnits, parseUnits, Address } from "viem";
-import {
-  getTokenAddresses,
-  getNativeTokenSymbol,
-} from "@/lib/contracts/gigipay";
 
-// Get available tokens for the current chain
+const TOKEN_ADDRESSES: Record<number, Record<string, Address>> = {
+  42220: {
+    CELO: "0x0000000000000000000000000000000000000000",
+    cUSD: "0x765DE816845861e75A25fCA122bb6898B8B1282a",
+    cEUR: "0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73",
+    USDC: "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
+    USDT: "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
+  },
+  8453: {
+    ETH: "0x0000000000000000000000000000000000000000",
+    USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    USDbC: "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
+  },
+};
+
+const NATIVE_SYMBOLS: Record<number, string> = { 42220: "CELO", 8453: "ETH" };
+
 const getAvailableTokens = (
   chainId?: number,
 ): Record<string, { symbol: string; name: string; icon: string }> => {
-  if (!chainId) return {};
-
-  try {
-    const tokenAddresses = getTokenAddresses(chainId);
-
-    // Map token addresses to token configs with proper metadata
-    const tokensArray = Object.entries(tokenAddresses).map(
-      ([symbol, address]) => {
-        // Set icon based on token type
-        let icon = "💰";
-        if (symbol.includes("USD")) icon = "💵";
-        if (symbol.includes("EUR")) icon = "💶";
-        if (symbol === "CELO") icon = "🟡";
-        if (symbol === "ETH") icon = "💎";
-
-        return {
-          symbol,
-          name: symbol,
-          icon,
-        };
-      },
-    );
-
-    // Convert array to object with symbol as key
-    return tokensArray.reduce(
-      (acc, token) => {
-        acc[token.symbol] = token;
-        return acc;
-      },
-      {} as Record<string, { symbol: string; name: string; icon: string }>,
-    );
-  } catch {
-    return {};
-  }
+  if (!chainId || !TOKEN_ADDRESSES[chainId]) return {};
+  return Object.entries(TOKEN_ADDRESSES[chainId]).reduce(
+    (acc, [symbol]) => {
+      let icon = "💰";
+      if (symbol.includes("USD")) icon = "💵";
+      if (symbol.includes("EUR")) icon = "💶";
+      if (symbol === "CELO") icon = "🟡";
+      if (symbol === "ETH") icon = "💎";
+      acc[symbol] = { symbol, name: symbol, icon };
+      return acc;
+    },
+    {} as Record<string, { symbol: string; name: string; icon: string }>,
+  );
 };
 
 type TokenSymbol = string;
@@ -82,12 +73,11 @@ export default function CreatePage() {
 
   // Get available tokens for current chain
   const availableTokens = getAvailableTokens(chain?.id);
-  const nativeSymbol = chain?.id ? getNativeTokenSymbol(chain.id) : "ETH";
+  const nativeSymbol = chain?.id ? (NATIVE_SYMBOLS[chain.id] ?? "ETH") : "ETH";
   const defaultToken = Object.keys(availableTokens)[0] || nativeSymbol;
 
-  // Get token addresses for the current chain
   const tokenAddresses: Record<string, Address> = chain?.id
-    ? getTokenAddresses(chain.id)
+    ? (TOKEN_ADDRESSES[chain.id] ?? {})
     : {};
 
   // Helper to get token decimals
