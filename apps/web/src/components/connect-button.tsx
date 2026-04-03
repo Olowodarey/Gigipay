@@ -1,25 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAuth } from "@/hooks/useAuth";
+import { ClientOnly } from "@/components/batch-payment/ClientOnly";
 
-export function WalletConnectButton() {
-  const [mounted, setMounted] = useState(false);
+function ConnectButtonInner() {
   const { user, isAuthenticated, isAuthenticating, signIn, isMiniPay } =
     useAuth();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
-        Connect Wallet
-      </button>
-    );
-  }
 
   return (
     <ConnectButton.Custom>
@@ -89,7 +76,6 @@ export function WalletConnectButton() {
                   {account.displayBalance ? ` (${account.displayBalance})` : ""}
                 </button>
 
-                {/* Show sign-in button if wallet connected but not authenticated */}
                 {!isAuthenticated && !isAuthenticating && (
                   <button
                     onClick={signIn}
@@ -111,5 +97,19 @@ export function WalletConnectButton() {
         );
       }}
     </ConnectButton.Custom>
+  );
+}
+
+export function WalletConnectButton() {
+  return (
+    <ClientOnly
+      fallback={
+        <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+          Connect Wallet
+        </button>
+      }
+    >
+      <ConnectButtonInner />
+    </ClientOnly>
   );
 }

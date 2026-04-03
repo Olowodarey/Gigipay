@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 
-export function ClientOnly({ children }: { children: React.ReactNode }) {
+interface ClientOnlyProps {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+}
+
+export function ClientOnly({ children, fallback }: ClientOnlyProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -10,7 +15,9 @@ export function ClientOnly({ children }: { children: React.ReactNode }) {
   }, []);
 
   if (!mounted) {
-    return (
+    return fallback ? (
+      <>{fallback}</>
+    ) : (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-muted-foreground">Loading...</div>
       </div>
