@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { usePrivy } from "@privy-io/react-auth";
 import { privyLogin } from "@/lib/api";
 
 const TOKEN_KEY = "gigipay_token";
@@ -19,13 +19,11 @@ export function usePrivyAuth() {
     logout,
     getAccessToken,
   } = usePrivy();
-  const { wallets } = useWallets();
 
   const syncWithBackend = useCallback(async () => {
     if (!privyUser) return;
 
     try {
-      // Get the Privy access token — backend will verify this server-side
       const accessToken = await getAccessToken();
       if (!accessToken) return;
 
@@ -41,7 +39,6 @@ export function usePrivyAuth() {
       syncWithBackend();
     }
     if (ready && !authenticated) {
-      // Clear token on logout
       localStorage.removeItem(TOKEN_KEY);
     }
   }, [ready, authenticated, syncWithBackend]);
@@ -50,8 +47,7 @@ export function usePrivyAuth() {
     ready,
     authenticated,
     privyUser,
-    wallets,
-    login, // opens Privy modal — email, phone, or wallet
+    login,
     logout,
   };
 }

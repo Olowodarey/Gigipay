@@ -6,7 +6,22 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePrivyAuth } from "@/hooks/usePrivyAuth";
 
 function PrivyLoginButton() {
-  const { login, authenticated } = usePrivyAuth();
+  const { login, authenticated, ready } = usePrivyAuth();
+
+  // Show a placeholder while Privy initializes to avoid layout shift
+  if (!ready) {
+    return (
+      <button
+        disabled
+        type="button"
+        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background opacity-50 h-10 px-4 py-2 gap-2"
+      >
+        Sign in with Email / Phone
+      </button>
+    );
+  }
+
+  // Hide once authenticated via Privy
   if (authenticated) return null;
 
   return (
@@ -133,23 +148,23 @@ function ConnectButtonInner() {
           );
         }}
       </ConnectButton.Custom>
-
-      {/* Email/Gmail login via Privy — only shows when not wallet-connected */}
-      <PrivyLoginButton />
     </div>
   );
 }
 
 export function WalletConnectButton() {
   return (
-    <ClientOnly
-      fallback={
-        <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
-          Connect Wallet
-        </button>
-      }
-    >
-      <ConnectButtonInner />
-    </ClientOnly>
+    <div className="flex items-center gap-2 flex-wrap">
+      <ClientOnly
+        fallback={
+          <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+            Connect Wallet
+          </button>
+        }
+      >
+        <ConnectButtonInner />
+        <PrivyLoginButton />
+      </ClientOnly>
+    </div>
   );
 }
