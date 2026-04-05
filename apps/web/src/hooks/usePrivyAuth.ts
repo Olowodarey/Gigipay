@@ -7,39 +7,42 @@ import { privyLogin } from "@/lib/api";
 const TOKEN_KEY = "gigipay_token";
 
 /**
- * Syncs Privy login (email/phone) with our backend.
- * Calls POST /api/auth/privy to register/login the user.
+ * Syncs Privy login (email/phone/social) with our backend.
+ * Sends the Privy access token to POST /auth/privy for server-side verification.
  */
 export function usePrivyAuth() {
-  const { ready, authenticated, user: privyUser, login, logout } = usePrivy();
+  const {
+    ready,
+    authenticated,
+    user: privyUser,
+    login,
+    logout,
+    getAccessToken,
+  } = usePrivy();
   const { wallets } = useWallets();
 
   const syncWithBackend = useCallback(async () => {
     if (!privyUser) return;
 
-    // Get embedded wallet (created by Privy for email/phone users)
-    const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
-    if (!embeddedWallet) return;
-
-    const email = privyUser.email?.address;
-    const phone = privyUser.phone?.number;
-
     try {
-      const { token } = await privyLogin({
-        privyUserId: privyUser.id,
-        walletAddress: embeddedWallet.address,
-        email,
-        phone,
-      });
+      // Get the Privy access token — backend will verify this server-side
+      const accessToken = await getAccessToken();
+      if (!accessToken) return;
+
+      const { token } = await privyLogin({ accessToken });
       localStorage.setItem(TOKEN_KEY, token);
     } catch (err) {
       console.error("Failed to sync Privy user with backend:", err);
     }
-  }, [privyUser, wallets]);
+  }, [privyUser, getAccessToken]);
 
   useEffect(() => {
     if (ready && authenticated) {
       syncWithBackend();
+    }
+    if (ready && !authenticated) {
+      // Clear token on logout
+      localStorage.removeItem(TOKEN_KEY);
     }
   }, [ready, authenticated, syncWithBackend]);
 
@@ -47,6 +50,7 @@ export function usePrivyAuth() {
     ready,
     authenticated,
     privyUser,
+    wallets,
     login, // opens Privy modal — email, phone, or wallet
     logout,
   };

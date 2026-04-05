@@ -137,10 +137,7 @@ export interface UserProfile {
 // ─── Privy Login ──────────────────────────────────────────────────────────────
 
 export function privyLogin(payload: {
-  privyUserId: string;
-  walletAddress: string;
-  email?: string;
-  phone?: string;
+  accessToken: string;
 }): Promise<{ token: string; user: UserProfile }> {
   return apiFetch("/auth/privy", {
     method: "POST",
