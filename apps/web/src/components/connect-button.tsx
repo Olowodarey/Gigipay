@@ -4,11 +4,12 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { ClientOnly } from "@/components/batch-payment/ClientOnly";
 import { useAuth } from "@/hooks/useAuth";
 import { usePrivyAuth } from "@/hooks/usePrivyAuth";
+import { useUser } from "@/hooks/useUser";
+import Link from "next/link";
 
 function PrivyLoginButton() {
   const { login, authenticated, ready } = usePrivyAuth();
 
-  // Show a placeholder while Privy initializes to avoid layout shift
   if (!ready) {
     return (
       <button
@@ -21,7 +22,6 @@ function PrivyLoginButton() {
     );
   }
 
-  // Hide once authenticated via Privy
   if (authenticated) return null;
 
   return (
@@ -53,9 +53,41 @@ function PrivyLoginButton() {
   );
 }
 
+function PrivyProfileButton() {
+  const { profile, logout } = useUser();
+  const { authenticated } = usePrivyAuth();
+
+  if (!authenticated || !profile) return null;
+
+  const label =
+    profile.displayName || profile.email || profile.phone || "My Account";
+
+  return (
+    <div className="flex items-center gap-2">
+      <Link
+        href="/profile"
+        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 gap-2"
+      >
+        <span className="text-base">✉️</span>
+        {label}
+      </Link>
+    </div>
+  );
+}
+
 function ConnectButtonInner() {
   const { user, isAuthenticated, isAuthenticating, signIn, isMiniPay } =
     useAuth();
+  const { authenticated: privyAuthenticated } = usePrivyAuth();
+
+  // If logged in via Privy, show profile button only — no wallet connect
+  if (privyAuthenticated) {
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        <PrivyProfileButton />
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -148,23 +180,22 @@ function ConnectButtonInner() {
           );
         }}
       </ConnectButton.Custom>
+
+      <PrivyLoginButton />
     </div>
   );
 }
 
 export function WalletConnectButton() {
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <ClientOnly
-        fallback={
-          <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
-            Connect Wallet
-          </button>
-        }
-      >
-        <ConnectButtonInner />
-        <PrivyLoginButton />
-      </ClientOnly>
-    </div>
+    <ClientOnly
+      fallback={
+        <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+          Connect Wallet
+        </button>
+      }
+    >
+      <ConnectButtonInner />
+    </ClientOnly>
   );
 }
