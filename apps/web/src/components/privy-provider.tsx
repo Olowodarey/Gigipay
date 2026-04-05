@@ -1,24 +1,19 @@
 "use client";
 
+import { PrivyProvider } from "@privy-io/react-auth";
 import { celo, base } from "viem/chains";
 
-// Lazy import so the app doesn't crash if @privy-io/react-auth isn't installed yet
-let PrivyProvider: any = null;
-try {
-  PrivyProvider = require("@privy-io/react-auth").PrivyProvider;
-} catch {
-  // package not installed yet
-}
-
 export function PrivyAuthProvider({ children }: { children: React.ReactNode }) {
-  // If Privy isn't installed or no App ID, just render children
-  if (!PrivyProvider || !process.env.NEXT_PUBLIC_PRIVY_APP_ID) {
+  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+
+  if (!appId) {
+    console.warn("NEXT_PUBLIC_PRIVY_APP_ID is not set");
     return <>{children}</>;
   }
 
   return (
     <PrivyProvider
-      appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID}
+      appId={appId}
       config={{
         loginMethods: ["email", "sms", "wallet"],
         appearance: {
