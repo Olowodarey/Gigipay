@@ -21,15 +21,12 @@ export function useUser() {
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
-
-  const isLoggedIn = !!token && (privyAuthenticated || walletConnected);
+  const [hasToken, setHasToken] = useState(false);
 
   const fetchProfile = useCallback(async () => {
     const stored =
       typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
+    setHasToken(!!stored);
     if (!stored) {
       setProfile(null);
       setLoading(false);
@@ -54,6 +51,7 @@ export function useUser() {
   const logout = useCallback(async () => {
     localStorage.removeItem(TOKEN_KEY);
     setProfile(null);
+    setHasToken(false);
     if (privyAuthenticated) {
       await privyLogout();
     }
@@ -62,7 +60,7 @@ export function useUser() {
   return {
     profile,
     loading,
-    isLoggedIn,
+    isLoggedIn: hasToken && (privyAuthenticated || walletConnected),
     isPrivyUser: privyAuthenticated,
     isWalletUser: walletConnected,
     logout,

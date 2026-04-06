@@ -51,12 +51,19 @@ function PrivyLoginButton() {
 }
 
 function PrivyProfileButton() {
+  const { authenticated, privyUser } = usePrivyAuth();
   const { profile } = useUser();
-  const { authenticated } = usePrivyAuth();
-  if (!authenticated || !profile) return null;
 
+  if (!authenticated) return null;
+
+  // Use Privy user data immediately — no need to wait for backend profile
   const label =
-    profile.displayName || profile.email || profile.phone || "My Account";
+    profile?.displayName ||
+    profile?.email ||
+    privyUser?.email?.address ||
+    privyUser?.phone?.number ||
+    "My Account";
+
   return (
     <Link
       href="/profile"
