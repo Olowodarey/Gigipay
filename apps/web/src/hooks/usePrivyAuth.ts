@@ -1,15 +1,11 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { privyLogin } from "@/lib/api";
 
 const TOKEN_KEY = "gigipay_token";
 
-/**
- * Syncs Privy login (email/phone/social) with our backend.
- * Sends the Privy access token to POST /auth/privy for server-side verification.
- */
 export function usePrivyAuth() {
   const {
     ready,
@@ -19,6 +15,10 @@ export function usePrivyAuth() {
     logout,
     getAccessToken,
   } = usePrivy();
+  const { wallets } = useWallets();
+
+  // The embedded wallet Privy creates for email/phone users
+  const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
 
   const syncWithBackend = useCallback(async () => {
     if (!privyUser) return;
@@ -47,6 +47,7 @@ export function usePrivyAuth() {
     ready,
     authenticated,
     privyUser,
+    embeddedWallet,
     login,
     logout,
   };

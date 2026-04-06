@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import "@rainbow-me/rainbowkit/styles.css";
 import {
   RainbowKitProvider,
@@ -66,15 +65,5 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
 }
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <div suppressHydrationWarning>{children}</div>;
-  }
-
   return <WalletProviderInner>{children}</WalletProviderInner>;
 }

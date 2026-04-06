@@ -1,28 +1,25 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { ClientOnly } from "@/components/batch-payment/ClientOnly";
 import { useAuth } from "@/hooks/useAuth";
 import { usePrivyAuth } from "@/hooks/usePrivyAuth";
 import { useUser } from "@/hooks/useUser";
 import Link from "next/link";
+import { useState, useEffect } from "react";
+
+// Stable skeleton — same size as the real buttons, no layout shift
+function ButtonSkeleton() {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="h-10 w-32 rounded-md border border-input bg-background animate-pulse opacity-40" />
+      <div className="h-10 w-44 rounded-md border border-input bg-background animate-pulse opacity-40" />
+    </div>
+  );
+}
 
 function PrivyLoginButton() {
   const { login, authenticated, ready } = usePrivyAuth();
-
-  if (!ready) {
-    return (
-      <button
-        disabled
-        type="button"
-        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background opacity-50 h-10 px-4 py-2 gap-2"
-      >
-        Sign in with Email / Phone
-      </button>
-    );
-  }
-
-  if (authenticated) return null;
+  if (!ready || authenticated) return null;
 
   return (
     <button
@@ -54,41 +51,43 @@ function PrivyLoginButton() {
 }
 
 function PrivyProfileButton() {
-  const { profile, logout } = useUser();
+  const { profile } = useUser();
   const { authenticated } = usePrivyAuth();
-
   if (!authenticated || !profile) return null;
 
   const label =
     profile.displayName || profile.email || profile.phone || "My Account";
-
   return (
-    <div className="flex items-center gap-2">
-      <Link
-        href="/profile"
-        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 gap-2"
-      >
-        <span className="text-base">✉️</span>
-        {label}
-      </Link>
-    </div>
+    <Link
+      href="/profile"
+      className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 gap-2"
+    >
+      <span className="text-base">✉️</span>
+      {label}
+    </Link>
   );
 }
 
 function ConnectButtonInner() {
   const { user, isAuthenticated, isAuthenticating, signIn, isMiniPay } =
     useAuth();
-  const { authenticated: privyAuthenticated } = usePrivyAuth();
+  const { authenticated: privyAuthenticated, ready: privyReady } =
+    usePrivyAuth();
+  const [mounted, setMounted] = useState(false);
 
-  // If logged in via Privy, show profile button only — no wallet connect
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Single stable loading state — wait for client mount + Privy ready
+  if (!mounted || !privyReady) return <ButtonSkeleton />;
+
+  // Privy user — show profile only
   if (privyAuthenticated) {
-    return (
-      <div className="flex items-center gap-2 flex-wrap">
-        <PrivyProfileButton />
-      </div>
-    );
+    return <PrivyProfileButton />;
   }
 
+  // Wallet user
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <ConnectButton.Custom>
@@ -98,13 +97,12 @@ function ConnectButtonInner() {
           openAccountModal,
           openChainModal,
           openConnectModal,
-          mounted,
+          mounted: rkMounted,
         }) => {
-          const connected = mounted && account && chain;
-
+          const connected = rkMounted && account && chain;
           return (
             <div
-              {...(!mounted && {
+              {...(!rkMounted && {
                 "aria-hidden": true,
                 style: { opacity: 0, pointerEvents: "none" as const },
               })}
@@ -129,8 +127,8 @@ function ConnectButtonInner() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={openChainModal}
-                    className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-10 px-3 py-2"
                     type="button"
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-10 px-3 py-2"
                   >
                     {chain.hasIcon && chain.iconUrl && (
                       <img
@@ -146,7 +144,6 @@ function ConnectButtonInner() {
                     )}
                     {chain.name}
                   </button>
-
                   <button
                     onClick={openAccountModal}
                     type="button"
@@ -158,7 +155,6 @@ function ConnectButtonInner() {
                       ? ` (${account.displayBalance})`
                       : ""}
                   </button>
-
                   {!isAuthenticated && !isAuthenticating && (
                     <button
                       onClick={signIn}
@@ -168,7 +164,6 @@ function ConnectButtonInner() {
                       Sign In
                     </button>
                   )}
-
                   {isAuthenticating && (
                     <span className="text-xs text-muted-foreground">
                       Signing in...
@@ -180,22 +175,11 @@ function ConnectButtonInner() {
           );
         }}
       </ConnectButton.Custom>
-
       <PrivyLoginButton />
     </div>
   );
 }
 
 export function WalletConnectButton() {
-  return (
-    <ClientOnly
-      fallback={
-        <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
-          Connect Wallet
-        </button>
-      }
-    >
-      <ConnectButtonInner />
-    </ClientOnly>
-  );
+  return <ConnectButtonInner />;
 }
