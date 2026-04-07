@@ -4,18 +4,17 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useUser } from "@/hooks/useUser";
 import { usePrivyAuth } from "@/hooks/usePrivyAuth";
+import { usePrivy } from "@privy-io/react-auth";
 import { ClientOnly } from "@/components/batch-payment/ClientOnly";
-import { Copy, Check, ExternalLink } from "lucide-react";
+import { Copy, Check, ExternalLink, Wallet } from "lucide-react";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
-
   const copy = async () => {
     await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
   return (
     <button
       onClick={copy}
@@ -34,13 +33,14 @@ function CopyButton({ text }: { text: string }) {
 
 function ProfileContent() {
   const { profile, loading, isLoggedIn, isPrivyUser, logout } = useUser();
-  const { embeddedWallet, privyUser } = usePrivyAuth();
+  const { embeddedWallet } = usePrivyAuth();
+  const { createWallet } = usePrivy();
   const router = useRouter();
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !isLoggedIn) {
-      router.push("/");
-    }
+    if (!loading && !isLoggedIn) router.push("/");
   }, [loading, isLoggedIn, router]);
 
   if (loading) {
@@ -53,8 +53,6 @@ function ProfileContent() {
 
   if (!profile) return null;
 
-  // Prefer the embedded wallet address from Privy (most accurate),
-  // fall back to what the backend stored
   const walletAddress =
     embeddedWallet?.address ??
     (profile.address.startsWith("privy:") ? null : profile.address);
@@ -64,14 +62,22 @@ function ProfileContent() {
     ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
     : null;
 
-  const celoscanUrl = walletAddress
-    ? `https://celoscan.io/address/${walletAddress}`
-    : null;
+  const handleCreateWallet = async () => {
+    setCreating(true);
+    setCreateError(null);
+    try {
+      await createWallet();
+      window.location.reload();
+    } catch (err: any) {
+      setCreateError(err?.message || "Failed to create wallet");
+    } finally {
+      setCreating(false);
+    }
+  };
 
   return (
     <div className="container max-w-lg mx-auto py-12 px-4">
       <div className="rounded-xl border border-border bg-card p-8 space-y-6">
-        {/* Avatar + name */}
         <div className="flex flex-col items-center gap-3">
           <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center text-3xl">
             {isPrivyUser ? "✉️" : "🦊"}
@@ -95,7 +101,6 @@ function ProfileContent() {
 
         <hr className="border-border" />
 
-        {/* Account details */}
         <div className="space-y-3">
           {profile.email && (
             <div className="flex justify-between items-center">
@@ -119,7 +124,6 @@ function ProfileContent() {
 
         <hr className="border-border" />
 
-        {/* Wallet section */}
         <div className="space-y-3">
           <h2 className="text-sm font-semibold">Wallet</h2>
 
@@ -132,35 +136,42 @@ function ProfileContent() {
                   <CopyButton text={walletAddress!} />
                 </div>
               </div>
-
-              {/* Full address copyable */}
               <div className="rounded-md bg-background border border-border px-3 py-2 flex items-center justify-between gap-2">
                 <span className="text-xs font-mono text-muted-foreground truncate">
                   {walletAddress}
                 </span>
                 <CopyButton text={walletAddress!} />
               </div>
-
-              {celoscanUrl && (
-                <a
-                  href={celoscanUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                >
-                  View on Celoscan
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
+              <a
+                href={`https://celoscan.io/address/${walletAddress}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                View on Celoscan
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed border-border p-4 text-center space-y-1">
-              <p className="text-sm text-muted-foreground">
-                No wallet linked yet
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Privy is creating your embedded wallet. Refresh in a moment.
-              </p>
+            <div className="rounded-lg border border-dashed border-border p-5 text-center space-y-3">
+              <Wallet className="h-8 w-8 mx-auto text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">No wallet yet</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Create a free embedded wallet to send and receive crypto
+                </p>
+              </div>
+              {createError && (
+                <p className="text-xs text-destructive">{createError}</p>
+              )}
+              <button
+                onClick={handleCreateWallet}
+                disabled={creating}
+                className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <Wallet className="h-4 w-4" />
+                {creating ? "Creating wallet..." : "Create Wallet"}
+              </button>
             </div>
           )}
         </div>
