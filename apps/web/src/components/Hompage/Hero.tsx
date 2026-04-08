@@ -1,13 +1,13 @@
-import React from 'react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { ArrowRight } from 'lucide-react'
-import { Mail, Wallet, CreditCard, Gift } from 'lucide-react'
+import React from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import { Mail, Wallet, CreditCard, Gift } from "lucide-react";
 
 const Hero = () => {
   return (
     <div>
-            <section className="relative py-16 md:py-24 lg:py-32 px-4 sm:px-6 lg:px-8">
+      <section className="relative py-16 md:py-24 lg:py-32 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
@@ -32,7 +32,7 @@ const Hero = () => {
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button asChild size="lg" className="text-base">
-                  <Link href="/create-payment">
+                  <Link href="/create-payment" prefetch={true}>
                     Pay Team / Create Giveaway
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
@@ -43,7 +43,9 @@ const Hero = () => {
                   size="lg"
                   className="text-base bg-transparent"
                 >
-                  <Link href="/claim-payment">Claim Payment</Link>
+                  <Link href="/claim-payment" prefetch={true}>
+                    Claim Payment
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -86,7 +88,7 @@ const Hero = () => {
         </div>
       </section>
     </div>
-  )
-}
+  );
+};
 
-export default Hero
+export default Hero;
