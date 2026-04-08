@@ -6,7 +6,8 @@ import { useUser } from "@/hooks/useUser";
 import { usePrivyAuth } from "@/hooks/usePrivyAuth";
 import { usePrivy } from "@privy-io/react-auth";
 import { ClientOnly } from "@/components/batch-payment/ClientOnly";
-import { Copy, Check, ExternalLink, Wallet } from "lucide-react";
+import { Copy, Check, ExternalLink, Wallet, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -174,6 +175,31 @@ function ProfileContent() {
               </button>
             </div>
           )}
+        </div>
+
+        <hr className="border-border" />
+
+        {/* Quick actions */}
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold">Quick Actions</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <Link
+              href="/create-payment"
+              prefetch={true}
+              className="flex items-center justify-between rounded-lg border border-border bg-muted/40 hover:bg-accent/10 p-3 transition-colors"
+            >
+              <span className="text-sm font-medium">Create Payment</span>
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+            <Link
+              href="/claim-payment"
+              prefetch={true}
+              className="flex items-center justify-between rounded-lg border border-border bg-muted/40 hover:bg-accent/10 p-3 transition-colors"
+            >
+              <span className="text-sm font-medium">Claim Payment</span>
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </div>
         </div>
 
         <hr className="border-border" />
