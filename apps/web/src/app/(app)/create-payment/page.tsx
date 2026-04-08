@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import CreatePaymentStep1 from "@/components/create-payment/CreatePaymentStep1";
 import CreatePaymentStep2 from "@/components/create-payment/CreatePaymentStep2";
 import CreatePaymentStep3 from "@/components/create-payment/CreatePaymentStep3";
 import { ClientOnly } from "@/components/batch-payment/ClientOnly";
-import { Check } from "lucide-react";
+import { Check, ArrowLeft } from "lucide-react";
 import { useAccount, useBalance } from "wagmi";
 import { useCreateVoucher, useCreateVoucherBatch } from "@/hooks/useVouchers";
 import {
@@ -553,6 +554,13 @@ Use your voucher ID and code to claim!
     <div className="flex flex-col min-h-screen">
       <div className="flex-1 py-8 md:py-12 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-2xl">
+          <Link
+            href="/"
+            prefetch={true}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to Home
+          </Link>
           {notice && (
             <div
               className={`mb-6 rounded-md border p-3 text-sm ${

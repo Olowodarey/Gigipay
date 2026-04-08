@@ -4,6 +4,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,7 +13,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Gift, Sparkles, ExternalLink, AlertCircle, Copy } from "lucide-react";
+import {
+  Gift,
+  Sparkles,
+  ExternalLink,
+  AlertCircle,
+  Copy,
+  ArrowLeft,
+} from "lucide-react";
 import Confetti from "react-confetti";
 import { useAccount, useBalance } from "wagmi";
 import {
@@ -336,6 +344,13 @@ function ClaimPageContent() {
 
       <div className="flex-1 py-8 md:py-12 lg:py-16 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-lg">
+          <Link
+            href="/"
+            prefetch={true}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to Home
+          </Link>
           {notice && (
             <div
               className={`mb-6 rounded-md border p-3 text-sm ${
