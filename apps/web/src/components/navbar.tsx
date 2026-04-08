@@ -84,9 +84,10 @@ export function Navbar() {
             <Link
               key={link.href}
               href={link.href}
+              prefetch={true}
               className={`flex items-center gap-1.5 text-xs lg:text-sm font-medium transition-colors hover:text-primary whitespace-nowrap ${
                 pathname === link.href
-                  ? "text-foreground"
+                  ? "text-foreground border-b-2 border-primary pb-0.5"
                   : "text-foreground/70"
               }`}
             >
