@@ -162,20 +162,6 @@ function ConnectButtonInner() {
                       ? ` (${account.displayBalance})`
                       : ""}
                   </button>
-                  {!isAuthenticated && !isAuthenticating && (
-                    <button
-                      onClick={signIn}
-                      type="button"
-                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                    >
-                      Sign In
-                    </button>
-                  )}
-                  {isAuthenticating && (
-                    <span className="text-xs text-muted-foreground">
-                      Signing in...
-                    </span>
-                  )}
                 </div>
               )}
             </div>

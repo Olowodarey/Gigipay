@@ -110,16 +110,16 @@ export function useAuth() {
     setUser(null);
   }, []);
 
-  // Auto sign-in when wallet connects
+  // Auto-restore session on wallet connect — never auto-prompt for signature
   useEffect(() => {
     if (!isConnected || !address) {
       signOut();
       return;
     }
-    // Try loading existing session first
-    loadProfile().then((result) => {
-      // If no valid session, auto sign-in (especially for MiniPay)
-      if (!getStoredToken()) {
+    // Only restore an existing valid session — never auto-trigger a signature popup
+    // MiniPay is the exception: it has no manual sign-in UI so we auto sign-in
+    loadProfile().then(() => {
+      if (!getStoredToken() && isMiniPay) {
         signIn();
       }
     });
