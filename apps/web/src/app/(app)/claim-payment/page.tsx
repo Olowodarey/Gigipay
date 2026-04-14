@@ -218,7 +218,7 @@ function ClaimPageContent() {
     }
 
     try {
-      await claimVoucher(voucherName, claimCode);
+      await claimVoucher(claimCode);
     } catch (err: any) {
       toast({
         title: "Claim Failed",
