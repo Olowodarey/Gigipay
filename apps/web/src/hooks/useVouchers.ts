@@ -3,7 +3,7 @@ import {
   useWaitForTransactionReceipt,
   useAccount,
 } from "wagmi";
-import { parseUnits, Address } from "viem";
+import { parseUnits, Address, keccak256, toBytes } from "viem";
 import { useEffect, useState, useCallback } from "react";
 import { CONTRACT_ADDRESSES, getContractAddress } from "@/lib/contracts";
 
@@ -12,7 +12,7 @@ const GIGIPAY_ABI = [
     inputs: [
       { internalType: "address", name: "token", type: "address" },
       { internalType: "string", name: "voucherName", type: "string" },
-      { internalType: "string[]", name: "claimCodes", type: "string[]" },
+      { internalType: "bytes32[]", name: "claimCodeHashes", type: "bytes32[]" },
       { internalType: "uint256[]", name: "amounts", type: "uint256[]" },
       { internalType: "uint256[]", name: "expirationTimes", type: "uint256[]" },
     ],
@@ -24,7 +24,7 @@ const GIGIPAY_ABI = [
   {
     inputs: [
       { internalType: "string", name: "voucherName", type: "string" },
-      { internalType: "string", name: "claimCode", type: "string" },
+      { internalType: "bytes32", name: "claimCodeHash", type: "bytes32" },
     ],
     name: "claimVoucher",
     outputs: [],
@@ -39,6 +39,11 @@ const GIGIPAY_ABI = [
     type: "function",
   },
 ] as const;
+
+// Hash a claim code client-side — the plain text never touches the chain
+function hashClaimCode(code: string): `0x${string}` {
+  return keccak256(toBytes(code));
+}
 
 import {
   getVoucher,
@@ -76,7 +81,7 @@ export function useCreateVoucher() {
       args: [
         tokenAddress,
         voucherName,
-        [claimCode],
+        [hashClaimCode(claimCode)],
         [parsedAmount],
         [BigInt(expirationTime)],
       ],
@@ -103,7 +108,7 @@ export function useCreateVoucherBatch() {
     }>,
     decimals: number = 18,
   ) => {
-    const claimCodes = vouchers.map((v) => v.claimCode);
+    const claimCodes = vouchers.map((v) => hashClaimCode(v.claimCode));
     const amounts = vouchers.map((v) => parseUnits(v.amount, decimals));
     const expirationTimes = vouchers.map((v) => BigInt(v.expirationTime));
     const totalAmount = amounts.reduce((sum, amount) => sum + amount, 0n);
@@ -140,7 +145,7 @@ export function useClaimVoucher() {
       address: getContractAddress(chain?.id),
       abi: GIGIPAY_ABI,
       functionName: "claimVoucher",
-      args: [voucherName, claimCode],
+      args: [voucherName, hashClaimCode(claimCode)],
     });
   };
 
