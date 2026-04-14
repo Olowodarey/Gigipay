@@ -3,7 +3,7 @@ import {
   useWaitForTransactionReceipt,
   useAccount,
 } from "wagmi";
-import { parseUnits, Address, keccak256, toBytes } from "viem";
+import { parseUnits, Address, keccak256, toBytes, encodePacked } from "viem";
 import { useEffect, useState, useCallback } from "react";
 import { CONTRACT_ADDRESSES, getContractAddress } from "@/lib/contracts";
 
@@ -39,9 +39,9 @@ const GIGIPAY_ABI = [
   },
 ] as const;
 
-// Hash a claim code client-side — the plain text never touches the chain
-function hashClaimCode(code: string): `0x${string}` {
-  return keccak256(toBytes(code));
+// Hash voucher name + claim code together — scoped per campaign, no cross-campaign collisions
+function hashClaimCode(voucherName: string, code: string): `0x${string}` {
+  return keccak256(encodePacked(["string", "string"], [voucherName, code]));
 }
 
 // Minimum claim code length to prevent brute-force guessing
@@ -93,7 +93,7 @@ export function useCreateVoucher() {
       args: [
         tokenAddress,
         voucherName,
-        [hashClaimCode(claimCode)],
+        [hashClaimCode(voucherName, claimCode)],
         [parsedAmount],
         [BigInt(expirationTime)],
       ],
@@ -125,7 +125,9 @@ export function useCreateVoucherBatch() {
       if (codeError) throw new Error(`Code "${v.claimCode}": ${codeError}`);
     }
 
-    const claimCodes = vouchers.map((v) => hashClaimCode(v.claimCode));
+    const claimCodes = vouchers.map((v) =>
+      hashClaimCode(voucherName, v.claimCode),
+    );
     const amounts = vouchers.map((v) => parseUnits(v.amount, decimals));
     const expirationTimes = vouchers.map((v) => BigInt(v.expirationTime));
     const totalAmount = amounts.reduce((sum, amount) => sum + amount, 0n);
@@ -157,12 +159,12 @@ export function useClaimVoucher() {
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({ hash });
 
-  const claimVoucher = async (claimCode: string) => {
+  const claimVoucher = async (voucherName: string, claimCode: string) => {
     writeContract({
       address: getContractAddress(chain?.id),
       abi: GIGIPAY_ABI,
       functionName: "claimVoucher",
-      args: [hashClaimCode(claimCode)],
+      args: [hashClaimCode(voucherName, claimCode)],
     });
   };
 
