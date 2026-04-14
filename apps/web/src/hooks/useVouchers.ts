@@ -45,6 +45,16 @@ function hashClaimCode(code: string): `0x${string}` {
   return keccak256(toBytes(code));
 }
 
+// Minimum claim code length to prevent brute-force guessing
+const MIN_CODE_LENGTH = 6;
+
+export function validateClaimCode(code: string): string | null {
+  if (code.trim().length < MIN_CODE_LENGTH) {
+    return `Claim code must be at least ${MIN_CODE_LENGTH} characters`;
+  }
+  return null;
+}
+
 import {
   getVoucher,
   getVouchersByName,
@@ -70,6 +80,9 @@ export function useCreateVoucher() {
     expirationTime: number,
     decimals: number = 18,
   ) => {
+    const codeError = validateClaimCode(claimCode);
+    if (codeError) throw new Error(codeError);
+
     const parsedAmount = parseUnits(amount, decimals);
     const isNativeToken =
       tokenAddress === "0x0000000000000000000000000000000000000000";
@@ -108,6 +121,11 @@ export function useCreateVoucherBatch() {
     }>,
     decimals: number = 18,
   ) => {
+    for (const v of vouchers) {
+      const codeError = validateClaimCode(v.claimCode);
+      if (codeError) throw new Error(`Code "${v.claimCode}": ${codeError}`);
+    }
+
     const claimCodes = vouchers.map((v) => hashClaimCode(v.claimCode));
     const amounts = vouchers.map((v) => parseUnits(v.amount, decimals));
     const expirationTimes = vouchers.map((v) => BigInt(v.expirationTime));

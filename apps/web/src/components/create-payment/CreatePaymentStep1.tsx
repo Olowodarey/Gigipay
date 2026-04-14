@@ -214,6 +214,11 @@ export default function CreatePaymentStep1({
               Add Payment
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Codes are hashed before being sent on-chain — the plain text is
+            never visible on the blockchain. Use at least 6 characters to
+            prevent guessing.
+          </p>
 
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {winners.map((winner, index) => (
@@ -223,8 +228,8 @@ export default function CreatePaymentStep1({
               >
                 <div className="flex-1 space-y-2">
                   <input
-                    className={inputClass}
-                    placeholder={`Code (e.g., WINNER${index + 1})`}
+                    className={`${inputClass} ${winner.code.trim().length > 0 && winner.code.trim().length < 6 ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    placeholder={`Code (min 6 chars, e.g., WINNER${index + 1}ABC)`}
                     value={winner.code}
                     onChange={(e) =>
                       updateWinner(
@@ -234,6 +239,13 @@ export default function CreatePaymentStep1({
                       )
                     }
                   />
+                  {winner.code.trim().length > 0 &&
+                    winner.code.trim().length < 6 && (
+                      <p className="text-xs text-destructive">
+                        Code must be at least 6 characters (
+                        {winner.code.trim().length}/6)
+                      </p>
+                    )}
                   <input
                     className={inputClass}
                     type="number"

@@ -15,6 +15,7 @@ import {
   useTokenAllowance,
 } from "@/hooks/useTokenApproval";
 import { formatUnits, parseUnits, Address } from "viem";
+import { validateClaimCode } from "@/hooks/useVouchers";
 
 const TOKEN_ADDRESSES: Record<number, Record<string, Address>> = {
   42220: {
@@ -315,6 +316,17 @@ function CreatePageContent() {
       showToast({
         title: "Duplicate Codes",
         description: "Each winner must have a unique claim code",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Validate minimum code length
+    const shortCode = winners.find((w) => w.code.trim().length < 6);
+    if (shortCode) {
+      showToast({
+        title: "Code Too Short",
+        description: `Claim code "${shortCode.code}" must be at least 6 characters to prevent guessing`,
         variant: "destructive",
       });
       return false;
