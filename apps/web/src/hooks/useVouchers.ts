@@ -23,7 +23,6 @@ const GIGIPAY_ABI = [
   },
   {
     inputs: [
-      { internalType: "string", name: "voucherName", type: "string" },
       { internalType: "bytes32", name: "claimCodeHash", type: "bytes32" },
     ],
     name: "claimVoucher",
@@ -158,12 +157,12 @@ export function useClaimVoucher() {
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({ hash });
 
-  const claimVoucher = async (voucherName: string, claimCode: string) => {
+  const claimVoucher = async (claimCode: string) => {
     writeContract({
       address: getContractAddress(chain?.id),
       abi: GIGIPAY_ABI,
       functionName: "claimVoucher",
-      args: [voucherName, hashClaimCode(claimCode)],
+      args: [hashClaimCode(claimCode)],
     });
   };
 
