@@ -1,88 +1,109 @@
+# Gigipay
 
+A multichain crypto payment protocol on **Celo** and **Base**. Send to multiple wallets in one transaction, create claim-code vouchers, and pay Nigerian utility bills (airtime, data, TV, electricity) with crypto.
 
-# GigiPay
+## What you can do
 
-**GigiPay** is a **multichain payment protocol** designed to make on-chain transfers **faster, cheaper, and more inclusive**.
-It currently supports **Celo and Base**, with a flexible architecture that allows easy expansion to additional chains.
+- **Batch Transfer** — send tokens to hundreds of addresses in a single transaction
+- **Payment Vouchers** — send crypto without knowing the recipient's wallet address; they claim with a secret code
+- **Bill Payments** — buy airtime, data bundles, pay DSTV/GOtv, pay electricity bills using any supported token
 
-With GigiPay, users can send funds to **multiple wallets in a single transaction**, significantly reducing gas costs and simplifying large-scale payouts across supported networks.
+## Monorepo Structure
 
-GigiPay also introduces **claim-code payments**, allowing users to send crypto **without needing the recipient’s wallet address**.
-Instead, a secure claim code or shareable link is generated, which the recipient can redeem at any time — even if they don’t yet have a wallet.
+```
+Gigipay/
+├── apps/
+│   └── web/          # Next.js frontend
+Gigipay-backend/       # NestJS API server
+contracts/             # Solidity smart contracts (Foundry)
+```
 
----
+Each folder has its own README with full setup instructions:
 
-## Key Features
+- [contracts/README.md](../contracts/README.md) — smart contract docs, deployment, tests
+- [Gigipay-backend/README.md](../Gigipay-backend/README.md) — backend API, auth, bill fulfilment
+- [apps/web/README.md](apps/web/README.md) — frontend setup, hooks, architecture
 
-* **Multichain Support (Celo & Base):**
-  Execute payments seamlessly on **Celo** and **Base**, choosing the network that best fits your use case.
+## Deployed Contracts
 
-* **CSV Batch Uploads:**
-  Organizations can upload wallet addresses to execute mass payments effortlessly across supported chains.
+| Network      | Address                                      |
+| ------------ | -------------------------------------------- |
+| Celo Mainnet | `0x70b92a67F391F674aFFfCE3Dd7EB3d99e1f1E9a8` |
+| Base Mainnet | `0xEdc6abb2f1A25A191dAf8B648c1A3686EfFE6Dd6` |
 
-* **Giveaway & Rewards Dashboard:**
-  Track who has claimed rewards, monitor payouts per chain, and reclaim unclaimed funds after expiration.
+## Quick Start
 
-* **Claim-Code Payments:**
-  Send funds using a secure code or link — no wallet address required at the time of sending.
+### Frontend (monorepo)
 
-* **Optional Gasless Redemption:**
-  First-time users can redeem claim codes without paying gas, lowering onboarding friction.
+```bash
+pnpm install
+pnpm dev
+```
 
-* **Wallet Abstraction via Gmail:**
-  New users can create a wallet using just their Gmail, avoiding seed phrase complexity.
+Runs at `http://localhost:3000`
 
-* **Future Off-Ramp Integration:**
-  Planned API integrations enabling stablecoins like **cUSD** and **USDC** to be converted into local currencies such as **Naira**.
+### Backend
 
----
+```bash
+cd Gigipay-backend
+pnpm install
+cp .env.example .env   # fill in your values
+pnpm start:dev
+```
 
-## Built for Multichain Payments
+Runs at `http://localhost:3001`  
+Swagger docs at `http://localhost:3001/api/docs`
 
-GigiPay is built with a **chain-agnostic architecture**, enabling fast, low-cost payments across multiple ecosystems.
+### Contracts
 
-* **Celo:**
-  Mobile-first, carbon-negative blockchain with stablecoins optimized for everyday payments.
+```bash
+cd contracts
+forge build
+forge test
+```
 
-* **Base:**
-  A secure, low-cost Ethereum L2 designed for scalable consumer and developer applications.
+## How it works
 
-This multichain approach allows GigiPay to serve **global users, DAOs, startups, and organizations** with diverse payment needs.
+```
+User (browser wallet)
+  │
+  ├── write txs (create voucher, claim, batch transfer, pay bill)
+  │     └── wagmi writeContract → user signs → broadcasts to chain
+  │
+  └── read data (voucher state, balances, order status)
+        └── fetch → Backend API → viem readContract → chain
+```
 
----
+For bill payments specifically:
 
-## Getting Started
+```
+1. User calls payBill() on contract (wallet signs)
+2. Contract holds crypto, emits BillPaymentInitiated event
+3. Backend listener picks up event
+4. Backend calls ClubKonnect API → airtime/data/TV/electricity delivered
+5. Order status stored in DB
+```
 
-1. Install dependencies:
+## Supported Wallets
 
-   ```bash
-   npm install
-   ```
+- MetaMask
+- WalletConnect (any compatible wallet)
+- MiniPay (Celo mobile wallet — auto-detected)
+- Privy embedded wallet (email/phone login)
 
-2. Start the development server:
+## Tech Stack
 
-   ```bash
-   npm run dev
-   ```
+| Layer           | Tech                                                    |
+| --------------- | ------------------------------------------------------- |
+| Smart Contracts | Solidity 0.8.27, Foundry, OpenZeppelin Upgradeable      |
+| Backend         | NestJS, TypeORM, PostgreSQL, viem, Privy                |
+| Frontend        | Next.js 15, wagmi, viem, RainbowKit, Privy, TailwindCSS |
+| Auth            | SIWE wallet signatures + Privy (email/phone) → JWT      |
+| Bill API        | ClubKonnect (airtime, data, TV, electricity)            |
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+## Requirements
 
----
-
-## Project Structure
-
-This is a monorepo managed by **Turborepo** with the following structure:
-
-* `apps/web` — Next.js application with embedded UI components and utilities
-
-
----
-
-## Learn More
-
-* [Next.js Documentation](https://nextjs.org/docs)
-* [Celo Documentation](https://docs.celo.org/)
-* [Base Documentation](https://docs.base.org/)
-* [Turborepo Documentation](https://turbo.build/repo/docs)
-* [shadcn/ui Documentation](https://ui.shadcn.com/)
-
+- Node.js >= 18
+- pnpm >= 9
+- PostgreSQL (for backend)
+- Foundry (for contracts)
