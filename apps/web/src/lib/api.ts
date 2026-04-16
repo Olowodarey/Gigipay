@@ -134,6 +134,33 @@ export interface UserProfile {
   updatedAt: string;
 }
 
+// ─── Bills / Admin ────────────────────────────────────────────────────────────
+
+export interface TokenBalance {
+  symbol: string;
+  address: string;
+  raw: string;
+  formatted: string;
+  decimals: number;
+}
+
+export interface ChainBalances {
+  chainId: number;
+  chainName: string;
+  contractAddress: string;
+  balances: TokenBalance[];
+}
+
+export function getBillBalances(): Promise<ChainBalances[]> {
+  return apiFetch("/bills/balances");
+}
+
+export function getBillBalancesByChain(
+  chainId: number,
+): Promise<ChainBalances> {
+  return apiFetch(`/bills/balances/chain?chainId=${chainId}`);
+}
+
 // ─── Rates (CoinGecko via backend) ───────────────────────────────────────────
 
 export interface TokenRate {
