@@ -6,6 +6,9 @@ const nextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       "@react-native-async-storage/async-storage": false,
+      "@solana/wallet-adapter-react": false,
+      "@solana/wallet-adapter-base": false,
+      "@solana/web3.js": false,
     };
     return config;
   },
