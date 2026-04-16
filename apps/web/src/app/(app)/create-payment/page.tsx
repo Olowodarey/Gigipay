@@ -237,7 +237,9 @@ function CreatePageContent() {
   };
 
   const handleInputChange = (field: keyof GiveawayData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Auto-trim leading/trailing spaces on voucherName to prevent mismatch
+    const sanitized = field === "name" ? value.trimStart() : value;
+    setFormData((prev) => ({ ...prev, [field]: sanitized }));
   };
 
   const addWinner = () => {
@@ -264,7 +266,13 @@ function CreatePageContent() {
   };
 
   const validateForm = () => {
-    if (!formData.name || !formData.totalPrize || !formData.expiryHours) {
+    // Trim voucher name before validation
+    const trimmedName = formData.name.trim();
+    if (trimmedName !== formData.name) {
+      setFormData((prev) => ({ ...prev, name: trimmedName }));
+    }
+
+    if (!trimmedName || !formData.totalPrize || !formData.expiryHours) {
       showToast({
         title: "Missing Information",
         description:

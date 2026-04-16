@@ -139,7 +139,12 @@ function ClaimPageContent() {
     `🎊 I just received ${prizeAmount} ${tokenSymbol} on Gigipay! 🎉\n\nGigipay makes crypto payments simple and secure on ${getChainName()}! \n\nTry Gigipay for seamless crypto payments! 🎁\n\n#Gigipay #CryptoPayments`;
 
   const validateCode = () => {
-    if (!voucherName.trim()) {
+    const trimmedName = voucherName.trim();
+    const trimmedCode = claimCode.trim();
+    setVoucherName(trimmedName);
+    setClaimCode(trimmedCode);
+
+    if (!trimmedName) {
       toast({
         title: "Missing Voucher Name",
         description: "Please enter the voucher name",
@@ -148,7 +153,7 @@ function ClaimPageContent() {
       return;
     }
 
-    if (!claimCode.trim()) {
+    if (!trimmedCode) {
       toast({
         title: "Missing Code",
         description: "Please enter a claim code",
@@ -385,7 +390,14 @@ function ClaimPageContent() {
                     placeholder="e.g., Summer Giveaway"
                     value={voucherName}
                     onChange={(e) =>
-                      setVoucherName((e.target as HTMLInputElement).value)
+                      setVoucherName(
+                        (e.target as HTMLInputElement).value.trimStart(),
+                      )
+                    }
+                    onBlur={(e) =>
+                      setVoucherName(
+                        (e.target as HTMLInputElement).value.trim(),
+                      )
                     }
                     className={`${inputClass} text-center`}
                   />
@@ -402,7 +414,12 @@ function ClaimPageContent() {
                     placeholder="STRK-XXXXXXXX"
                     value={claimCode}
                     onChange={(e) =>
-                      setClaimCode((e.target as HTMLInputElement).value)
+                      setClaimCode(
+                        (e.target as HTMLInputElement).value.trimStart(),
+                      )
+                    }
+                    onBlur={(e) =>
+                      setClaimCode((e.target as HTMLInputElement).value.trim())
                     }
                     className={`${inputClass} font-mono text-center text-lg`}
                   />
