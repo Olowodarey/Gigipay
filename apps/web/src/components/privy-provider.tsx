@@ -24,7 +24,9 @@ export function PrivyAuthProvider({ children }: { children: React.ReactNode }) {
         defaultChain: celo,
         supportedChains: [celo, base],
         embeddedWallets: {
-          createOnLogin: "users-without-wallets",
+          ethereum: {
+            createOnLogin: "users-without-wallets",
+          },
         },
       }}
     >
