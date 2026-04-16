@@ -15,6 +15,7 @@ const navLinks = [
   { name: "Create payment", href: "/create-payment" },
   { name: "Claim payment", href: "/claim-payment" },
   { name: "Reclaim payment", href: "/reclaim-payment" },
+  { name: "Buy Airtime", href: "/buy-airtime" },
 ];
 
 export function Navbar() {
