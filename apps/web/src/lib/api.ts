@@ -134,6 +134,32 @@ export interface UserProfile {
   updatedAt: string;
 }
 
+// ─── Rates (CoinGecko via backend) ───────────────────────────────────────────
+
+export interface TokenRate {
+  coinId: string;
+  ngn: number;
+  usd: number;
+  updatedAt: number;
+}
+
+export interface ConvertResult {
+  tokenAmount: string;
+  rate: number;
+  coinId: string;
+}
+
+export function getAllRates(): Promise<Record<string, TokenRate>> {
+  return apiFetch("/rates");
+}
+
+export function convertNgnToToken(
+  chainId: number,
+  amount: number,
+): Promise<ConvertResult> {
+  return apiFetch(`/rates/convert?chainId=${chainId}&amount=${amount}`);
+}
+
 // ─── Airtime ──────────────────────────────────────────────────────────────────
 
 export interface AirtimeNetwork {

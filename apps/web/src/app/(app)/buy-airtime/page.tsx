@@ -30,6 +30,7 @@ import {
   useTokenApproval,
   useTokenAllowance,
 } from "@/hooks/useTokenApproval";
+import { useRate } from "@/hooks/useRate";
 
 // ─── Token config per chain ───────────────────────────────────────────────────
 
@@ -127,6 +128,15 @@ function BuyAirtimeContent() {
     reset,
   } = usePayBillAirtime();
 
+  // Live NGN → token conversion
+  const {
+    tokenAmount,
+    rate,
+    coinId,
+    isLoading: rateLoading,
+    error: rateError,
+  } = useRate(chain?.id, amount);
+
   const selectedNetwork = NETWORKS.find((n) => n.code === networkCode)!;
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
@@ -155,7 +165,11 @@ function BuyAirtimeContent() {
       showNotice("error", "Maximum airtime amount is ₦200,000");
       return false;
     }
-    if (displayBalance < amt) {
+    if (!tokenAmount) {
+      showNotice("error", "Waiting for exchange rate — try again in a moment");
+      return false;
+    }
+    if (displayBalance < parseFloat(tokenAmount)) {
       showNotice("error", `Insufficient ${selectedToken} balance`);
       return false;
     }
@@ -163,23 +177,29 @@ function BuyAirtimeContent() {
   };
 
   const handleSubmit = async () => {
-    if (!validate()) return;
+    if (!validate() || !tokenAmount) return;
     setNotice(null);
 
     try {
       // ERC20 approval check
       if (!isNative) {
-        const required = parseUnits(amount, decimals);
+        const required = parseUnits(tokenAmount, decimals);
         const { data: fresh } = await refetchAllowance();
         const current = fresh ?? allowance;
         if (current < required) {
           showNotice("info", "Approving token spend — confirm in your wallet");
-          approve(amount, decimals);
+          approve(tokenAmount, decimals);
           return;
         }
       }
 
-      payAirtime(tokenAddress, amount, decimals, networkCode, phone.trim());
+      payAirtime(
+        tokenAddress,
+        tokenAmount,
+        decimals,
+        networkCode,
+        phone.trim(),
+      );
     } catch (err: any) {
       showNotice("error", err.message ?? "Transaction failed");
     }
@@ -187,9 +207,15 @@ function BuyAirtimeContent() {
 
   // After approval confirmed, re-submit
   useEffect(() => {
-    if (approvalConfirmed) {
+    if (approvalConfirmed && tokenAmount) {
       showNotice("info", "Approval confirmed — submitting payment…");
-      payAirtime(tokenAddress, amount, decimals, networkCode, phone.trim());
+      payAirtime(
+        tokenAddress,
+        tokenAmount,
+        decimals,
+        networkCode,
+        phone.trim(),
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [approvalConfirmed]);
@@ -390,15 +416,33 @@ function BuyAirtimeContent() {
                     <span className="font-medium">{phone}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Amount</span>
+                    <span className="text-muted-foreground">Airtime value</span>
                     <span className="font-medium">₦{amount}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Pay with</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">You pay</span>
                     <span className="font-medium">
-                      {amount} {selectedToken}
+                      {rateLoading ? (
+                        <span className="text-muted-foreground animate-pulse">
+                          fetching rate…
+                        </span>
+                      ) : rateError ? (
+                        <span className="text-destructive text-xs">
+                          {rateError}
+                        </span>
+                      ) : tokenAmount ? (
+                        `${tokenAmount} ${selectedToken}`
+                      ) : (
+                        "—"
+                      )}
                     </span>
                   </div>
+                  {rate && coinId && !rateLoading && (
+                    <p className="text-xs text-muted-foreground pt-1 border-t border-border">
+                      1 {selectedToken} ≈ ₦{rate.toLocaleString()} · rate via
+                      CoinGecko
+                    </p>
+                  )}
                 </div>
               )}
 
