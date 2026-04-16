@@ -134,6 +134,28 @@ export interface UserProfile {
   updatedAt: string;
 }
 
+// ─── Airtime ──────────────────────────────────────────────────────────────────
+
+export interface AirtimeNetwork {
+  networkCode: string;
+  networkName: string;
+  discountPercent: number;
+}
+
+export function getAirtimeNetworks(): Promise<AirtimeNetwork[]> {
+  return apiFetch("/airtime/networks");
+}
+
+export function queryAirtimeTransaction(params: {
+  orderId?: string;
+  requestId?: string;
+}): Promise<Record<string, string>> {
+  const qs = params.orderId
+    ? `orderId=${params.orderId}`
+    : `requestId=${params.requestId}`;
+  return apiFetch(`/airtime/query?${qs}`);
+}
+
 // ─── Privy Login ──────────────────────────────────────────────────────────────
 
 export function privyLogin(payload: {
