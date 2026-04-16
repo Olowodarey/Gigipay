@@ -182,6 +182,34 @@ export function queryAirtimeTransaction(params: {
   return apiFetch(`/airtime/query?${qs}`);
 }
 
+export interface AirtimeOrderStatus {
+  id: string;
+  status: "pending" | "processing" | "fulfilled" | "failed";
+  providerOrderId: string | null;
+  providerRemark: string | null;
+  amountNgn: number;
+  phoneNumber: string;
+  networkCode: string;
+}
+
+export function registerAirtimeOrder(payload: {
+  chainId: number;
+  networkCode: string;
+  phoneNumber: string;
+  amountNgn: number;
+  txHash: string;
+  chainOrderId?: string;
+}): Promise<AirtimeOrderStatus> {
+  return apiFetch("/airtime/orders/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getAirtimeOrderStatus(id: string): Promise<AirtimeOrderStatus> {
+  return apiFetch(`/airtime/orders/${id}`);
+}
+
 // ─── Privy Login ──────────────────────────────────────────────────────────────
 
 export function privyLogin(payload: {

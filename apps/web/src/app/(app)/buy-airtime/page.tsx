@@ -31,6 +31,7 @@ import {
   useTokenAllowance,
 } from "@/hooks/useTokenApproval";
 import { useRate } from "@/hooks/useRate";
+import { registerAirtimeOrder, type AirtimeOrderStatus } from "@/lib/api";
 
 // ─── Token config per chain ───────────────────────────────────────────────────
 
@@ -81,6 +82,10 @@ function BuyAirtimeContent() {
   const [networkCode, setNetworkCode] = useState<NetworkCode>("01");
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState("");
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [orderStatus, setOrderStatus] = useState<AirtimeOrderStatus | null>(
+    null,
+  );
   const [notice, setNotice] = useState<{
     type: "error" | "success" | "info";
     msg: string;
@@ -224,6 +229,28 @@ function BuyAirtimeContent() {
     if (error) showNotice("error", error.message ?? "Transaction failed");
   }, [error]);
 
+  // Register order with backend after tx confirms so it can fulfill the airtime
+  useEffect(() => {
+    if (!isConfirmed || !hash || !chain?.id || !tokenAmount) return;
+
+    registerAirtimeOrder({
+      chainId: chain.id,
+      networkCode,
+      phoneNumber: phone.trim(),
+      amountNgn: parseFloat(amount),
+      txHash: hash,
+    })
+      .then((order) => {
+        setOrderId(order.id);
+        setOrderStatus(order);
+      })
+      .catch((err) => {
+        // Non-fatal — tx already succeeded on-chain
+        console.error("Failed to register order with backend:", err);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConfirmed, hash]);
+
   const explorerBase =
     chain?.id === 42220
       ? "https://celoscan.io/tx/"
@@ -252,6 +279,27 @@ function BuyAirtimeContent() {
                   has been sent to the contract. The airtime will be delivered
                   shortly.
                 </p>
+
+                {orderStatus && (
+                  <div
+                    className={`w-full rounded-md border px-3 py-2 text-sm text-center ${
+                      orderStatus.status === "fulfilled"
+                        ? "border-green-500 bg-green-50 text-green-700"
+                        : orderStatus.status === "failed"
+                          ? "border-destructive bg-destructive/10 text-destructive"
+                          : "border-border bg-muted/50 text-muted-foreground"
+                    }`}
+                  >
+                    {orderStatus.status === "fulfilled" &&
+                      "✅ Airtime delivered!"}
+                    {orderStatus.status === "failed" &&
+                      `❌ Delivery failed: ${orderStatus.providerRemark}`}
+                    {(orderStatus.status === "pending" ||
+                      orderStatus.status === "processing") &&
+                      "⏳ Delivering airtime…"}
+                  </div>
+                )}
+
                 <a
                   href={`${explorerBase}${hash}`}
                   target="_blank"
@@ -269,10 +317,12 @@ function BuyAirtimeContent() {
                       setPhone("");
                       setAmount("");
                       setNotice(null);
+                      setOrderId(null);
+                      setOrderStatus(null);
                     }}
                   >
                     Buy Again
-                  </Button>
+                  </Button>{" "}
                   <Button asChild className="flex-1">
                     <Link href="/">Home</Link>
                   </Button>
