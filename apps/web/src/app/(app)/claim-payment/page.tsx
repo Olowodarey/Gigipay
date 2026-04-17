@@ -162,19 +162,10 @@ function ClaimPageContent() {
       return;
     }
 
-    // Check if voucher exists
-    if (voucherIds.length === 0) {
-      toast({
-        title: "Invalid Voucher",
-        description: "No vouchers found with this name",
-        variant: "destructive",
-      });
-      setClaimState("invalid");
-      return;
-    }
-
-    // Set the first voucher ID to fetch details
-    setVoucherId(Number(voucherIds[0]));
+    // Don't check voucherIds here — they load async after voucherName is set.
+    // Just move to valid state and let the voucher details load.
+    // The claim button will be disabled if the voucher doesn't exist.
+    setVoucherId(null);
     setClaimState("valid");
     setPrizeAmount("???");
   };
@@ -232,6 +223,25 @@ function ClaimPageContent() {
       });
     }
   };
+
+  // Once voucherIds loads after validateCode, set the first ID
+  useEffect(() => {
+    if (claimState !== "valid") return;
+    if (isLoadingVouchers) return;
+
+    if (voucherIds.length > 0) {
+      setVoucherId(Number(voucherIds[0]));
+    } else if (voucherName) {
+      // Lookup finished and nothing found
+      toast({
+        title: "Invalid Voucher",
+        description: "No vouchers found with this name",
+        variant: "destructive",
+      });
+      setClaimState("invalid");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voucherIds, isLoadingVouchers]);
 
   // Handle successful claim
   useEffect(() => {
