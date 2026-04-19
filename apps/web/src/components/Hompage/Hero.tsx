@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Smartphone, Users, Zap } from "lucide-react";
 import { Mail, Wallet, CreditCard, Gift } from "lucide-react";
 
 const Hero = () => {
