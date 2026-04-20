@@ -6,8 +6,344 @@ import { useUser } from "@/hooks/useUser";
 import { usePrivyAuth } from "@/hooks/usePrivyAuth";
 import { usePrivy } from "@privy-io/react-auth";
 import { ClientOnly } from "@/components/batch-payment/ClientOnly";
-import { Copy, Check, ExternalLink, Wallet, ArrowRight } from "lucide-react";
+import {
+  Copy,
+  Check,
+  ExternalLink,
+  Wallet,
+  ArrowRight,
+  KeyRound,
+  AlertTriangle,
+  X,
+} from "lucide-react";
 import Link from "next/link";
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button
+      onClick={copy}
+      className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      title="Copy to clipboard"
+    >
+      {copied ? (
+        <Check className="h-3.5 w-3.5 text-green-500" />
+      ) : (
+        <Copy className="h-3.5 w-3.5" />
+      )}
+      {copied ? "Copied!" : "Copy"}
+    </button>
+  );
+}
+
+function ExportKeyWarningModal({
+  onConfirm,
+  onCancel,
+}: {
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+      <div className="bg-card border border-destructive/50 rounded-xl p-6 max-w-md w-full space-y-4 shadow-xl">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">
+              Export Private Key
+            </h2>
+          </div>
+          <button
+            onClick={onCancel}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-4 space-y-2">
+          <p className="text-sm font-semibold text-destructive">
+            ⚠️ Read this carefully before continuing
+          </p>
+          <ul className="text-sm text-foreground space-y-1.5 list-disc list-inside">
+            <li>
+              Your private key gives <strong>full access</strong> to your wallet
+              and all funds
+            </li>
+            <li>
+              <strong>Never share it</strong> with anyone — not even Gigipay
+              support
+            </li>
+            <li>
+              Anyone with your private key can{" "}
+              <strong>steal all your crypto</strong>
+            </li>
+            <li>Store it somewhere safe and offline if you save it</li>
+            <li>
+              Gigipay cannot recover your funds if your key is compromised
+            </li>
+          </ul>
+        </div>
+
+        <p className="text-sm text-muted-foreground">
+          Only export your key if you want to import this wallet into another
+          app like MetaMask or Rabby.
+        </p>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 h-10 rounded-md border border-border text-sm font-medium hover:bg-muted transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 h-10 rounded-md bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors"
+          >
+            I understand, export key
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileContent() {
+  const { profile, loading, isLoggedIn, isPrivyUser, logout } = useUser();
+  const { embeddedWallet } = usePrivyAuth();
+  const { createWallet, exportWallet } = usePrivy();
+  const router = useRouter();
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [showExportWarning, setShowExportWarning] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !isLoggedIn) router.push("/");
+  }, [loading, isLoggedIn, router]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-muted-foreground text-sm">Loading profile...</div>
+      </div>
+    );
+  }
+
+  if (!profile) return null;
+
+  const walletAddress =
+    embeddedWallet?.address ??
+    (profile.address.startsWith("privy:") ? null : profile.address);
+
+  const hasWallet = !!walletAddress;
+  const isEmbeddedWallet = !!embeddedWallet;
+  const shortAddress = walletAddress
+    ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+    : null;
+
+  const handleCreateWallet = async () => {
+    setCreating(true);
+    setCreateError(null);
+    try {
+      await createWallet();
+      window.location.reload();
+    } catch (err: any) {
+      setCreateError(err?.message || "Failed to create wallet");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleExportKey = async () => {
+    setShowExportWarning(false);
+    try {
+      await exportWallet();
+    } catch (err: any) {
+      console.error("Export failed:", err);
+    }
+  };
+
+  return (
+    <>
+      {showExportWarning && (
+        <ExportKeyWarningModal
+          onConfirm={handleExportKey}
+          onCancel={() => setShowExportWarning(false)}
+        />
+      )}
+
+      <div className="container max-w-lg mx-auto py-12 px-4">
+        <div className="rounded-xl border border-border bg-card p-8 space-y-6">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center text-3xl">
+              {isPrivyUser ? "✉️" : "🦊"}
+            </div>
+            <div className="text-center">
+              <h1 className="text-xl font-semibold">
+                {profile.displayName ||
+                  profile.email ||
+                  profile.phone ||
+                  "My Account"}
+              </h1>
+              <p className="text-xs text-muted-foreground mt-1">
+                {isPrivyUser
+                  ? "Email / Phone login"
+                  : profile.isMiniPay
+                    ? "MiniPay"
+                    : "Wallet login"}
+              </p>
+            </div>
+          </div>
+
+          <hr className="border-border" />
+
+          <div className="space-y-3">
+            {profile.email && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Email</span>
+                <span className="text-sm font-medium">{profile.email}</span>
+              </div>
+            )}
+            {profile.phone && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Phone</span>
+                <span className="text-sm font-medium">{profile.phone}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">
+                Member since
+              </span>
+              <span className="text-sm font-medium">
+                {new Date(profile.createdAt).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+
+          <hr className="border-border" />
+
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold">Wallet</h2>
+
+            {hasWallet ? (
+              <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-muted-foreground">Address</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono">{shortAddress}</span>
+                    <CopyButton text={walletAddress!} />
+                  </div>
+                </div>
+                <div className="rounded-md bg-background border border-border px-3 py-2 flex items-center justify-between gap-2">
+                  <span className="text-xs font-mono text-muted-foreground truncate">
+                    {walletAddress}
+                  </span>
+                  <CopyButton text={walletAddress!} />
+                </div>
+                <a
+                  href={`https://celoscan.io/address/${walletAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  View on Celoscan
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+
+                {/* Export private key — only for Privy embedded wallets */}
+                {isEmbeddedWallet && (
+                  <div className="pt-2 border-t border-border">
+                    <button
+                      onClick={() => setShowExportWarning(true)}
+                      className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      <KeyRound className="h-3.5 w-3.5" />
+                      Export private key
+                    </button>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Use to import this wallet into MetaMask or Rabby
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-border p-5 text-center space-y-3">
+                <Wallet className="h-8 w-8 mx-auto text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">No wallet yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Create a free embedded wallet to send and receive crypto
+                  </p>
+                </div>
+                {createError && (
+                  <p className="text-xs text-destructive">{createError}</p>
+                )}
+                <button
+                  onClick={handleCreateWallet}
+                  disabled={creating}
+                  className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Wallet className="h-4 w-4" />
+                  {creating ? "Creating wallet..." : "Create Wallet"}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <hr className="border-border" />
+
+          {/* Quick actions */}
+          <div className="space-y-2">
+            <h2 className="text-sm font-semibold">Quick Actions</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <Link
+                href="/create-payment"
+                prefetch={true}
+                className="flex items-center justify-between rounded-lg border border-border bg-muted/40 hover:bg-accent/10 p-3 transition-colors"
+              >
+                <span className="text-sm font-medium">Create Payment</span>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
+              <Link
+                href="/claim-payment"
+                prefetch={true}
+                className="flex items-center justify-between rounded-lg border border-border bg-muted/40 hover:bg-accent/10 p-3 transition-colors"
+              >
+                <span className="text-sm font-medium">Claim Payment</span>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
+            </div>
+          </div>
+
+          <hr className="border-border" />
+
+          <button
+            onClick={logout}
+            className="w-full inline-flex items-center justify-center rounded-md text-sm font-medium border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground h-10 px-4 py-2 transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <ClientOnly>
+      <ProfileContent />
+    </ClientOnly>
+  );
+}
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
