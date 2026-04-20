@@ -3,24 +3,36 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, ExternalLink } from "lucide-react";
+import { Menu } from "lucide-react";
+import { useAccount } from "wagmi";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { WalletConnectButton } from "@/components/connect-button";
 
-const navLinks = [
+const ADMIN_ADDRESSES = (process.env.NEXT_PUBLIC_ADMIN_ADDRESSES || "")
+  .split(",")
+  .map((a) => a.trim().toLowerCase())
+  .filter(Boolean);
+
+const baseNavLinks = [
   { name: "Home", href: "/" },
   { name: "Batch payment", href: "/batch-payment" },
   { name: "Create payment", href: "/create-payment" },
   { name: "Claim payment", href: "/claim-payment" },
   { name: "Reclaim payment", href: "/reclaim-payment" },
   { name: "Buy Airtime", href: "/buy-airtime" },
-  { name: "Admin", href: "/admin/bills" },
 ];
+
+const adminLink = { name: "Admin", href: "/admin/bills" };
 
 export function Navbar() {
   const pathname = usePathname();
+  const { address } = useAccount();
+
+  const isAdmin = !!address && ADMIN_ADDRESSES.includes(address.toLowerCase());
+
+  const navLinks = isAdmin ? [...baseNavLinks, adminLink] : baseNavLinks;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
