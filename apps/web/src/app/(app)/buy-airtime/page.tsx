@@ -251,6 +251,27 @@ function BuyAirtimeContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfirmed, hash]);
 
+  // Poll order status until fulfilled or failed
+  useEffect(() => {
+    if (!orderId) return;
+    if (orderStatus?.status === "fulfilled" || orderStatus?.status === "failed")
+      return;
+
+    const interval = setInterval(async () => {
+      try {
+        const updated = await getAirtimeOrderStatus(orderId);
+        setOrderStatus(updated);
+        if (updated.status === "fulfilled" || updated.status === "failed") {
+          clearInterval(interval);
+        }
+      } catch {
+        // ignore polling errors
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [orderId, orderStatus?.status]);
+
   const explorerBase =
     chain?.id === 42220
       ? "https://celoscan.io/tx/"
