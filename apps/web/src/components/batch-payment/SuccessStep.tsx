@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
 
 interface SuccessStepProps {
@@ -7,6 +13,7 @@ interface SuccessStepProps {
   recipientCount: number;
   totalAmount: number;
   txHash: string | null;
+  chainId?: number;
   onDownloadCSV: () => void;
   onNewBatch: () => void;
 }
@@ -16,14 +23,21 @@ export function SuccessStep({
   recipientCount,
   totalAmount,
   txHash,
+  chainId,
   onDownloadCSV,
   onNewBatch,
 }: SuccessStepProps) {
+  const explorerBase =
+    chainId === 8453 ? "https://basescan.org/tx/" : "https://celoscan.io/tx/";
+  const explorerName = chainId === 8453 ? "Basescan" : "Celoscan";
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>✅ Batch Transfer Complete!</CardTitle>
-        <CardDescription>Your batch payment has been successfully processed</CardDescription>
+        <CardDescription>
+          Your batch payment has been successfully processed
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="p-4 rounded-lg bg-gradient-to-br from-success/10 to-accent/10 border border-success/20">
@@ -41,12 +55,12 @@ export function SuccessStep({
           {txHash && (
             <div className="mt-3 pt-3 border-t border-success/20">
               <a
-                href={`https://celoscan.io/tx/${txHash}`}
+                href={`${explorerBase}${txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm text-primary hover:underline"
               >
-                View on Celoscan
+                View on {explorerName}
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>

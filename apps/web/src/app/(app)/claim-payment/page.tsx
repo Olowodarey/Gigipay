@@ -421,7 +421,7 @@ function ClaimPageContent() {
                   </label>
                   <input
                     id="claimCode"
-                    placeholder="STRK-XXXXXXXX"
+                    placeholder="e.g., GIGIPAY-XXXXXXXX"
                     value={claimCode}
                     onChange={(e) =>
                       setClaimCode(

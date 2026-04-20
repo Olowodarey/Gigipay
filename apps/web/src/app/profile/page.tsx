@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useUser } from "@/hooks/useUser";
 import { usePrivyAuth } from "@/hooks/usePrivyAuth";
 import { usePrivy } from "@privy-io/react-auth";
+import { useAccount } from "wagmi";
 import { ClientOnly } from "@/components/batch-payment/ClientOnly";
 import {
   Copy,
@@ -120,6 +121,7 @@ function ProfileContent() {
   const { profile, loading, isLoggedIn, isPrivyUser, logout } = useUser();
   const { embeddedWallet } = usePrivyAuth();
   const { createWallet, exportWallet } = usePrivy();
+  const { chain } = useAccount();
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -249,12 +251,12 @@ function ProfileContent() {
                   <CopyButton text={walletAddress!} />
                 </div>
                 <a
-                  href={`https://celoscan.io/address/${walletAddress}`}
+                  href={`${chain?.id === 8453 ? "https://basescan.org" : "https://celoscan.io"}/address/${walletAddress}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                 >
-                  View on Celoscan
+                  View on {chain?.id === 8453 ? "Basescan" : "Celoscan"}
                   <ExternalLink className="h-3 w-3" />
                 </a>
 

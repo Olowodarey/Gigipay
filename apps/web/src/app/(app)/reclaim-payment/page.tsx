@@ -394,7 +394,7 @@ function ReclaimPageContent() {
                       Transaction
                     </span>
                     <a
-                      href={`https://celoscan.io/tx/${txHash}`}
+                      href={`${chain?.id === 8453 ? "https://basescan.org" : "https://celoscan.io"}/tx/${txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm font-mono text-accent hover:underline flex items-center gap-1 break-all text-right"

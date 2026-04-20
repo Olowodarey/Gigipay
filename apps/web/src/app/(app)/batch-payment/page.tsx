@@ -402,6 +402,7 @@ function BatchPaymentContent() {
               recipientCount={recipients.length}
               totalAmount={totalAmount()}
               txHash={txHash}
+              chainId={chain?.id}
               onDownloadCSV={downloadCSV}
               onNewBatch={() => {
                 setStep(1);
