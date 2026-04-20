@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Smartphone, Users, Zap } from "lucide-react";
+import { ArrowRight, Smartphone, Users, Zap, Phone } from "lucide-react";
 import { Mail, Wallet, CreditCard, Gift } from "lucide-react";
 
 const Hero = () => {
@@ -47,6 +47,16 @@ const Hero = () => {
                     Claim Payment
                   </Link>
                 </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="text-base bg-transparent"
+                >
+                  <Link href="/buy-airtime" prefetch={true}>
+                    Buy Airtime
+                  </Link>
+                </Button>
               </div>
             </div>
 
@@ -83,6 +93,83 @@ const Hero = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+              Perfect for Every Occasion
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Whether you're paying your team, running a giveaway, or gifting
+              airtime, Gigipay makes it simple
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Payments Feature */}
+            <div className="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
+              <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
+                <Wallet className="h-6 w-6 text-accent" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                Team Payments
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Pay your team members instantly with crypto. No bank accounts
+                needed.
+              </p>
+              <Link
+                href="/create-payment"
+                className="text-accent hover:underline text-sm font-medium"
+              >
+                Create Payment →
+              </Link>
+            </div>
+
+            {/* Giveaways Feature */}
+            <div className="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
+              <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
+                <Gift className="h-6 w-6 text-accent" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                Giveaways & Contests
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Run viral giveaways with mystery prizes. Perfect for engagement
+                and rewards.
+              </p>
+              <Link
+                href="/create-payment"
+                className="text-accent hover:underline text-sm font-medium"
+              >
+                Start Giveaway →
+              </Link>
+            </div>
+
+            {/* Airtime Feature */}
+            <div className="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
+              <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
+                <Phone className="h-6 w-6 text-accent" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                Gift Airtime
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Send airtime to anyone instantly. Perfect for gifts, rewards, or
+                employee benefits.
+              </p>
+              <Link
+                href="/buy-airtime"
+                className="text-accent hover:underline text-sm font-medium"
+              >
+                Buy Airtime →
+              </Link>
             </div>
           </div>
         </div>
