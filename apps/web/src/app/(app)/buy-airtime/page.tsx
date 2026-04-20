@@ -31,7 +31,11 @@ import {
   useTokenAllowance,
 } from "@/hooks/useTokenApproval";
 import { useRate } from "@/hooks/useRate";
-import { registerAirtimeOrder, type AirtimeOrderStatus } from "@/lib/api";
+import {
+  registerAirtimeOrder,
+  getAirtimeOrderStatus,
+  type AirtimeOrderStatus,
+} from "@/lib/api";
 
 // ─── Token config per chain ───────────────────────────────────────────────────
 
