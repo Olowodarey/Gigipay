@@ -1,6 +1,7 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
 import { usePrivyAuth } from "@/hooks/usePrivyAuth";
 import { useUser } from "@/hooks/useUser";
@@ -19,7 +20,8 @@ function ButtonSkeleton() {
 
 function PrivyLoginButton() {
   const { login, authenticated, ready } = usePrivyAuth();
-  if (!ready || authenticated) return null;
+  const { isConnected } = useAccount();
+  if (!ready || authenticated || isConnected) return null;
 
   return (
     <button
