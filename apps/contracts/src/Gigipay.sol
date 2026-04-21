@@ -11,6 +11,9 @@ import {
 import {
     PausableUpgradeable
 } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {
+    UUPSUpgradeable
+} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {
     SafeERC20
@@ -22,6 +25,7 @@ contract Gigipay is
     Initializable,
     PausableUpgradeable,
     AccessControlUpgradeable,
+    UUPSUpgradeable,
     IGigipayErrors,
     IGigipayEvents
 {
@@ -72,6 +76,10 @@ contract Gigipay is
     // Bill Payment
     uint256 private _billOrderCounter;
 
+    // Tracks bill payment funds per token (address(0) = native)
+    // Only these funds can be withdrawn via withdrawBillFunds
+    mapping(address => uint256) public billFundsBalance;
+
     // Reentrancy guard
     uint256 private _status;
     uint256 private constant _NOT_ENTERED = 1;
@@ -106,12 +114,20 @@ contract Gigipay is
     ) public initializer {
         __Pausable_init();
         __AccessControl_init();
+        __UUPSUpgradeable_init();
         _status = _NOT_ENTERED;
 
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(PAUSER_ROLE, pauser);
         _grantRole(WITHDRAWER_ROLE, defaultAdmin);
     }
+
+    /// @dev Only DEFAULT_ADMIN_ROLE can authorize an upgrade
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        override
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {}
 
     /**
      * @notice Create multiple payment vouchers under ONE voucher name (gas efficient!)
@@ -421,6 +437,9 @@ contract Gigipay is
             IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         }
 
+        // Track bill funds separately from voucher funds
+        billFundsBalance[token] += amount;
+
         orderId = _billOrderCounter++;
 
         emit BillPaymentInitiated(
@@ -449,15 +468,18 @@ contract Gigipay is
         if (to == address(0)) revert InvalidRecipient();
         if (amount == 0) revert InvalidAmount();
 
+        // Only allow withdrawing bill payment funds — never voucher funds
+        if (billFundsBalance[token] < amount) revert InsufficientContractBalance();
+
+        // Deduct from tracked balance before transfer (checks-effects-interactions)
+        billFundsBalance[token] -= amount;
+
+        emit BillFundsWithdrawn(to, token, amount);
+
         if (token == address(0)) {
-            if (address(this).balance < amount) revert InsufficientContractBalance();
-            emit BillFundsWithdrawn(to, token, amount);
             (bool success, ) = payable(to).call{value: amount}("");
             if (!success) revert TransferFailed();
         } else {
-            if (IERC20(token).balanceOf(address(this)) < amount)
-                revert InsufficientContractBalance();
-            emit BillFundsWithdrawn(to, token, amount);
             IERC20(token).safeTransfer(to, amount);
         }
     }
