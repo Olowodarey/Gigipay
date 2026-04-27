@@ -28,7 +28,8 @@ export type BatchTransferRecipient = {
 };
 
 /**
- * Hook for batch transferring native tokens or ERC20 tokens
+ * Hook for batch transferring native tokens or ERC20 tokens to multiple recipients
+ * in a single on-chain transaction.
  */
 export function useBatchTransfer() {
   const { chain } = useAccount();
@@ -73,7 +74,8 @@ export function useBatchTransfer() {
 }
 
 /**
- * Hook to check if contract is paused — reads from backend API
+ * Hook to check if the Gigipay contract is paused on the current chain.
+ * Reads from the backend API — no direct RPC call needed.
  */
 export function useContractPaused() {
   const { chain } = useAccount();
