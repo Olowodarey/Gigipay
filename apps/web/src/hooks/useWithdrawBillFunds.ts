@@ -20,6 +20,10 @@ const WITHDRAW_ABI = [
   },
 ] as const;
 
+/**
+ * Hook for withdrawing bill funds from the Gigipay contract.
+ * Only callable by the contract owner / admin.
+ */
 export function useWithdrawBillFunds() {
   const { chain } = useAccount();
   const {
