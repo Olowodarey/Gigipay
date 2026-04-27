@@ -4,6 +4,7 @@ interface ProgressIndicatorProps {
   currentStep: number;
 }
 
+/** Displays a 3-step progress indicator for the batch payment flow. */
 export function ProgressIndicator({ currentStep }: ProgressIndicatorProps) {
   const steps = [
     { number: 1, label: "Setup" },
@@ -29,11 +30,15 @@ export function ProgressIndicator({ currentStep }: ProgressIndicatorProps) {
                   s.number < currentStep
                     ? "bg-success text-success-foreground"
                     : s.number === currentStep
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
                 } ${s.number === 1 ? "ml-0" : "mx-2"} ${s.number === 3 ? "mr-0" : ""}`}
               >
-                {s.number < currentStep ? <Check className="h-4 w-4" /> : s.number}
+                {s.number < currentStep ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  s.number
+                )}
               </div>
               {s.number < 3 && (
                 <div
@@ -43,7 +48,9 @@ export function ProgressIndicator({ currentStep }: ProgressIndicatorProps) {
                 />
               )}
             </div>
-            <span className="text-xs sm:text-sm text-muted-foreground mt-2">{s.label}</span>
+            <span className="text-xs sm:text-sm text-muted-foreground mt-2">
+              {s.label}
+            </span>
           </div>
         ))}
       </div>
