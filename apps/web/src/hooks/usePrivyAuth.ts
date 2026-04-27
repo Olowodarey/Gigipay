@@ -6,6 +6,12 @@ import { privyLogin } from "@/lib/api";
 
 const TOKEN_KEY = "gigipay_token";
 
+/**
+ * Handles Privy authentication lifecycle:
+ * - Syncs the Privy access token with the Gigipay backend on login
+ * - Clears the stored JWT on logout
+ * - Exposes the embedded wallet created for email/phone users
+ */
 export function usePrivyAuth() {
   const {
     ready,
