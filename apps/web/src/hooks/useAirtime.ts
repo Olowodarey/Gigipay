@@ -31,6 +31,10 @@ export const NETWORKS = [
 
 export type NetworkCode = "01" | "02" | "03" | "04";
 
+/**
+ * Hook for paying airtime bills via the Gigipay smart contract.
+ * Hashes the recipient phone number on-chain for privacy.
+ */
 export function usePayBillAirtime() {
   const { chain } = useAccount();
   const {
