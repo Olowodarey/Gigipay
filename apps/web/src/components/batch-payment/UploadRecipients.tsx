@@ -2,10 +2,13 @@
 
 import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
-
-
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export type UploadRecipient = { address: string; amount: string };
 
@@ -13,6 +16,11 @@ interface Props {
   onParsed: (rows: UploadRecipient[]) => void;
 }
 
+/**
+ * Handles CSV/Excel file uploads for batch payment recipient lists.
+ * Parses address + amount columns, validates rows, and shows a preview
+ * before the user confirms the import.
+ */
 export default function UploadRecipients({ onParsed }: Props) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [fileName, setFileName] = useState<string>("");
@@ -62,7 +70,10 @@ export default function UploadRecipients({ onParsed }: Props) {
         setErrors("Unsupported file type. Please upload .csv, .xlsx or .xls");
       }
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Could not read file. Please try again.";
+      const errorMessage =
+        e instanceof Error
+          ? e.message
+          : "Could not read file. Please try again.";
       setErrors(errorMessage);
     }
   };
@@ -88,30 +99,38 @@ export default function UploadRecipients({ onParsed }: Props) {
     const amountKey = findKey(["amount", "value", "amt"]);
 
     if (!addressKey || !amountKey) {
-      setErrors("Required columns not found. Make sure your header contains 'address' and 'amount' (case-insensitive).",
+      setErrors(
+        "Required columns not found. Make sure your header contains 'address' and 'amount' (case-insensitive).",
       );
       return;
     }
 
     const mapped: UploadRecipient[] = rows
-      .map((r) => ({ 
-        address: String(r[addressKey] || "").trim(), 
-        amount: String(r[amountKey] || "").trim() 
+      .map((r) => ({
+        address: String(r[addressKey] || "").trim(),
+        amount: String(r[amountKey] || "").trim(),
       }))
       .filter((r) => {
         const hasAddress = r.address.length > 0;
-        const hasValidAmount = r.amount.length > 0 && !isNaN(parseFloat(r.amount)) && parseFloat(r.amount) > 0;
+        const hasValidAmount =
+          r.amount.length > 0 &&
+          !isNaN(parseFloat(r.amount)) &&
+          parseFloat(r.amount) > 0;
         return hasAddress && hasValidAmount;
       });
 
     if (mapped.length === 0) {
-      setErrors("No valid rows found. Ensure each row has a valid address and positive amount.");
+      setErrors(
+        "No valid rows found. Ensure each row has a valid address and positive amount.",
+      );
       return;
     }
 
     const skippedRows = rows.length - mapped.length;
     if (skippedRows > 0) {
-      setWarning(`${skippedRows} row(s) skipped due to missing or invalid data.`);
+      setWarning(
+        `${skippedRows} row(s) skipped due to missing or invalid data.`,
+      );
     }
 
     fullRowsRef.current = mapped;
@@ -143,7 +162,9 @@ export default function UploadRecipients({ onParsed }: Props) {
     <Card>
       <CardHeader>
         <CardTitle>Upload recipients</CardTitle>
-        <CardDescription>Upload a CSV/Excel file with columns: address, amount</CardDescription>
+        <CardDescription>
+          Upload a CSV/Excel file with columns: address, amount
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <input
@@ -176,7 +197,11 @@ export default function UploadRecipients({ onParsed }: Props) {
             Download CSV template
           </Button>
         </div>
-        {fileName && <div className="text-sm text-muted-foreground">Selected: {fileName}</div>}
+        {fileName && (
+          <div className="text-sm text-muted-foreground">
+            Selected: {fileName}
+          </div>
+        )}
         {errors && (
           <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
             {errors}
