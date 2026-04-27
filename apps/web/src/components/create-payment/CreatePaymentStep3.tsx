@@ -19,6 +19,10 @@ interface Props {
   getTweetTemplate: () => string;
 }
 
+/**
+ * Step 3 of the create payment flow.
+ * Displays the generated claim codes with copy/download options and a share template.
+ */
 export default function CreatePaymentStep3({
   winners,
   selectedToken,
@@ -43,19 +47,29 @@ export default function CreatePaymentStep3({
               className="flex items-center justify-between p-2 rounded bg-muted/50 hover:bg-muted transition-colors"
             >
               <div className="flex flex-col">
-                <span className="font-mono text-sm text-foreground">{winner.code}</span>
+                <span className="font-mono text-sm text-foreground">
+                  {winner.code}
+                </span>
                 <span className="text-xs text-muted-foreground">
                   {winner.amount} {selectedToken}
                 </span>
               </div>
-              <Button size="sm" variant="ghost" onClick={() => copyToClipboard(winner.code)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => copyToClipboard(winner.code)}
+              >
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
           ))}
         </div>
 
-        <Button onClick={downloadCSV} variant="outline" className="w-full bg-transparent">
+        <Button
+          onClick={downloadCSV}
+          variant="outline"
+          className="w-full bg-transparent"
+        >
           <Download className="mr-2 h-4 w-4" />
           Download CSV
         </Button>
@@ -67,7 +81,11 @@ export default function CreatePaymentStep3({
               {getTweetTemplate()}
             </p>
           </div>
-          <Button onClick={() => copyToClipboard(getTweetTemplate())} variant="outline" className="w-full">
+          <Button
+            onClick={() => copyToClipboard(getTweetTemplate())}
+            variant="outline"
+            className="w-full"
+          >
             <Copy className="mr-2 h-4 w-4" />
             Copy Template
           </Button>

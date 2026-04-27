@@ -47,6 +47,10 @@ function formatExpiry(expiryHours: string) {
   return `${days}d ${remainingHours}h (${hours} hours)`;
 }
 
+/**
+ * Step 2 of the create payment flow.
+ * Shows a preview of the payment details and handles ERC20 approval + on-chain submission.
+ */
 export default function CreatePaymentStep2({
   formData,
   tokens,

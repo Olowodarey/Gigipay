@@ -44,6 +44,10 @@ interface Props {
   onNext: () => void;
 }
 
+/**
+ * Step 1 of the create payment flow.
+ * Collects payment name, token, prize pool, expiry, and individual winner codes.
+ */
 export default function CreatePaymentStep1({
   formData,
   onChange,
