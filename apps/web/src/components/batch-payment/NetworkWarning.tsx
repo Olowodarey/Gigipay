@@ -7,6 +7,12 @@ interface NetworkWarningProps {
   isPaused: boolean;
 }
 
+/**
+ * Renders contextual warnings for the batch payment page:
+ * - Prompts wallet connection when disconnected
+ * - Warns about unsupported networks
+ * - Alerts when the contract is paused
+ */
 export function NetworkWarning({
   isConnected,
   isCorrectNetwork,
