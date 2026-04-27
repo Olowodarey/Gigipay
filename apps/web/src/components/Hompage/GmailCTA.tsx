@@ -20,6 +20,7 @@ const steps = [
   },
 ];
 
+/** CTA section explaining Gmail-based onboarding via Privy embedded wallets. */
 export default function GmailCTA() {
   return (
     <section className="py-16 md:py-20 px-4 sm:px-6 lg:px-8">

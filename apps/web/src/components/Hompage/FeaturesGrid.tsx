@@ -50,6 +50,7 @@ const features = [
   },
 ];
 
+/** Displays a 3-column grid of Gigipay feature cards with links to each feature. */
 export default function FeaturesGrid() {
   return (
     <section className="py-16 md:py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
