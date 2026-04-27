@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Gift, Mail, Wallet, CheckCircle } from "lucide-react";
 
+/** Hero section with headline, mini flow diagram, CTA buttons, and a mock payment card visual. */
 export default function HeroSection() {
   return (
     <section className="relative py-16 md:py-24 lg:py-32 px-4 sm:px-6 lg:px-8">
