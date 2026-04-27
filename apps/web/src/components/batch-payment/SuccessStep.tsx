@@ -18,6 +18,10 @@ interface SuccessStepProps {
   onNewBatch: () => void;
 }
 
+/**
+ * Step 3 of the batch payment flow.
+ * Displays a success summary with a block explorer link and CSV export option.
+ */
 export function SuccessStep({
   selectedToken,
   recipientCount,

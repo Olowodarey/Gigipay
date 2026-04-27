@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
 type Recipient = { id: string; address: string; amount: string };
@@ -19,6 +25,10 @@ interface ReviewStepProps {
   onSubmit: () => void;
 }
 
+/**
+ * Step 2 of the batch payment flow.
+ * Shows a summary table of recipients and handles ERC20 approval + final submission.
+ */
 export function ReviewStep({
   selectedToken,
   recipients,
@@ -37,7 +47,9 @@ export function ReviewStep({
     <Card>
       <CardHeader>
         <CardTitle>Review Batch</CardTitle>
-        <CardDescription>Confirm recipients and total before sending</CardDescription>
+        <CardDescription>
+          Confirm recipients and total before sending
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Recipients Table */}
@@ -49,7 +61,10 @@ export function ReviewStep({
           </div>
           <div className="divide-y">
             {recipients.map((r) => (
-              <div key={r.id} className="grid grid-cols-2 sm:grid-cols-3 px-3 py-2 text-sm">
+              <div
+                key={r.id}
+                className="grid grid-cols-2 sm:grid-cols-3 px-3 py-2 text-sm"
+              >
                 <div className="font-mono break-all pr-3">{r.address}</div>
                 <div>
                   {r.amount} {selectedToken}
@@ -82,7 +97,8 @@ export function ReviewStep({
         {needsApproval && (
           <div className="p-3 rounded-lg border border-yellow-500 bg-yellow-500/10">
             <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-3">
-              ⚠️ You need to approve the contract to spend your {selectedToken} tokens
+              ⚠️ You need to approve the contract to spend your {selectedToken}{" "}
+              tokens
             </p>
             <Button
               onClick={onApprove}
