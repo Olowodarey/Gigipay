@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Plus, Trash2, ArrowRight } from "lucide-react";
 import UploadRecipients, { UploadRecipient } from "./UploadRecipients";
 
@@ -14,7 +20,11 @@ interface RecipientFormProps {
   onTokenChange: (token: string) => void;
   onAddRecipient: () => void;
   onRemoveRecipient: (id: string) => void;
-  onUpdateRecipient: (id: string, field: "address" | "amount", value: string) => void;
+  onUpdateRecipient: (
+    id: string,
+    field: "address" | "amount",
+    value: string,
+  ) => void;
   onToggleUpload: () => void;
   onImported: (rows: UploadRecipient[]) => void;
   onNext: () => void;
@@ -24,6 +34,10 @@ interface RecipientFormProps {
 const inputClass =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
+/**
+ * Step 1 of the batch payment flow.
+ * Allows the user to select a token and add recipients manually or via CSV upload.
+ */
 export function RecipientForm({
   selectedToken,
   recipients,
@@ -43,7 +57,9 @@ export function RecipientForm({
     <Card>
       <CardHeader>
         <CardTitle>Batch Payment</CardTitle>
-        <CardDescription>Add recipient wallet addresses and amounts</CardDescription>
+        <CardDescription>
+          Add recipient wallet addresses and amounts
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Token Selection */}
@@ -88,26 +104,38 @@ export function RecipientForm({
             <>
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {recipients.map((r, idx) => (
-                  <div key={r.id} className="flex gap-2 items-start p-3 rounded-lg border border-border">
+                  <div
+                    key={r.id}
+                    className="flex gap-2 items-start p-3 rounded-lg border border-border"
+                  >
                     <div className="flex-1 space-y-2">
                       <input
                         className={inputClass}
                         placeholder={`Wallet address ${idx + 1}`}
                         value={r.address}
-                        onChange={(e) => onUpdateRecipient(r.id, "address", e.target.value)}
+                        onChange={(e) =>
+                          onUpdateRecipient(r.id, "address", e.target.value)
+                        }
                       />
                       <input
                         className={inputClass}
                         type="number"
                         placeholder={`Amount (${selectedToken})`}
                         value={r.amount}
-                        onChange={(e) => onUpdateRecipient(r.id, "amount", e.target.value)}
+                        onChange={(e) =>
+                          onUpdateRecipient(r.id, "amount", e.target.value)
+                        }
                         min="0"
                         step="0.01"
                       />
                     </div>
                     {recipients.length > 1 && (
-                      <Button onClick={() => onRemoveRecipient(r.id)} size="icon" variant="ghost" className="mt-1">
+                      <Button
+                        onClick={() => onRemoveRecipient(r.id)}
+                        size="icon"
+                        variant="ghost"
+                        className="mt-1"
+                      >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     )}
@@ -118,7 +146,9 @@ export function RecipientForm({
               {/* Summary */}
               <div className="p-3 rounded-lg bg-muted/50 space-y-1">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total Recipients:</span>
+                  <span className="text-muted-foreground">
+                    Total Recipients:
+                  </span>
                   <span className="font-medium">{recipients.length}</span>
                 </div>
                 <div className="flex justify-between text-sm">
