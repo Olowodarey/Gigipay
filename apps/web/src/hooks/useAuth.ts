@@ -17,15 +17,18 @@ export interface UserProfile {
 
 const TOKEN_KEY = "gigipay_token";
 
+/** Retrieve the stored JWT from localStorage (SSR-safe). */
 function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(TOKEN_KEY);
 }
 
+/** Persist a JWT to localStorage. */
 function storeToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token);
 }
 
+/** Remove the stored JWT from localStorage. */
 function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
