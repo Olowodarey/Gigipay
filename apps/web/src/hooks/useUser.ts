@@ -10,6 +10,7 @@ const TOKEN_KEY = "gigipay_token";
 /**
  * Unified hook that returns the current user profile from the backend,
  * regardless of whether they logged in via wallet or Privy (email/phone).
+ * Automatically re-fetches when auth state changes.
  */
 export function useUser() {
   const {
