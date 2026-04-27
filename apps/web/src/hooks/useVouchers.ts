@@ -44,9 +44,13 @@ function hashClaimCode(voucherName: string, code: string): `0x${string}` {
   return keccak256(encodePacked(["string", "string"], [voucherName, code]));
 }
 
-// Minimum claim code length to prevent brute-force guessing
+/** Minimum claim code length to prevent brute-force guessing. */
 const MIN_CODE_LENGTH = 6;
 
+/**
+ * Validates a voucher claim code.
+ * @returns An error message string, or null if the code is valid.
+ */
 export function validateClaimCode(code: string): string | null {
   if (code.trim().length < MIN_CODE_LENGTH) {
     return `Claim code must be at least ${MIN_CODE_LENGTH} characters`;
