@@ -13,6 +13,9 @@ interface UseRateResult {
  * Converts an NGN amount to the equivalent token amount for the connected chain.
  * Debounces 400ms so we don't hammer the backend on every keystroke.
  * The backend caches CoinGecko responses for 60s.
+ *
+ * @param chainId - The connected chain ID (undefined when wallet is not connected)
+ * @param ngnAmount - The NGN amount as a string (e.g. "5000")
  */
 export function useRate(
   chainId: number | undefined,
