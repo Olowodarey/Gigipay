@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { WalletConnectButton } from "@/components/connect-button";
 
+/** Wallet addresses that have access to the admin section. */
 const ADMIN_ADDRESSES = (process.env.NEXT_PUBLIC_ADMIN_ADDRESSES || "")
   .split(",")
   .map((a) => a.trim().toLowerCase())
