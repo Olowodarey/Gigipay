@@ -1,6 +1,7 @@
 /**
  * Gigipay Backend API client
- * All contract reads go through here instead of direct RPC calls
+ * All contract reads go through here instead of direct RPC calls.
+ * Centralises error handling and base URL configuration.
  */
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
@@ -239,6 +240,10 @@ export function getAirtimeOrderStatus(id: string): Promise<AirtimeOrderStatus> {
 
 // ─── Privy Login ──────────────────────────────────────────────────────────────
 
+/**
+ * Exchange a Privy access token for a Gigipay JWT.
+ * Called automatically after Privy authentication succeeds.
+ */
 export function privyLogin(payload: {
   accessToken: string;
 }): Promise<{ token: string; user: UserProfile }> {
