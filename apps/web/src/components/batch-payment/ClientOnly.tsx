@@ -7,6 +7,11 @@ interface ClientOnlyProps {
   fallback?: React.ReactNode;
 }
 
+/**
+ * Renders children only after the component has mounted on the client.
+ * Prevents SSR hydration mismatches for wallet-dependent UI.
+ * Shows a loading placeholder (or a custom `fallback`) until mounted.
+ */
 export function ClientOnly({ children, fallback }: ClientOnlyProps) {
   const [mounted, setMounted] = useState(false);
 
