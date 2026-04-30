@@ -739,6 +739,7 @@ function ClaimPageContent() {
   );
 }
 
+/** Claim payment page — validates a voucher name + claim code and triggers on-chain redemption. */
 export default function ClaimPage() {
   return (
     <ClientOnly>
