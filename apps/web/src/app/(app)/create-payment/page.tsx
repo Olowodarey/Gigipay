@@ -17,6 +17,7 @@ import {
 import { formatUnits, parseUnits, Address } from "viem";
 import { validateClaimCode } from "@/hooks/useVouchers";
 
+/** ERC20 token addresses per chain. Native token uses address(0). */
 const TOKEN_ADDRESSES: Record<number, Record<string, Address>> = {
   42220: {
     CELO: "0x0000000000000000000000000000000000000000",
@@ -67,6 +68,7 @@ interface GiveawayData {
   selectedToken: TokenSymbol;
 }
 
+/** Create payment page — 3-step flow for creating on-chain voucher batches with claim codes. */
 export default function CreatePage() {
   return (
     <ClientOnly>
