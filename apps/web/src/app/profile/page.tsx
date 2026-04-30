@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+/** Small inline copy-to-clipboard button with a 2-second "Copied!" confirmation state. */
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
@@ -42,6 +43,10 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+/**
+ * Warning modal shown before exporting a Privy embedded wallet private key.
+ * Requires explicit user confirmation before proceeding.
+ */
 function ExportKeyWarningModal({
   onConfirm,
   onCancel,
@@ -338,6 +343,7 @@ function ProfileContent() {
   );
 }
 
+/** Profile page — displays user info, wallet address, and quick action links. */
 export default function ProfilePage() {
   return (
     <ClientOnly>
