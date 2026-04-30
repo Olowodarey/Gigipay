@@ -39,6 +39,7 @@ import {
 
 // ─── Token config per chain ───────────────────────────────────────────────────
 
+/** ERC20 token addresses per chain. Native token uses address(0). */
 const TOKEN_ADDRESSES: Record<number, Record<string, Address>> = {
   42220: {
     CELO: "0x0000000000000000000000000000000000000000",
@@ -64,6 +65,7 @@ function getDecimals(symbol: string) {
 
 // ─── Page shell (ClientOnly guard) ───────────────────────────────────────────
 
+/** Wraps the airtime page in a ClientOnly guard to prevent SSR hydration issues. */
 export default function BuyAirtimePage() {
   return (
     <ClientOnly>
