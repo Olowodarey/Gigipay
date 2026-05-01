@@ -13,8 +13,9 @@ import {
 } from "@/hooks/useTokenApproval";
 import { Address, formatUnits, parseUnits } from "viem";
 
-const SUPPORTED_CHAIN_IDS = [42220, 8453]; // Celo, Base
+const SUPPORTED_CHAIN_IDS = [42220, 8453]; // Celo Mainnet, Base Mainnet
 
+/** ERC20 token addresses per chain. Native token uses address(0). */
 const TOKEN_ADDRESSES: Record<number, Record<string, Address>> = {
   42220: {
     CELO: "0x0000000000000000000000000000000000000000",
@@ -416,6 +417,7 @@ function BatchPaymentContent() {
   );
 }
 
+/** Batch payment page — 3-step flow for sending tokens to multiple recipients in one transaction. */
 export default function BatchPaymentPage() {
   return (
     <ClientOnly>
