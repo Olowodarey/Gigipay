@@ -23,6 +23,7 @@ import {
 import { formatUnits, Address } from "viem";
 import { ClientOnly } from "@/components/batch-payment/ClientOnly";
 
+/** ERC20 token addresses per chain. Native token uses address(0). */
 const TOKEN_ADDRESSES: Record<number, Record<string, Address>> = {
   42220: {
     CELO: "0x0000000000000000000000000000000000000000",
@@ -333,7 +334,7 @@ function ReclaimPageContent() {
                 <div className="space-y-3">
                   {!isConnected ? (
                     <p className="text-sm text-center text-muted-foreground">
-                      Please connect your wallet to reclaim vocher
+                      Please connect your wallet to reclaim voucher
                     </p>
                   ) : (
                     <Button
@@ -441,6 +442,7 @@ function ReclaimPageContent() {
   );
 }
 
+/** Reclaim payment page — lets voucher creators refund all unclaimed/expired vouchers by name. */
 export default function ReclaimPage() {
   return (
     <ClientOnly>
