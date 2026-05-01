@@ -16,6 +16,10 @@ import {
   injectedWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 
+/**
+ * Lazily initialised wagmi config — created once and reused.
+ * Supports Celo and Base with MiniPay (injected), MetaMask, Rainbow, and WalletConnect.
+ */
 let config: any = null;
 
 function getWagmiConfig() {
@@ -64,6 +68,10 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Root wallet provider — composes Wagmi, React Query, and RainbowKit.
+ * Must wrap any component that uses wallet hooks.
+ */
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   return <WalletProviderInner>{children}</WalletProviderInner>;
 }
