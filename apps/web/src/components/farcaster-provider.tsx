@@ -11,6 +11,12 @@ interface AuthResponse {
   authenticated?: boolean;
 }
 
+/**
+ * Initialises the Farcaster MiniApp SDK on mount.
+ * Calls `sdk.actions.ready()` to dismiss the loading splash screen,
+ * then fetches the current Farcaster auth session from `/api/auth`.
+ * Renders children regardless of auth state — auth data is for context only.
+ */
 export function FarcasterProvider({ children }: { children: React.ReactNode }) {
   const [authData, setAuthData] = useState<AuthResponse | null>(null);
 
