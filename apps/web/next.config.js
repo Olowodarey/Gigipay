@@ -2,9 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
   webpack: (config) => {
+    // Suppress Node.js-only modules that wallet libs try to import in the browser
     config.externals.push("pino-pretty", "lokijs", "encoding");
     config.resolve.alias = {
       ...config.resolve.alias,
+      // Stub out Solana deps — not used in this app
       "@react-native-async-storage/async-storage": false,
       "@solana/wallet-adapter-react": false,
       "@solana/wallet-adapter-base": false,
