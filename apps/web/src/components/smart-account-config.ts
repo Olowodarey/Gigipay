@@ -10,7 +10,8 @@ const ENTRYPOINT_ADDRESS_V07 =
   "0x0000000071727De22E5E9d8BAf0edAc6f37da032" as const;
 
 /**
- * Get the Paymaster URL from environment variables
+ * Returns the Paymaster/Bundler URL from env vars.
+ * Throws a descriptive error if the key is missing or still set to the placeholder.
  */
 export function getPaymasterUrl(): string {
   const url = process.env.NEXT_PUBLIC_PAYMASTER_URL;
@@ -23,8 +24,8 @@ export function getPaymasterUrl(): string {
 }
 
 /**
- * Get the chain configuration based on environment
- * Defaults to Base mainnet for production
+ * Resolves the active chain from the Paymaster URL.
+ * Detects `base-sepolia` in the URL for testnet; defaults to Base Mainnet.
  */
 export function getChain(): Chain {
   const paymasterUrl = getPaymasterUrl();
@@ -36,7 +37,8 @@ export function getChain(): Chain {
 }
 
 /**
- * Create a public client for reading blockchain data
+ * Creates a viem public client for reading on-chain data on the given chain.
+ * Uses the Paymaster URL as the RPC transport.
  */
 export function createPublicClientForChain(chain: Chain) {
   return createPublicClient({
