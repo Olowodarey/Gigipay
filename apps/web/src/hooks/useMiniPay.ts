@@ -5,8 +5,9 @@ import { useAccount, useConnect } from "wagmi";
 import { injected } from "wagmi/connectors";
 
 /**
- * Detects if the app is running inside MiniPay browser
- * and auto-connects the injected wallet
+ * Detects if the app is running inside the MiniPay browser
+ * and auto-connects the injected wallet on mount.
+ * MiniPay sets `window.ethereum.isMiniPay = true` when active.
  */
 export function useMiniPay() {
   const [isMiniPay, setIsMiniPay] = useState(false);
