@@ -1,3 +1,7 @@
+/**
+ * Filters out undefined values and empty arrays from a properties object.
+ * Used to keep the Farcaster manifest clean — omits unset optional fields.
+ */
 function withValidProperties(
   properties: Record<string, undefined | string | string[]>,
 ) {
@@ -8,6 +12,11 @@ function withValidProperties(
   );
 }
 
+/**
+ * GET /.well-known/farcaster.json
+ * Serves the Farcaster MiniApp manifest required for Warpcast discovery.
+ * The `noindex` field should be set to "false" before going to production.
+ */
 export async function GET() {
   const URL = process.env.NEXT_PUBLIC_URL || "https://gigipay-app.vercel.app";
 
