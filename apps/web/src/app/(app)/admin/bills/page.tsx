@@ -29,7 +29,8 @@ import {
 import { useWithdrawBillFunds } from "@/hooks/useWithdrawBillFunds";
 
 // ─── Admin wallet addresses allowed to use this page ─────────────────────────
-// Add your deployer / admin wallet(s) here
+// Populated from NEXT_PUBLIC_ADMIN_ADDRESSES env var (comma-separated).
+// If the env var is empty, all connected wallets are treated as admin.
 const ADMIN_ADDRESSES: string[] = (
   process.env.NEXT_PUBLIC_ADMIN_ADDRESSES ?? ""
 )
@@ -39,6 +40,7 @@ const ADMIN_ADDRESSES: string[] = (
 
 const NATIVE_ADDRESS = "0x0000000000000000000000000000000000000000";
 
+/** Admin bills page — shows bill fund balances per chain and allows admin withdrawal. */
 export default function AdminBillsPage() {
   return (
     <ClientOnly>
