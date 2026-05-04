@@ -29,10 +29,11 @@ src/
 │   │   ├── create-payment/     # Create voucher campaigns
 │   │   ├── claim-payment/      # Claim a voucher with a code
 │   │   ├── reclaim-payment/    # Refund expired vouchers
-│   │   └── batch-payment/      # Batch send to multiple addresses
+│   │   ├── batch-payment/      # Batch send to multiple addresses
+│   │   ├── buy-airtime/        # Buy Nigerian airtime with crypto
+│   │   └── admin/bills/        # Admin: view balances & withdraw
 │   ├── api/                    # Next.js API routes
 │   ├── profile/                # User profile page
-│   ├── public/                 # Public claim pages
 │   └── layout.tsx              # Root layout with all providers
 ├── components/
 │   ├── Hompage/                # Landing page components
@@ -49,9 +50,11 @@ src/
 │   ├── usePrivyAuth.ts         # Privy auth → JWT
 │   ├── useVouchers.ts          # Voucher write hooks (wagmi)
 │   ├── useBatchTransfer.ts     # Batch transfer write hook
+│   ├── useAirtime.ts           # Airtime bill payment hook
 │   ├── useGigipayContract.ts   # General contract hook
 │   ├── useTokenApproval.ts     # ERC20 approval hook
 │   ├── useMiniPay.ts           # MiniPay detection
+│   ├── useRate.ts              # NGN → token live rate
 │   └── useUser.ts              # User profile hook
 └── lib/
     ├── api.ts                  # Backend API client (all reads)
@@ -110,6 +113,9 @@ NEXT_PUBLIC_PRIVY_APP_ID=
 # Contract addresses (update after each deployment)
 NEXT_PUBLIC_CONTRACT_ADDRESS_CELO=0x70b92a67F391F674aFFfCE3Dd7EB3d99e1f1E9a8
 NEXT_PUBLIC_CONTRACT_ADDRESS_BASE=0xEdc6abb2f1A25A191dAf8B648c1A3686EfFE6Dd6
+
+# Admin wallets (comma-separated, for /admin/bills access)
+NEXT_PUBLIC_ADMIN_ADDRESSES=0xYourWallet
 ```
 
 ### Run
@@ -154,6 +160,8 @@ MiniPay users are auto-detected via `window.ethereum.isMiniPay` and flagged in t
 | `useClaimVoucher`       | Claim a voucher by name + code     |
 | `useRefundVoucher`      | Refund expired vouchers            |
 | `useBatchTransfer`      | Send tokens to multiple addresses  |
+| `usePayBillAirtime`     | Pay airtime bill on-chain          |
+| `useRate`               | Live NGN → token conversion        |
 | `useVoucherDetails`     | Fetch voucher data from backend    |
 | `useSenderVouchers`     | Fetch all vouchers by sender       |
 | `useContractPaused`     | Check if contract is paused        |
