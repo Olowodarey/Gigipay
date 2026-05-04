@@ -7,6 +7,7 @@ A multichain crypto payment protocol on **Celo** and **Base**. Send to multiple 
 - **Batch Transfer** — send tokens to hundreds of addresses in a single transaction
 - **Payment Vouchers** — send crypto without knowing the recipient's wallet address; they claim with a secret code
 - **Bill Payments** — buy airtime, data bundles, pay DSTV/GOtv, pay electricity bills using any supported token
+- **Gmail Login** — recipients can sign in with Google; Privy creates an embedded wallet automatically
 
 ## Monorepo Structure
 
@@ -81,7 +82,7 @@ For bill payments specifically:
 2. Contract holds crypto, emits BillPaymentInitiated event
 3. Backend listener picks up event
 4. Backend calls ClubKonnect API → airtime/data/TV/electricity delivered
-5. Order status stored in DB
+5. Order status stored in DB, polled by frontend
 ```
 
 ## Supported Wallets
@@ -89,7 +90,7 @@ For bill payments specifically:
 - MetaMask
 - WalletConnect (any compatible wallet)
 - MiniPay (Celo mobile wallet — auto-detected)
-- Privy embedded wallet (email/phone login)
+- Privy embedded wallet (email/phone/Google login)
 
 ## Tech Stack
 
