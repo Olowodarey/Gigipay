@@ -2,9 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Global CSS custom properties (design tokens).
+ * All values are dark-mode by default — the app uses `class="dark"` on <html>.
+ * Colours are defined as raw hex values in :root and as HSL in .dark
+ * so both Tailwind and direct CSS consumers work correctly.
+ */
 @layer base {
   :root {
-   --background: #0f172a;
+    --background: #0f172a;
     --foreground: #f8fafc;
     --card: #1e293b;
     --card-foreground: #f8fafc;
@@ -69,7 +75,6 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
-
   }
 }
 
@@ -80,6 +85,7 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Force foreground colour on all input types to prevent browser default overrides */
   input[type="number"],
   input[type="text"],
   input {
