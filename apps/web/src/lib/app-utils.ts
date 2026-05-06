@@ -2,6 +2,7 @@
  * Format a number as currency using the browser's Intl API.
  * @param amount - The numeric value to format
  * @param currency - ISO 4217 currency code (default: 'USD')
+ * @example formatCurrency(1500, 'NGN') // '₦1,500.00'
  */
 export function formatCurrency(amount: number, currency = "USD"): string {
   return new Intl.NumberFormat("en-US", {
@@ -15,6 +16,7 @@ export function formatCurrency(amount: number, currency = "USD"): string {
  * @param address - Full hex address string
  * @param startLength - Characters to keep from the start (default: 6)
  * @param endLength - Characters to keep from the end (default: 4)
+ * @example truncateAddress('0xabcdef1234567890') // '0xabcd...7890'
  */
 export function truncateAddress(
   address: string,
@@ -45,6 +47,7 @@ export function sleep(ms: number): Promise<void> {
 /**
  * Format a token amount with a fixed number of decimal places.
  * Strips trailing zeros for cleaner display.
+ * @example formatTokenAmount('1.50000', 4) // '1.5'
  */
 export function formatTokenAmount(
   amount: string | number,
