@@ -33,6 +33,17 @@ function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+/**
+ * Manages wallet-based authentication (SIWE flow).
+ *
+ * Flow:
+ * 1. `signIn()` — fetches a nonce, prompts wallet signature, verifies with backend, stores JWT
+ * 2. On wallet connect — auto-restores an existing session via `loadProfile()`
+ * 3. MiniPay exception — auto-triggers `signIn()` since MiniPay has no manual sign-in UI
+ * 4. `signOut()` — clears the JWT and resets state
+ *
+ * Returns `isAuthenticated: true` only when both a valid JWT and user profile are present.
+ */
 export function useAuth() {
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
