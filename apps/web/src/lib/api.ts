@@ -31,6 +31,7 @@ export interface VoucherDetail {
   voucherName: string;
 }
 
+/** Fetch a single voucher's on-chain details by ID. */
 export function getVoucher(
   chainId: number,
   voucherId: string,
@@ -38,6 +39,7 @@ export function getVoucher(
   return apiFetch(`/vouchers?chainId=${chainId}&voucherId=${voucherId}`);
 }
 
+/** Fetch all voucher IDs that belong to a given voucher campaign name. */
 export function getVouchersByName(
   chainId: number,
   voucherName: string,
@@ -47,6 +49,7 @@ export function getVouchersByName(
   );
 }
 
+/** Fetch all voucher IDs created by a specific sender address. */
 export function getSenderVouchers(
   chainId: number,
   sender: string,
@@ -54,6 +57,7 @@ export function getSenderVouchers(
   return apiFetch(`/vouchers/by-sender?chainId=${chainId}&sender=${sender}`);
 }
 
+/** Returns true if the voucher exists, is not claimed, not refunded, and not expired. */
 export function isVoucherClaimable(
   chainId: number,
   voucherId: string,
@@ -63,6 +67,7 @@ export function isVoucherClaimable(
   );
 }
 
+/** Returns true if the voucher is expired or unclaimed and can be refunded by the sender. */
 export function isVoucherRefundable(
   chainId: number,
   voucherId: string,
@@ -72,6 +77,7 @@ export function isVoucherRefundable(
   );
 }
 
+/** Returns true if the Gigipay voucher contract is currently paused on the given chain. */
 export function isContractPaused(chainId: number): Promise<boolean> {
   return apiFetch(`/vouchers/paused?chainId=${chainId}`);
 }
