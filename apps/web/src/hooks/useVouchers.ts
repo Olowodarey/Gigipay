@@ -69,6 +69,10 @@ import {
 
 // ─── Write Hooks (still need wallet signing) ─────────────────────────────────
 
+/**
+ * Hook for creating a single voucher on-chain.
+ * Validates the claim code length before writing to the contract.
+ */
 export function useCreateVoucher() {
   const { chain } = useAccount();
   const { data: hash, writeContract, isPending, error } = useWriteContract();
@@ -108,6 +112,10 @@ export function useCreateVoucher() {
   return { createVoucher, hash, isPending, isConfirming, isConfirmed, error };
 }
 
+/**
+ * Hook for creating multiple vouchers in a single on-chain transaction.
+ * More gas-efficient than calling createVoucher individually for each recipient.
+ */
 export function useCreateVoucherBatch() {
   const { chain } = useAccount();
   const { data: hash, writeContract, isPending, error } = useWriteContract();
