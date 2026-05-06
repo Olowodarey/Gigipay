@@ -84,18 +84,21 @@ export function isContractPaused(chainId: number): Promise<boolean> {
 
 // ─── Batch Transfer ───────────────────────────────────────────────────────────
 
+/** Returns true if the batch transfer contract is currently paused on the given chain. */
 export function isBatchContractPaused(chainId: number): Promise<boolean> {
   return apiFetch(`/batch-transfer/paused?chainId=${chainId}`);
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
+/** Fetch a sign-in nonce for the given wallet address. Used in the SIWE flow. */
 export function getNonce(
   address: string,
 ): Promise<{ nonce: string; message: string }> {
   return apiFetch(`/auth/nonce?address=${address}`);
 }
 
+/** Verify a wallet signature and receive a Gigipay JWT. */
 export function verifySignature(payload: {
   address: string;
   signature: string;
@@ -108,6 +111,7 @@ export function verifySignature(payload: {
   });
 }
 
+/** Fetch the authenticated user's profile using a stored JWT. */
 export function getMyProfile(token: string): Promise<UserProfile> {
   return apiFetch("/users/me", {
     headers: {
@@ -117,6 +121,7 @@ export function getMyProfile(token: string): Promise<UserProfile> {
   });
 }
 
+/** Update the authenticated user's profile fields (email, phone, displayName). */
 export function updateProfile(
   token: string,
   data: Partial<{ email: string; phone: string; displayName: string }>,
