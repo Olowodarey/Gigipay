@@ -172,7 +172,6 @@ export function getBillBalancesByChain(
 ): Promise<ChainBalances> {
   return apiFetch(`/bills/balances/chain?chainId=${chainId}`);
 }
-
 // ─── Rates (CoinGecko via backend) ───────────────────────────────────────────
 
 export interface TokenRate {
@@ -207,10 +206,12 @@ export interface AirtimeNetwork {
   discountPercent: number;
 }
 
+/** Fetch the list of supported Nigerian airtime networks and their discount rates. */
 export function getAirtimeNetworks(): Promise<AirtimeNetwork[]> {
   return apiFetch("/airtime/networks");
 }
 
+/** Query an airtime transaction status by orderId or requestId. */
 export function queryAirtimeTransaction(params: {
   orderId?: string;
   requestId?: string;
@@ -231,6 +232,10 @@ export interface AirtimeOrderStatus {
   networkCode: string;
 }
 
+/**
+ * Register an on-chain airtime payment with the backend so it can
+ * fulfil the airtime delivery via ClubKonnect.
+ */
 export function registerAirtimeOrder(payload: {
   chainId: number;
   networkCode: string;
@@ -245,6 +250,7 @@ export function registerAirtimeOrder(payload: {
   });
 }
 
+/** Poll the delivery status of a registered airtime order by its backend ID. */
 export function getAirtimeOrderStatus(id: string): Promise<AirtimeOrderStatus> {
   return apiFetch(`/airtime/orders/${id}`);
 }
