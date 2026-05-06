@@ -3,6 +3,7 @@ import type { Address } from "viem";
 /**
  * Single source of truth for contract addresses.
  * Values come from env vars — update .env.local to change them.
+ * Fallback addresses are the latest mainnet deployments.
  */
 export const CONTRACT_ADDRESSES: Record<number, Address> = {
   42220: (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_CELO ||
@@ -13,7 +14,8 @@ export const CONTRACT_ADDRESSES: Record<number, Address> = {
 
 /**
  * Returns the contract address for the given chain ID.
- * Throws if the chain is not supported.
+ * Throws a descriptive error if the chain is not supported.
+ * @throws {Error} if chainId is undefined or not in CONTRACT_ADDRESSES
  */
 export function getContractAddress(chainId?: number): Address {
   const address = chainId ? CONTRACT_ADDRESSES[chainId] : undefined;
