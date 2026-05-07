@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Github, Twitter, Send } from "lucide-react";
+import { Github, Twitter, SendHorizontal } from "lucide-react";
 
 const links = {
   Product: [
@@ -21,28 +21,10 @@ const links = {
   ],
 };
 
-const socials = [
-  {
-    name: "Twitter / X",
-    href: "https://twitter.com/gigipay",
-    icon: Twitter,
-  },
-  {
-    name: "Telegram",
-    href: "https://t.me/gigipay",
-    icon: Send,
-  },
-  {
-    name: "GitHub",
-    href: "https://github.com/Olowodarey/Gigipay",
-    icon: Github,
-  },
-];
+const YEAR = new Date().getFullYear();
 
 /** Site-wide footer with nav links, social icons, and copyright. */
 export function Footer() {
-  const year = new Date().getFullYear();
-
   return (
     <footer className="border-t bg-background">
       <div className="container max-w-screen-2xl mx-auto px-4 py-12">
@@ -65,20 +47,36 @@ export function Footer() {
               On-chain payments made simple. Send crypto to anyone, run
               giveaways, and top up airtime — all on Celo and Base.
             </p>
-            {/* Socials */}
+
+            {/* Social icons — inlined to avoid undefined component refs */}
             <div className="flex items-center gap-3 pt-1">
-              {socials.map(({ name, href, icon: Icon }) => (
-                <a
-                  key={name}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={name}
-                  className="h-8 w-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                </a>
-              ))}
+              <a
+                href="https://twitter.com/gigipay"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Twitter / X"
+                className="h-8 w-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+              >
+                <Twitter className="h-3.5 w-3.5" />
+              </a>
+              <a
+                href="https://t.me/gigipay"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Telegram"
+                className="h-8 w-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+              >
+                <SendHorizontal className="h-3.5 w-3.5" />
+              </a>
+              <a
+                href="https://github.com/Olowodarey/Gigipay"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub"
+                className="h-8 w-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+              >
+                <Github className="h-3.5 w-3.5" />
+              </a>
             </div>
           </div>
 
@@ -106,7 +104,7 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-10 pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <p>© {year} Gigipay. All rights reserved.</p>
+          <p>© {YEAR} Gigipay. All rights reserved.</p>
           <div className="flex items-center gap-1">
             <span>Built on</span>
             <a
@@ -117,7 +115,7 @@ export function Footer() {
             >
               Celo
             </a>
-            <span>&</span>
+            <span>&amp;</span>
             <a
               href="https://base.org"
               target="_blank"
