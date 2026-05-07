@@ -152,7 +152,7 @@ export default function FAQ() {
   const toggle = (i: number) => setOpenIndex(openIndex === i ? null : i);
 
   return (
-    <section className="py-20 px-4 bg-muted/30" id="faq">
+    <section className="py-20 px-4" id="faq">
       <div className="container max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
