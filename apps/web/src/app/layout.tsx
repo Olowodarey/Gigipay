@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 import { WalletProvider } from "@/components/wallet-provider";
 import { FarcasterProvider } from "@/components/farcaster-provider";
 import { PaymasterProvider } from "@/components/paymaster-provider";
@@ -33,6 +34,7 @@ export default function RootLayout({
                 <PaymasterProvider>
                   <Navbar />
                   <main className="flex-1">{children}</main>
+                  <Footer />
                 </PaymasterProvider>
               </WalletProvider>
             </div>
