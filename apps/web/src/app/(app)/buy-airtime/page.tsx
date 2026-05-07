@@ -368,12 +368,20 @@ function BuyAirtimeContent() {
     <div className="flex flex-col min-h-screen">
       <div className="flex-1 py-8 md:py-12 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-lg">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to Home
-          </Link>
+          <div className="flex items-center justify-between mb-6">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to Home
+            </Link>
+            <Link
+              href="/bulk-airtime"
+              className="inline-flex items-center gap-1 text-sm text-primary hover:underline transition-colors"
+            >
+              Send to multiple numbers →
+            </Link>
+          </div>
 
           {notice && (
             <div
