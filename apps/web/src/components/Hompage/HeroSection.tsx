@@ -38,8 +38,8 @@ export default function HeroSection() {
 
             <div className="flex flex-col sm:flex-row gap-3">
               <Button asChild size="lg" className="text-base">
-                <Link href="/create-payment">
-                  Create a Payment
+                <Link href="/voucher">
+                  Create a Voucher
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
@@ -49,7 +49,7 @@ export default function HeroSection() {
                 size="lg"
                 className="text-base bg-transparent"
               >
-                <Link href="/claim-payment">Claim a Payment</Link>
+                <Link href="/claim-payment">Claim a Voucher</Link>
               </Button>
             </div>
           </div>

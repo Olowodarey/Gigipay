@@ -60,8 +60,8 @@ export default function GmailCTA() {
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild size="lg" className="text-base">
-              <Link href="/create-payment">
-                Start Sending Payments
+              <Link href="/voucher">
+                Create a Voucher
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
@@ -71,7 +71,7 @@ export default function GmailCTA() {
               size="lg"
               className="text-base bg-transparent"
             >
-              <Link href="/claim-payment">Claim a Payment</Link>
+              <Link href="/claim-payment">Claim a Voucher</Link>
             </Button>
           </div>
         </div>
