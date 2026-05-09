@@ -591,6 +591,7 @@ function BulkAirtimeContent() {
                       {r.status === "pending" && !isSending && (
                         <button
                           onClick={() => removeRow(r.id)}
+                          aria-label={`Remove recipient ${r.phone || i + 1}`}
                           className="text-muted-foreground hover:text-destructive transition-colors"
                           disabled={recipients.length === 1}
                         >

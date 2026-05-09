@@ -197,6 +197,8 @@ export default function FAQ() {
               >
                 <button
                   onClick={() => toggle(i)}
+                  aria-expanded={isOpen}
+                  aria-controls={`faq-answer-${i}`}
                   className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
                 >
                   <span className="font-medium text-sm leading-snug">
@@ -206,10 +208,11 @@ export default function FAQ() {
                     className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-200 ${
                       isOpen ? "rotate-180" : ""
                     }`}
+                    aria-hidden="true"
                   />
                 </button>
                 {isOpen && (
-                  <div className="px-5 pb-4">
+                  <div id={`faq-answer-${i}`} className="px-5 pb-4">
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       {item.answer}
                     </p>
