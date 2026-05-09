@@ -167,10 +167,7 @@ function BulkAirtimeContent() {
   // Rate for the first pending recipient's amount (used for total estimate)
   const firstPendingAmount =
     recipients.find((r) => r.status === "pending")?.amountNgn ?? "";
-  const { tokenAmount: sampleTokenAmount, rate } = useRate(
-    chain?.id,
-    firstPendingAmount,
-  );
+  const { rate } = useRate(chain?.id, firstPendingAmount);
 
   // ─── Recipient management ─────────────────────────────────────────────────
 
@@ -326,7 +323,9 @@ function BulkAirtimeContent() {
           updateRow(recipient.id, { orderId: order.id, orderStatus: order });
           pollOrder(recipient.id, order.id);
         })
-        .catch(console.error);
+        .catch(() => {
+          // Order registration is non-fatal — the on-chain tx already succeeded
+        });
     }
 
     resetTx();
