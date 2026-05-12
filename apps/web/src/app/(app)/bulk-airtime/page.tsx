@@ -242,6 +242,17 @@ function BulkAirtimeContent() {
       });
       return false;
     }
+
+    // Check if all recipients use the same network (batch limitation)
+    const networks = new Set(recipients.map((r) => r.networkCode));
+    if (networks.size > 1) {
+      setNotice({
+        type: "error",
+        msg: "All recipients must use the same network for batch payments",
+      });
+      return false;
+    }
+
     for (const r of recipients) {
       if (!isValidPhone(r.phone)) {
         setNotice({
