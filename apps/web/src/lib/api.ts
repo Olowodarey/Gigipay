@@ -255,6 +255,58 @@ export function getAirtimeOrderStatus(id: string): Promise<AirtimeOrderStatus> {
   return apiFetch(`/airtime/orders/${id}`);
 }
 
+// ─── GigiPay Agent ──────────────────────────────────────────────────────────────
+
+export interface AgentMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+/** A transaction the agent prepared for the user to review and sign. */
+export interface AgentPreparedTx {
+  id: string;
+  kind: "airtime" | "batch-transfer";
+  summary: string;
+  chainId: number;
+  to: `0x${string}`;
+  data: `0x${string}`;
+  value: string; // native value in wei (string)
+  token: {
+    symbol: string;
+    address: `0x${string}`;
+    decimals: number;
+    isNative: boolean;
+  };
+  amount: string; // token amount in base units (for ERC-20 approval)
+  requiresApproval: boolean;
+  postAction?: {
+    type: "registerAirtimeOrder";
+    payload: {
+      chainId: number;
+      networkCode: string;
+      phoneNumber: string;
+      amountNgn: number;
+    };
+  };
+}
+
+export interface AgentChatResult {
+  reply: string;
+  transactions: AgentPreparedTx[];
+}
+
+/** Send the full conversation to the GigiPay Agent and get a reply + prepared txs. */
+export function sendAgentMessage(payload: {
+  messages: AgentMessage[];
+  chainId?: number;
+  userAddress?: string;
+}): Promise<AgentChatResult> {
+  return apiFetch("/agent/chat", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 // ─── Privy Login ──────────────────────────────────────────────────────────────
 
 /**
