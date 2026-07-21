@@ -297,10 +297,22 @@ export interface AgentPreparedSchedule {
   payload: CreateSchedulePayload;
 }
 
+/**
+ * A read-only directive the agent asks the frontend to fulfil with the
+ * signed-in user's JWT (the /agent endpoint is unauthenticated, so it can't read
+ * the user's data itself).
+ */
+export type AgentAction =
+  | { type: "list_schedules" }
+  | { type: "list_due" }
+  | { type: "recent_activity"; limit: number }
+  | { type: "navigate"; href: string; label: string };
+
 export interface AgentChatResult {
   reply: string;
   transactions: AgentPreparedTx[];
   schedules: AgentPreparedSchedule[];
+  actions: AgentAction[];
 }
 
 /** Send the full conversation to the GigiPay Agent and get a reply + prepared txs. */
