@@ -2,7 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Sparkles, Send, Loader2, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  Sparkles,
+  Send,
+  Loader2,
+  ShieldCheck,
+  CalendarClock,
+  CheckCircle2,
+} from "lucide-react";
 import { useAccount } from "wagmi";
 import { ClientOnly } from "@/components/batch-payment/ClientOnly";
 import { Button } from "@/components/ui/button";
@@ -14,10 +22,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PreparedTxCard } from "@/components/PreparedTxCard";
+import { useAuth } from "@/hooks/useAuth";
 import {
   sendAgentMessage,
+  createSchedule,
   type AgentMessage,
   type AgentPreparedTx,
+  type AgentPreparedSchedule,
 } from "@/lib/api";
 
 // ─── Page shell ───────────────────────────────────────────────────────────────
@@ -36,6 +47,7 @@ function AgentContent() {
   const { address, chain } = useAccount();
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [transactions, setTransactions] = useState<AgentPreparedTx[]>([]);
+  const [schedules, setSchedules] = useState<AgentPreparedSchedule[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +55,7 @@ function AgentContent() {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, transactions, loading]);
+  }, [messages, transactions, schedules, loading]);
 
   const send = async () => {
     const text = input.trim();
@@ -62,6 +74,9 @@ function AgentContent() {
       setMessages([...next, { role: "assistant", content: res.reply }]);
       if (res.transactions.length) {
         setTransactions((prev) => [...prev, ...res.transactions]);
+      }
+      if (res.schedules?.length) {
+        setSchedules((prev) => [...prev, ...res.schedules]);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -155,6 +170,11 @@ function AgentContent() {
                   <PreparedTxCard key={tx.id} tx={tx} />
                 ))}
 
+                {/* Proposed recurring schedules */}
+                {schedules.map((s) => (
+                  <ScheduleConfirmCard key={s.id} schedule={s} />
+                ))}
+
                 <div ref={endRef} />
               </div>
 
@@ -180,6 +200,75 @@ function AgentContent() {
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Schedule confirmation card (confirm → save via authenticated API) ─────────
+
+function ScheduleConfirmCard({
+  schedule,
+}: {
+  schedule: AgentPreparedSchedule;
+}) {
+  const { token, isAuthenticating, signIn } = useAuth();
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const save = async () => {
+    if (!token) {
+      signIn();
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await createSchedule(token, schedule.payload);
+      setSaved(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save schedule");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-primary/40 bg-primary/5 p-3 space-y-2">
+      <div className="flex items-start gap-2">
+        <CalendarClock className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+        <div className="text-sm">
+          <p className="font-medium">Recurring payment</p>
+          <p className="text-xs text-muted-foreground">{schedule.summary}</p>
+        </div>
+      </div>
+
+      {saved ? (
+        <div className="flex items-center gap-2 text-sm text-green-600">
+          <CheckCircle2 className="h-4 w-4" />
+          Schedule saved ·{" "}
+          <Link href="/schedules" className="text-primary hover:underline">
+            manage
+          </Link>
+        </div>
+      ) : (
+        <Button
+          size="sm"
+          className="w-full"
+          onClick={save}
+          disabled={saving || isAuthenticating}
+        >
+          {saving
+            ? "Saving…"
+            : isAuthenticating
+              ? "Signing in…"
+              : token
+                ? "Create schedule"
+                : "Sign in to save"}
+        </Button>
+      )}
+
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }

@@ -16,6 +16,12 @@ const nextConfig = {
   },
   staticPageGenerationTimeout: 1000,
   async headers() {
+    // In local dev the backend runs on http://localhost:3001 — allow it (and
+    // its ws) in the CSP so browser fetches to the local API aren't blocked.
+    const isDev = process.env.NODE_ENV !== "production";
+    const devConnect = isDev
+      ? " http://localhost:3001 ws://localhost:3001 http://127.0.0.1:3001 ws://127.0.0.1:3001"
+      : "";
     return [
       {
         source: "/(.*)",
@@ -41,7 +47,8 @@ const nextConfig = {
               // Fonts: self + data URIs
               "font-src 'self' data:",
               // Connect: self + your backend + Privy + RPC endpoints + WalletConnect
-              "connect-src 'self' https://auth.privy.io wss://auth.privy.io https://*.privy.io https://gigipay-backend-production.up.railway.app https://forno.celo.org https://mainnet.base.org https://rpc.ankr.com https://*.walletconnect.com wss://*.walletconnect.com https://api.coingecko.com https://pro-api.coingecko.com",
+              "connect-src 'self' https://auth.privy.io wss://auth.privy.io https://*.privy.io https://gigipay-backend-production.up.railway.app https://forno.celo.org https://mainnet.base.org https://rpc.ankr.com https://*.walletconnect.com wss://*.walletconnect.com https://pulse.walletconnect.org https://api.web3modal.org https://*.reown.com https://api.coingecko.com https://pro-api.coingecko.com" +
+                devConnect,
               // Frames: Privy embedded wallet iframe must be allowed
               "frame-src 'self' https://auth.privy.io https://*.privy.io",
               // Workers: blob for wagmi/viem

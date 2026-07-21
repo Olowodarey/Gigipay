@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { cookieToInitialState } from "wagmi";
 import "./globals.css";
 
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { WalletProvider } from "@/components/wallet-provider";
+import { ssrWagmiConfig } from "@/lib/wagmi-ssr";
 import { FarcasterProvider } from "@/components/farcaster-provider";
 import { PaymasterProvider } from "@/components/paymaster-provider";
 import { PrivyAuthProvider } from "@/components/privy-provider";
@@ -19,18 +22,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Hydrate wagmi's connection state from cookies so a previously connected
+  // wallet is already connected on first server render — no reconnect prompt.
+  const initialState = cookieToInitialState(
+    ssrWagmiConfig,
+    (await headers()).get("cookie"),
+  );
+
   return (
     <html lang="en" className="dark">
       <body className="font-sans">
         <PrivyAuthProvider>
           <FarcasterProvider>
             <div className="relative flex min-h-screen flex-col">
-              <WalletProvider>
+              <WalletProvider initialState={initialState}>
                 <PaymasterProvider>
                   <Navbar />
                   <main className="flex-1">{children}</main>

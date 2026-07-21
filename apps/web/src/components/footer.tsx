@@ -8,7 +8,6 @@ const links = {
     { name: "Vouchers", href: "/voucher" },
     { name: "Buy Airtime", href: "/buy-airtime" },
     { name: "Bulk Airtime", href: "/bulk-airtime" },
-    { name: "Swap", href: "/swap" },
   ],
   Vouchers: [
     { name: "Create Voucher", href: "/create-payment" },

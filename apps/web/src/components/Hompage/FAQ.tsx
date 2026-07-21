@@ -15,7 +15,7 @@ const faqs: FAQItem[] = [
     category: "General",
     question: "What is Gigipay?",
     answer:
-      "Gigipay is an on-chain payment platform built on Celo and Base. It lets you send crypto to multiple people at once, create claimable vouchers, buy Nigerian airtime with crypto, and swap tokens — all without needing a centralised intermediary.",
+      "Gigipay is an on-chain payment platform built on Celo and Base. It lets you send crypto to multiple people at once, create claimable vouchers, and buy Nigerian airtime with crypto — all without needing a centralised intermediary.",
   },
   {
     category: "General",

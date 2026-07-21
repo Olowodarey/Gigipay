@@ -49,7 +49,6 @@ const baseNavLinks = [
   { name: "Batch Payment", href: "/batch-payment" },
   { name: "Buy Airtime", href: "/buy-airtime" },
   { name: "Bulk Airtime", href: "/bulk-airtime" },
-  { name: "Swap", href: "/swap" },
 ];
 
 const adminLink = { name: "Admin", href: "/admin/bills" };

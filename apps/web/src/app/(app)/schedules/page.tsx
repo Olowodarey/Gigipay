@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -11,6 +11,8 @@ import {
   X,
   ShieldCheck,
   Plus,
+  Bell,
+  BellRing,
 } from "lucide-react";
 import { ClientOnly } from "@/components/batch-payment/ClientOnly";
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,7 @@ import {
 import { WalletConnectButton } from "@/components/connect-button";
 import { PreparedTxCard } from "@/components/PreparedTxCard";
 import { useAuth } from "@/hooks/useAuth";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useAccount } from "wagmi";
 import {
   createSchedule,
@@ -59,7 +62,30 @@ export default function SchedulesPage() {
 
 function SchedulesContent() {
   const { isConnected } = useAccount();
-  const { token, isAuthenticated, isAuthenticating, signIn } = useAuth();
+  const {
+    token,
+    user,
+    isAuthenticated,
+    isAuthenticating,
+    signIn,
+    error: authError,
+  } = useAuth();
+
+  // Auto-start the one-time SIWE sign-in when a wallet is connected but there's
+  // no stored session yet. Guarded so a rejected signature doesn't loop.
+  const autoTried = useRef(false);
+  useEffect(() => {
+    if (!isConnected) {
+      autoTried.current = false;
+      return;
+    }
+    if (!token && !autoTried.current) {
+      autoTried.current = true;
+      signIn();
+    }
+  }, [isConnected, token, signIn]);
+
+  const restoringSession = !!token && !user; // valid JWT, profile still loading
 
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [runs, setRuns] = useState<ScheduleRun[]>([]);
@@ -115,28 +141,52 @@ function SchedulesContent() {
           </p>
         </div>
 
-        {!isConnected || !isAuthenticated ? (
+        {!isConnected ? (
           <Card>
             <CardHeader>
-              <CardTitle>Sign in to manage schedules</CardTitle>
+              <CardTitle>Connect your wallet</CardTitle>
               <CardDescription>
-                Connect your wallet and sign in so only you can see and confirm
-                your recurring payments.
+                Connect a wallet to set up and confirm recurring payments.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <WalletConnectButton />
+            </CardContent>
+          </Card>
+        ) : !isAuthenticated ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {isAuthenticating || restoringSession
+                  ? "Signing you in…"
+                  : "One-time sign-in"}
+              </CardTitle>
+              <CardDescription>
+                A quick signature (no fee) so only you can see and confirm your
+                recurring payments.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
-              {!isConnected ? (
-                <WalletConnectButton />
+              {isAuthenticating || restoringSession ? (
+                <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Check your wallet
+                  to approve the sign-in…
+                </div>
               ) : (
-                <Button onClick={signIn} disabled={isAuthenticating}>
-                  {isAuthenticating ? "Signing in…" : "Sign in"}
-                </Button>
+                <>
+                  {authError && (
+                    <p className="text-sm text-destructive">{authError}</p>
+                  )}
+                  <Button onClick={signIn}>Sign in</Button>
+                </>
               )}
             </CardContent>
           </Card>
         ) : (
           <>
             {error && <p className="text-sm text-destructive">{error}</p>}
+
+            <NotificationsBanner token={token!} />
 
             {/* Due now */}
             {pendingRuns.length > 0 && (
@@ -191,6 +241,49 @@ function SchedulesContent() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Notifications opt-in ─────────────────────────────────────────────────────
+
+function NotificationsBanner({ token }: { token: string }) {
+  const { supported, subscribed, permission, busy, error, enable } =
+    usePushNotifications();
+
+  if (!supported || subscribed) {
+    return subscribed ? (
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <BellRing className="h-3.5 w-3.5 text-primary" /> Notifications on —
+        we'll alert you when a payment is due.
+      </div>
+    ) : null;
+  }
+
+  if (permission === "denied") {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Notifications are blocked in your browser settings. Enable them for this
+        site to get due-payment alerts.
+      </p>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-border p-3 flex items-center justify-between gap-3">
+      <div className="flex items-start gap-2">
+        <Bell className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+        <div className="text-sm">
+          <p className="font-medium">Get notified when a payment is due</p>
+          <p className="text-xs text-muted-foreground">
+            A browser alert each time a scheduled run needs your approval.
+          </p>
+          {error && <p className="text-xs text-destructive mt-1">{error}</p>}
+        </div>
+      </div>
+      <Button size="sm" onClick={() => enable(token)} disabled={busy}>
+        {busy ? "Enabling…" : "Enable"}
+      </Button>
     </div>
   );
 }

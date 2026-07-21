@@ -16,6 +16,7 @@ export interface UserProfile {
 }
 
 const TOKEN_KEY = "gigipay_token";
+const TOKEN_ADDRESS_KEY = "gigipay_token_address";
 
 /** Retrieve the stored JWT from localStorage (SSR-safe). */
 function getStoredToken(): string | null {
@@ -23,14 +24,22 @@ function getStoredToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
-/** Persist a JWT to localStorage. */
-function storeToken(token: string) {
+/** The wallet address the stored JWT was issued for (lowercased), if any. */
+function getStoredAddress(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(TOKEN_ADDRESS_KEY);
+}
+
+/** Persist a JWT (bound to the address it was issued for) to localStorage. */
+function storeToken(token: string, address: string) {
   localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(TOKEN_ADDRESS_KEY, address.toLowerCase());
 }
 
 /** Remove the stored JWT from localStorage. */
 function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(TOKEN_ADDRESS_KEY);
 }
 
 /**
@@ -83,7 +92,7 @@ export function useAuth() {
 
       const { token: jwt, user: profile } = await verifyRes.json();
 
-      storeToken(jwt);
+      storeToken(jwt, address);
       setToken(jwt);
       setUser(profile);
     } catch (err: any) {
@@ -124,14 +133,29 @@ export function useAuth() {
     setUser(null);
   }, []);
 
-  // Auto-restore session on wallet connect — never auto-prompt for signature
+  // Auto-restore session on wallet connect — never auto-prompt for signature.
   useEffect(() => {
+    // Wallet fully disconnected: drop the in-memory profile so gated UI hides,
+    // but KEEP the stored JWT so a reconnect (or page reload / navigation)
+    // restores the same session without a new signature. Only an explicit
+    // signOut() or an account switch clears the token.
     if (!isConnected || !address) {
+      setUser(null);
+      return;
+    }
+
+    // Connected as a different wallet than the session was issued for → that
+    // session isn't valid for this account, so clear it (the new account will
+    // sign in on its own).
+    const boundAddress = getStoredAddress();
+    if (boundAddress && boundAddress !== address.toLowerCase()) {
       signOut();
       return;
     }
-    // Only restore an existing valid session — never auto-trigger a signature popup
-    // MiniPay is the exception: it has no manual sign-in UI so we auto sign-in
+
+    // Same account (or restoring after reload): restore profile from stored JWT.
+    // Never auto-trigger a signature popup — MiniPay is the exception since it
+    // has no manual sign-in UI.
     loadProfile().then(() => {
       if (!getStoredToken() && isMiniPay) {
         signIn();

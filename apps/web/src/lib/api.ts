@@ -290,9 +290,17 @@ export interface AgentPreparedTx {
   };
 }
 
+/** A recurring schedule the agent proposed for the user to confirm & save. */
+export interface AgentPreparedSchedule {
+  id: string;
+  summary: string;
+  payload: CreateSchedulePayload;
+}
+
 export interface AgentChatResult {
   reply: string;
   transactions: AgentPreparedTx[];
+  schedules: AgentPreparedSchedule[];
 }
 
 /** Send the full conversation to the GigiPay Agent and get a reply + prepared txs. */
@@ -435,6 +443,35 @@ export function resumeSchedule(token: string, id: string): Promise<Schedule> {
 
 export function cancelSchedule(token: string, id: string): Promise<Schedule> {
   return authFetch(`/schedules/${id}/cancel`, token, { method: "PATCH" });
+}
+
+// ─── Web Push notifications ────────────────────────────────────────────────────
+
+/** Public VAPID key (falls back to backend if the env var is unset). */
+export function getVapidPublicKey(): Promise<{ publicKey: string }> {
+  return apiFetch("/notifications/vapid-public-key");
+}
+
+/** Register a browser push subscription for the authenticated user. */
+export function subscribePush(
+  token: string,
+  subscription: PushSubscriptionJSON,
+): Promise<{ ok: true }> {
+  return authFetch("/notifications/subscribe", token, {
+    method: "POST",
+    body: JSON.stringify(subscription),
+  });
+}
+
+/** Remove a browser push subscription. */
+export function unsubscribePush(
+  token: string,
+  endpoint: string,
+): Promise<{ ok: true }> {
+  return authFetch("/notifications/unsubscribe", token, {
+    method: "POST",
+    body: JSON.stringify({ endpoint }),
+  });
 }
 
 // ─── Privy Login ──────────────────────────────────────────────────────────────
