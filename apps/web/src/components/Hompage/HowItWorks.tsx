@@ -5,7 +5,7 @@ const steps = [
     step: "01",
     icon: <Wallet className="h-6 w-6 text-accent" />,
     title: "Connect & Fund",
-    desc: "Connect your wallet (or sign in with Gmail). Choose how much to send and which token to use — CELO, cUSD, USDC, ETH, and more.",
+    desc: "Connect your wallet (or sign in with Gmail). Choose how much to send and which stablecoin to use — USDC, USDT, USDm, and more.",
   },
   {
     step: "02",
@@ -17,7 +17,7 @@ const steps = [
     step: "03",
     icon: <CheckCircle className="h-6 w-6 text-accent" />,
     title: "Recipients Claim",
-    desc: "Recipients visit Gigipay, enter the payment name and their code, and the crypto lands in their wallet instantly. No setup needed.",
+    desc: "Recipients visit Gigipay, enter the payment name and their code, and the stablecoins land in their wallet instantly. No setup needed.",
   },
 ];
 
@@ -31,7 +31,7 @@ export default function HowItWorks() {
             How Gigipay Works
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Three simple steps — no crypto experience needed on the receiving
+            Three simple steps — no technical experience needed on the receiving
             end.
           </p>
         </div>

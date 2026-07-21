@@ -111,6 +111,20 @@ export function verifySignature(payload: {
   });
 }
 
+/**
+ * MiniPay login — issues a JWT bound to the injected wallet address WITHOUT a
+ * signature. MiniPay does not support `personal_sign`, so the SIWE flow can't
+ * run there; Gigipay is non-custodial so this only scopes per-user data.
+ */
+export function miniPayLogin(
+  address: string,
+): Promise<{ token: string; user: UserProfile }> {
+  return apiFetch("/auth/minipay", {
+    method: "POST",
+    body: JSON.stringify({ address }),
+  });
+}
+
 /** Fetch the authenticated user's profile using a stored JWT. */
 export function getMyProfile(token: string): Promise<UserProfile> {
   return apiFetch("/users/me", {
@@ -499,4 +513,44 @@ export function privyLogin(payload: {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+// ─── Public metrics (stats page) ───────────────────────────────────────────────
+
+export interface GigipayMetrics {
+  generatedAt: string;
+  users: { total: number; miniPay: number; new7d: number; new30d: number };
+  airtime: {
+    total: number;
+    fulfilled: number;
+    failed: number;
+    pending: number;
+    failedRatePct: number;
+    volumeNgnFulfilled: number;
+    byNetwork: Record<"MTN" | "GLO" | "9MOBILE" | "AIRTEL", number>;
+    last7d: number;
+    last30d: number;
+  };
+  schedules: {
+    total: number;
+    active: number;
+    byKind: Record<"airtime" | "batch-transfer", number>;
+  };
+  runs: {
+    total: number;
+    signed: number;
+    fulfilled: number;
+    pending: number;
+    failed: number;
+    completed: number;
+    failedRatePct: number;
+  };
+  activity: { activeWallets7d: number; activeWallets30d: number };
+  engagement: { dau: number; mau: number; stickinessPct: number } | null;
+  daily: Array<{ date: string; airtime: number; runs: number }>;
+}
+
+/** Public aggregate stats — no auth, no per-user data. */
+export function getMetrics(): Promise<GigipayMetrics> {
+  return apiFetch("/metrics");
 }

@@ -7,6 +7,7 @@ import { parseUnits, Address } from "viem";
 import { useEffect, useState } from "react";
 import { isContractPaused } from "@/lib/api";
 import { CONTRACT_ADDRESSES } from "@/lib/contracts";
+import { getAttributionSuffix } from "@/lib/attribution";
 
 const BATCH_TRANSFER_ABI = [
   {
@@ -60,6 +61,7 @@ export function useBatchTransfer() {
       functionName: "batchTransfer",
       args: [tokenAddress, addresses, amounts],
       value: isNativeToken ? totalAmount : 0n,
+      dataSuffix: getAttributionSuffix(chain.id),
     });
   };
 

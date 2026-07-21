@@ -67,30 +67,46 @@ export function useAuth() {
     typeof window !== "undefined" &&
     (window as any)?.ethereum?.isMiniPay === true;
 
-  // Sign in: get nonce from backend → sign → verify with backend → get JWT
+  // Sign in. Normal browsers use SIWE (get nonce → sign → verify). Inside MiniPay
+  // there is no message signing (personal_sign is unsupported), so we use the
+  // no-signature MiniPay session endpoint bound to the injected wallet address.
   const signIn = useCallback(async () => {
     if (!address) return;
     setIsAuthenticating(true);
     setError(null);
 
     try {
-      // 1. Get nonce from backend
-      const nonceRes = await fetch(`${API_BASE}/auth/nonce?address=${address}`);
-      const { message } = await nonceRes.json();
+      let jwt: string;
+      let profile: UserProfile;
 
-      // 2. Sign the message with wallet (only thing that happens on frontend)
-      const signature = await signMessageAsync({ message });
+      if (isMiniPay) {
+        // MiniPay: no signature — issue a session for the connected address.
+        const res = await fetch(`${API_BASE}/auth/minipay`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address }),
+        });
+        if (!res.ok) throw new Error("Sign in failed");
+        ({ token: jwt, user: profile } = await res.json());
+      } else {
+        // 1. Get nonce from backend
+        const nonceRes = await fetch(
+          `${API_BASE}/auth/nonce?address=${address}`,
+        );
+        const { message } = await nonceRes.json();
 
-      // 3. Send signature to backend for verification
-      const verifyRes = await fetch(`${API_BASE}/auth/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address, signature, message, isMiniPay }),
-      });
+        // 2. Sign the message with wallet (only thing that happens on frontend)
+        const signature = await signMessageAsync({ message });
 
-      if (!verifyRes.ok) throw new Error("Verification failed");
-
-      const { token: jwt, user: profile } = await verifyRes.json();
+        // 3. Send signature to backend for verification
+        const verifyRes = await fetch(`${API_BASE}/auth/verify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address, signature, message, isMiniPay }),
+        });
+        if (!verifyRes.ok) throw new Error("Verification failed");
+        ({ token: jwt, user: profile } = await verifyRes.json());
+      }
 
       storeToken(jwt, address);
       setToken(jwt);

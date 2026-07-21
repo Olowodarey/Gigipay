@@ -15,13 +15,13 @@ const faqs: FAQItem[] = [
     category: "General",
     question: "What is Gigipay?",
     answer:
-      "Gigipay is an on-chain payment platform built on Celo and Base. It lets you send crypto to multiple people at once, create claimable vouchers, and buy Nigerian airtime with crypto — all without needing a centralised intermediary.",
+      "Gigipay is an on-chain payment platform built on Celo and Base. It lets you send stablecoins to multiple people at once, create claimable vouchers, and buy Nigerian airtime with stablecoins — all without needing a centralised intermediary.",
   },
   {
     category: "General",
     question: "Which networks does Gigipay support?",
     answer:
-      "Gigipay currently supports Celo Mainnet and Base Mainnet. On Celo you can pay with CELO, cUSD, cEUR, USDC, and USDT. On Base you can pay with ETH, USDC, and USDbC.",
+      "Gigipay currently supports Celo Mainnet and Base Mainnet. On Celo you can pay with USDC, USDT, and USDm. Inside MiniPay, network fees are handled automatically and you transact entirely in stablecoins.",
   },
   {
     category: "General",
@@ -35,7 +35,7 @@ const faqs: FAQItem[] = [
     category: "Batch Payment",
     question: "What is Batch Payment?",
     answer:
-      "Batch Payment lets you send crypto to dozens or hundreds of wallet addresses in a single transaction. Instead of sending one-by-one, you upload a list of recipients and amounts, review the total, approve once (for ERC-20 tokens), and the smart contract distributes everything atomically.",
+      "Batch Payment lets you send stablecoins to dozens or hundreds of wallet addresses in a single transaction. Instead of sending one-by-one, you upload a list of recipients and amounts, review the total, approve once (for ERC-20 tokens), and the smart contract distributes everything atomically.",
   },
   {
     category: "Batch Payment",
@@ -47,7 +47,7 @@ const faqs: FAQItem[] = [
     category: "Batch Payment",
     question: "Is there a limit on how many recipients I can include?",
     answer:
-      "There is no hard limit set by Gigipay, but very large batches may hit block gas limits on-chain. We recommend keeping batches under 200 recipients per transaction for reliability. You can always split a large list into multiple batches.",
+      "There is no hard limit set by Gigipay, but very large batches may hit on-chain block limits. We recommend keeping batches under 200 recipients per transaction for reliability. You can always split a large list into multiple batches.",
   },
   {
     category: "Batch Payment",
@@ -61,7 +61,7 @@ const faqs: FAQItem[] = [
     category: "Vouchers",
     question: "What are Gigipay Vouchers?",
     answer:
-      "Vouchers are on-chain payment links secured by a claim code. You lock crypto into a smart contract and share a unique code with each recipient. They enter the code on the Claim page to receive their funds — no wallet required to receive a code, only to claim it.",
+      "Vouchers are on-chain payment links secured by a claim code. You lock stablecoins into a smart contract and share a unique code with each recipient. They enter the code on the Claim page to receive their funds — no wallet required to receive a code, only to claim it.",
   },
   {
     category: "Vouchers",
@@ -93,7 +93,7 @@ const faqs: FAQItem[] = [
     category: "Airtime",
     question: "How does Buy Airtime work?",
     answer:
-      "You enter a Nigerian phone number, select the network (MTN, GLO, 9mobile, or Airtel), and enter the airtime amount in Naira. Gigipay fetches a live exchange rate, you pay the equivalent in crypto, and the airtime is delivered to the phone number within seconds via our fulfilment partner.",
+      "You enter a Nigerian phone number, select the network (MTN, GLO, 9mobile, or Airtel), and enter the airtime amount in Naira. Gigipay fetches a live exchange rate, you pay the equivalent in stablecoins, and the airtime is delivered to the phone number within seconds via our fulfilment partner.",
   },
   {
     category: "Airtime",

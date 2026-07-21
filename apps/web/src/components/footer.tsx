@@ -16,7 +16,13 @@ const links = {
   ],
   Resources: [
     { name: "FAQ", href: "/#faq" },
+    { name: "Stats", href: "/stats" },
     { name: "Profile", href: "/profile" },
+    { name: "Support", href: "https://t.me/gigipay" },
+  ],
+  Legal: [
+    { name: "Terms of Service", href: "/terms" },
+    { name: "Privacy Policy", href: "/privacy" },
   ],
 };
 
@@ -46,7 +52,7 @@ export function Footer() {
               />
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-              On-chain payments made simple. Send crypto to anyone, run
+              On-chain payments made simple. Send stablecoins to anyone, run
               giveaways, and top up airtime — all on Celo and Base.
             </p>
 

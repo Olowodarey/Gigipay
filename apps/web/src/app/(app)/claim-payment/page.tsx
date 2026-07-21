@@ -136,7 +136,7 @@ function ClaimPageContent() {
   };
 
   const getShareTemplate = () =>
-    `🎊 I just received ${prizeAmount} ${tokenSymbol} on Gigipay! 🎉\n\nGigipay makes crypto payments simple and secure on ${getChainName()}! \n\nTry Gigipay for seamless crypto payments! 🎁\n\n#Gigipay #CryptoPayments`;
+    `🎊 I just received ${prizeAmount} ${tokenSymbol} on Gigipay! 🎉\n\nGigipay makes stablecoin payments simple and secure on ${getChainName()}! \n\nTry Gigipay for seamless stablecoin payments! 🎁\n\n#Gigipay #StablecoinPayments`;
 
   const validateCode = () => {
     const trimmedName = voucherName.trim();
@@ -616,7 +616,7 @@ function ClaimPageContent() {
                     </Button>
                   )}
                   <p className="text-xs text-center text-muted-foreground">
-                    Gas fees apply on {getChainName()}
+                    Network fees apply on {getChainName()}
                   </p>
                 </div>
               </CardContent>

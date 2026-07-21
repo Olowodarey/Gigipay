@@ -6,6 +6,9 @@ import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { WalletProvider } from "@/components/wallet-provider";
+import { MiniPayAutoConnect } from "@/components/minipay-autoconnect";
+import { PostHogProvider } from "@/components/posthog-provider";
+import { PostHogIdentify } from "@/components/posthog-identify";
 import { ssrWagmiConfig } from "@/lib/wagmi-ssr";
 import { FarcasterProvider } from "@/components/farcaster-provider";
 import { PaymasterProvider } from "@/components/paymaster-provider";
@@ -37,19 +40,23 @@ export default async function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="font-sans">
-        <PrivyAuthProvider>
-          <FarcasterProvider>
-            <div className="relative flex min-h-screen flex-col">
-              <WalletProvider initialState={initialState}>
-                <PaymasterProvider>
-                  <Navbar />
-                  <main className="flex-1">{children}</main>
-                  <Footer />
-                </PaymasterProvider>
-              </WalletProvider>
-            </div>
-          </FarcasterProvider>
-        </PrivyAuthProvider>
+        <PostHogProvider>
+          <PrivyAuthProvider>
+            <FarcasterProvider>
+              <div className="relative flex min-h-screen flex-col">
+                <WalletProvider initialState={initialState}>
+                  <MiniPayAutoConnect />
+                  <PostHogIdentify />
+                  <PaymasterProvider>
+                    <Navbar />
+                    <main className="flex-1">{children}</main>
+                    <Footer />
+                  </PaymasterProvider>
+                </WalletProvider>
+              </div>
+            </FarcasterProvider>
+          </PrivyAuthProvider>
+        </PostHogProvider>
       </body>
     </html>
   );

@@ -6,6 +6,7 @@ import {
 import { parseUnits, Address, keccak256, toBytes, encodePacked } from "viem";
 import { useEffect, useState, useCallback } from "react";
 import { CONTRACT_ADDRESSES, getContractAddress } from "@/lib/contracts";
+import { getAttributionSuffix } from "@/lib/attribution";
 
 const GIGIPAY_ABI = [
   {
@@ -106,6 +107,7 @@ export function useCreateVoucher() {
         [BigInt(expirationTime)],
       ],
       value: isNativeToken ? parsedAmount : 0n,
+      dataSuffix: getAttributionSuffix(chain?.id),
     });
   };
 
@@ -152,6 +154,7 @@ export function useCreateVoucherBatch() {
       functionName: "createVoucherBatch",
       args: [tokenAddress, voucherName, claimCodes, amounts, expirationTimes],
       value: isNativeToken ? totalAmount : 0n,
+      dataSuffix: getAttributionSuffix(chain?.id),
     });
   };
 
@@ -177,6 +180,7 @@ export function useClaimVoucher() {
       abi: GIGIPAY_ABI,
       functionName: "claimVoucher",
       args: [hashClaimCode(voucherName, claimCode)],
+      dataSuffix: getAttributionSuffix(chain?.id),
     });
   };
 
@@ -195,6 +199,7 @@ export function useRefundVoucher() {
       abi: GIGIPAY_ABI,
       functionName: "refundVouchersByName",
       args: [voucherName],
+      dataSuffix: getAttributionSuffix(chain?.id),
     });
   };
 

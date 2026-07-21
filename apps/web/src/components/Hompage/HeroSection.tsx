@@ -15,9 +15,9 @@ export default function HeroSection() {
               <span className="text-accent">Just a Gmail Needed</span>
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed">
-              Send crypto payments, run giveaways, and top up airtime — all
+              Send stablecoin payments, run giveaways, and top up airtime — all
               on-chain. Recipients only need a Gmail address. No wallet setup,
-              no crypto knowledge required.
+              no technical know-how required.
             </p>
 
             {/* Mini flow */}
@@ -32,7 +32,7 @@ export default function HeroSection() {
               <ArrowRight className="h-4 w-4 shrink-0" />
               <span className="flex items-center gap-1.5 bg-muted rounded-full px-3 py-1">
                 <CheckCircle className="h-3.5 w-3.5 text-accent" /> Receive
-                crypto
+                stablecoins
               </span>
             </div>
 

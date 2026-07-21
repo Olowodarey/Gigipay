@@ -16,7 +16,7 @@ const steps = [
   {
     icon: <CheckCircle className="h-5 w-5 text-accent" />,
     title: "Claim & spend",
-    desc: "Receive crypto, buy airtime, or transfer out",
+    desc: "Receive stablecoins, buy airtime, or transfer out",
   },
 ];
 
@@ -30,7 +30,7 @@ export default function GmailCTA() {
             <Globe className="h-8 w-8 text-accent" />
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            Your Recipients Don't Need Crypto Knowledge
+            Your Recipients Don't Need Any Technical Knowledge
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
             Gigipay uses Privy to create embedded wallets from Gmail accounts.

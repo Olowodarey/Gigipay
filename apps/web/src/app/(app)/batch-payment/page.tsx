@@ -12,6 +12,8 @@ import {
   useTokenBalance,
 } from "@/hooks/useTokenApproval";
 import { Address, formatUnits, parseUnits } from "viem";
+import { useIsMiniPay } from "@/hooks/useIsMiniPay";
+import { MINIPAY_TOKENS, addCashDeeplink } from "@/lib/minipay";
 
 const SUPPORTED_CHAIN_IDS = [42220, 8453]; // Celo Mainnet, Base Mainnet
 
@@ -72,8 +74,12 @@ function BatchPaymentContent() {
   const { address, isConnected, chain } = useAccount();
   const { isPaused } = useContractPaused();
 
-  // Get available tokens for current chain
-  const availableTokens = getAvailableTokens(chain?.id);
+  // Get available tokens for current chain. Inside MiniPay, only USDC/USDT/USDm
+  // — never show CELO/ETH/cUSD/cEUR.
+  const isMiniPay = useIsMiniPay();
+  const availableTokens = getAvailableTokens(chain?.id).filter(
+    (t) => !isMiniPay || (MINIPAY_TOKENS as readonly string[]).includes(t.symbol),
+  );
   const selectedTokenConfig =
     availableTokens.find((t) => t.symbol === selectedToken) ||
     availableTokens[0];
@@ -233,6 +239,10 @@ function BatchPaymentContent() {
       : tokenBalance;
 
     if (currentBalance < totalInWei) {
+      if (isMiniPay) {
+        window.location.href = addCashDeeplink();
+        return;
+      }
       notify({
         description: `Insufficient ${selectedToken} balance`,
         variant: "destructive",

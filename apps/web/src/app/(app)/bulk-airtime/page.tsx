@@ -34,6 +34,8 @@ import {
 } from "@/hooks/useTokenApproval";
 import { useRate } from "@/hooks/useRate";
 import { useBatchBillPayment } from "@/hooks/useBatchBillPayment";
+import { useIsMiniPay } from "@/hooks/useIsMiniPay";
+import { filterTokensForEnv } from "@/lib/minipay";
 import {
   registerAirtimeOrder,
   getAirtimeOrderStatus,
@@ -105,9 +107,10 @@ function BulkAirtimeContent() {
   const { address, isConnected, chain } = useAccount();
   const { data: nativeBalance } = useBalance({ address });
 
+  const isMiniPay = useIsMiniPay();
   const tokens = chain?.id ? (TOKEN_ADDRESSES[chain.id] ?? {}) : {};
-  const tokenSymbols = Object.keys(tokens);
-  const defaultToken = tokenSymbols[0] ?? "CELO";
+  const tokenSymbols = filterTokensForEnv(Object.keys(tokens), isMiniPay);
+  const defaultToken = tokenSymbols[0] ?? "USDC";
 
   const [selectedToken, setSelectedToken] = useState(defaultToken);
   const [recipients, setRecipients] = useState<Recipient[]>([emptyRecipient()]);
@@ -119,11 +122,16 @@ function BulkAirtimeContent() {
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Reset token when chain changes
+  // Reset token when chain changes or the selection isn't available (e.g. CELO
+  // is hidden inside MiniPay).
   useEffect(() => {
-    const syms = chain?.id ? Object.keys(TOKEN_ADDRESSES[chain.id] ?? {}) : [];
-    if (syms.length) setSelectedToken(syms[0]);
-  }, [chain?.id]);
+    const syms = filterTokensForEnv(
+      chain?.id ? Object.keys(TOKEN_ADDRESSES[chain.id] ?? {}) : [],
+      isMiniPay,
+    );
+    if (syms.length && !syms.includes(selectedToken)) setSelectedToken(syms[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chain?.id, isMiniPay]);
 
   const tokenAddress = (tokens[selectedToken] ??
     "0x0000000000000000000000000000000000000000") as Address;

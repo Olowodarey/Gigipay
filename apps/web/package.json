@@ -11,6 +11,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@celo/attribution-tags": "^0.3.0",
     "@farcaster/miniapp-sdk": "^0.2.1",
     "@privy-io/react-auth": "^3.19.0",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -23,6 +24,7 @@
     "next": "^15.3.9",
     "papaparse": "^5.5.3",
     "permissionless": "^0.3.3",
+    "posthog-js": "^1.406.0",
     "react": "^19.1.0",
     "react-confetti": "^6.4.0",
     "react-dom": "^19.1.0",

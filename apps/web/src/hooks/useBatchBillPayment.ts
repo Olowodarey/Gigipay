@@ -5,6 +5,7 @@ import {
 } from "wagmi";
 import { keccak256, encodePacked, parseUnits, type Address } from "viem";
 import { getContractAddress } from "@/lib/contracts";
+import { getAttributionSuffix } from "@/lib/attribution";
 
 const PAY_BILL_BATCH_ABI = [
   {
@@ -102,6 +103,7 @@ export function useBatchBillPayment() {
       functionName: "payBillBatch",
       args: [tokenAddress, amounts, serviceType, serviceId, recipientHashes],
       value: isNative ? totalAmount : 0n,
+      dataSuffix: getAttributionSuffix(chain.id),
     });
   };
 

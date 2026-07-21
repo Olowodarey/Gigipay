@@ -13,7 +13,7 @@ const features = [
   {
     icon: <Users className="h-6 w-6 text-accent" />,
     title: "Batch Payments",
-    desc: "Pay your entire team in one transaction. Add multiple wallet addresses and amounts — Gigipay sends them all at once, saving you time and gas fees.",
+    desc: "Pay your entire team in one transaction. Add multiple wallet addresses and amounts — Gigipay sends them all at once, saving you time and network fees.",
     link: { href: "/batch-payment", label: "Send batch payment" },
   },
   {
@@ -25,19 +25,19 @@ const features = [
   {
     icon: <CheckCircle className="h-6 w-6 text-accent" />,
     title: "Claim a Payment",
-    desc: "Received a payment code? Enter the voucher name and your unique code to claim your crypto instantly. No wallet setup needed — just sign in with Gmail and you're done.",
+    desc: "Received a payment code? Enter the voucher name and your unique code to claim your stablecoins instantly. No wallet setup needed — just sign in with Gmail and you're done.",
     link: { href: "/claim-payment", label: "Claim now" },
   },
   {
     icon: <Phone className="h-6 w-6 text-accent" />,
     title: "Buy & Gift Airtime",
-    desc: "Top up any Nigerian number instantly using crypto. MTN, Glo, Airtel, 9mobile — all supported. Perfect for gifting, employee perks, or giveaway prizes.",
+    desc: "Top up any Nigerian number instantly using stablecoins. MTN, Glo, Airtel, 9mobile — all supported. Perfect for gifting, employee perks, or giveaway prizes.",
     link: { href: "/buy-airtime", label: "Buy airtime" },
   },
   {
     icon: <Mail className="h-6 w-6 text-accent" />,
     title: "Gmail Login",
-    desc: "No MetaMask? No problem. Sign in with your Google account and Gigipay automatically creates a secure embedded wallet for you. Start receiving crypto in seconds.",
+    desc: "No MetaMask? No problem. Sign in with your Google account and Gigipay automatically creates a secure embedded wallet for you. Start receiving stablecoins in seconds.",
     link: null,
     footer: 'Just click "Sign in with Google" →',
   },
@@ -46,7 +46,7 @@ const features = [
     title: "On-chain & Trustless",
     desc: "Every payment is locked in a smart contract on Celo or Base. Funds are only released when the correct claim code is used. Unclaimed payments can be refunded by the sender.",
     link: null,
-    footer: "Your keys, your crypto.",
+    footer: "Your keys, your stablecoins.",
   },
 ];
 

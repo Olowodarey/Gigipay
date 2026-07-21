@@ -16,6 +16,8 @@ import {
 } from "@/hooks/useTokenApproval";
 import { formatUnits, parseUnits, Address } from "viem";
 import { validateClaimCode } from "@/hooks/useVouchers";
+import { useIsMiniPay } from "@/hooks/useIsMiniPay";
+import { MINIPAY_TOKENS } from "@/lib/minipay";
 
 /** ERC20 token addresses per chain. Native token uses address(0). */
 const TOKEN_ADDRESSES: Record<number, Record<string, Address>> = {
@@ -84,10 +86,20 @@ function CreatePageContent() {
   const { address, isConnected, chain } = useAccount();
   const { data: balance } = useBalance({ address });
 
-  // Get available tokens for current chain
-  const availableTokens = getAvailableTokens(chain?.id);
+  // Get available tokens for current chain. Inside MiniPay, hide CELO/ETH and
+  // any non-MiniPay token (USDC/USDT/USDm only).
+  const isMiniPay = useIsMiniPay();
+  const allTokens = getAvailableTokens(chain?.id);
+  const availableTokens = isMiniPay
+    ? Object.fromEntries(
+        Object.entries(allTokens).filter(([symbol]) =>
+          (MINIPAY_TOKENS as readonly string[]).includes(symbol),
+        ),
+      )
+    : allTokens;
   const nativeSymbol = chain?.id ? (NATIVE_SYMBOLS[chain.id] ?? "ETH") : "ETH";
-  const defaultToken = Object.keys(availableTokens)[0] || nativeSymbol;
+  const defaultToken =
+    Object.keys(availableTokens)[0] || (isMiniPay ? "USDC" : nativeSymbol);
 
   const tokenAddresses: Record<string, Address> = chain?.id
     ? (TOKEN_ADDRESSES[chain.id] ?? {})

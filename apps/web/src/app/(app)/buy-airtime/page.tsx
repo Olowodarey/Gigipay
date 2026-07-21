@@ -31,6 +31,8 @@ import {
   useTokenAllowance,
 } from "@/hooks/useTokenApproval";
 import { useRate } from "@/hooks/useRate";
+import { useIsMiniPay } from "@/hooks/useIsMiniPay";
+import { filterTokensForEnv, addCashDeeplink } from "@/lib/minipay";
 import {
   registerAirtimeOrder,
   getAirtimeOrderStatus,
@@ -80,9 +82,10 @@ function BuyAirtimeContent() {
   const { address, isConnected, chain } = useAccount();
   const { data: nativeBalance } = useBalance({ address });
 
+  const isMiniPay = useIsMiniPay();
   const tokens = chain?.id ? (TOKEN_ADDRESSES[chain.id] ?? {}) : {};
-  const tokenSymbols = Object.keys(tokens);
-  const defaultToken = tokenSymbols[0] ?? "CELO";
+  const tokenSymbols = filterTokensForEnv(Object.keys(tokens), isMiniPay);
+  const defaultToken = tokenSymbols[0] ?? "USDC";
 
   const [selectedToken, setSelectedToken] = useState(defaultToken);
   const [networkCode, setNetworkCode] = useState<NetworkCode>("01");
@@ -97,11 +100,16 @@ function BuyAirtimeContent() {
     msg: string;
   } | null>(null);
 
-  // Reset token when chain changes
+  // Reset token when chain changes or the selected token isn't available in the
+  // current environment (e.g. CELO hidden inside MiniPay).
   useEffect(() => {
-    const syms = chain?.id ? Object.keys(TOKEN_ADDRESSES[chain.id] ?? {}) : [];
-    if (syms.length) setSelectedToken(syms[0]);
-  }, [chain?.id]);
+    const syms = filterTokensForEnv(
+      chain?.id ? Object.keys(TOKEN_ADDRESSES[chain.id] ?? {}) : [],
+      isMiniPay,
+    );
+    if (syms.length && !syms.includes(selectedToken)) setSelectedToken(syms[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chain?.id, isMiniPay]);
 
   const tokenAddress = (tokens[selectedToken] ??
     "0x0000000000000000000000000000000000000000") as Address;
@@ -181,6 +189,11 @@ function BuyAirtimeContent() {
       return false;
     }
     if (displayBalance < parseFloat(tokenAmount)) {
+      // Inside MiniPay, send the user to Deposit (Add Cash) instead of a dead end.
+      if (isMiniPay) {
+        window.location.href = addCashDeeplink();
+        return false;
+      }
       showNotice("error", `Insufficient ${selectedToken} balance`);
       return false;
     }

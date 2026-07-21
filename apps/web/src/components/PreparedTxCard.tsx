@@ -12,6 +12,7 @@ import {
 import { erc20Abi, formatUnits, type Address } from "viem";
 import { Button } from "@/components/ui/button";
 import { getContractAddress } from "@/lib/contracts";
+import { withAttribution, getAttributionSuffix } from "@/lib/attribution";
 import { registerAirtimeOrder, type AgentPreparedTx } from "@/lib/api";
 
 /**
@@ -75,7 +76,9 @@ export function PreparedTxCard({
     sendTransaction({
       chainId: tx.chainId,
       to: tx.to,
-      data: tx.data,
+      // Append the Celo attribution suffix (ERC-8021) — invisible to the
+      // contract, used only for ecosystem impact tracking.
+      data: withAttribution(tx.data, tx.chainId),
       value: BigInt(tx.value || "0"),
     });
 
@@ -103,6 +106,7 @@ export function PreparedTxCard({
         abi: erc20Abi,
         functionName: "approve",
         args: [spender, BigInt(tx.amount)],
+        dataSuffix: getAttributionSuffix(tx.chainId),
       });
     } else {
       doSend();

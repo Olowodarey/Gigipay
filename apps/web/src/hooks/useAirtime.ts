@@ -5,6 +5,7 @@ import {
 } from "wagmi";
 import { keccak256, encodePacked, parseUnits, type Address } from "viem";
 import { getContractAddress } from "@/lib/contracts";
+import { getAttributionSuffix } from "@/lib/attribution";
 
 const PAY_BILL_ABI = [
   {
@@ -68,6 +69,7 @@ export function usePayBillAirtime() {
       functionName: "payBill",
       args: [tokenAddress, amount, "airtime", networkCode, recipientHash],
       value: isNative ? amount : 0n,
+      dataSuffix: getAttributionSuffix(chain.id),
     });
   };
 

@@ -96,6 +96,13 @@ function ConnectButtonInner() {
     return <PrivyProfileButton />;
   }
 
+  // MiniPay: zero-click connect. Never show a "Connect Wallet" button, no Privy
+  // login, no chain switcher, no CELO balance, no raw 0x as the primary label.
+  // The injected wallet auto-connects (see MiniPayAutoConnect).
+  if (isMiniPay) {
+    return <MiniPayAccountChip label={user?.displayName} />;
+  }
+
   // Wallet user
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -172,6 +179,24 @@ function ConnectButtonInner() {
       </ConnectButton.Custom>
       <PrivyLoginButton />
     </div>
+  );
+}
+
+/**
+ * MiniPay account chip — phone-first identity, no address/balance/chain shown.
+ * While the injected wallet is still auto-connecting, renders nothing.
+ */
+function MiniPayAccountChip({ label }: { label?: string }) {
+  const { isConnected } = useAccount();
+  if (!isConnected) return null;
+  return (
+    <Link
+      href="/profile"
+      className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 gap-1"
+    >
+      <span className="text-xs">📱</span>
+      {label || "My Account"}
+    </Link>
   );
 }
 

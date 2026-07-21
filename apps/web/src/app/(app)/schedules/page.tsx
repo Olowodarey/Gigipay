@@ -27,6 +27,8 @@ import { WalletConnectButton } from "@/components/connect-button";
 import { PreparedTxCard } from "@/components/PreparedTxCard";
 import { useAuth } from "@/hooks/useAuth";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useIsMiniPay } from "@/hooks/useIsMiniPay";
+import { filterTokensForEnv } from "@/lib/minipay";
 import { useAccount } from "wagmi";
 import {
   createSchedule,
@@ -440,6 +442,8 @@ function CreateScheduleForm({
   token: string;
   onCreated: () => void;
 }) {
+  const isMiniPay = useIsMiniPay();
+  const tokens = filterTokensForEnv(TOKENS, isMiniPay);
   const [kind, setKind] = useState<ScheduleKind>("airtime");
   const [tokenSymbol, setTokenSymbol] = useState("USDC");
   const [cadence, setCadence] = useState<ScheduleCadence>("weekly");
@@ -583,7 +587,7 @@ function CreateScheduleForm({
             value={tokenSymbol}
             onChange={(e) => setTokenSymbol(e.target.value)}
           >
-            {TOKENS.map((t) => (
+            {tokens.map((t) => (
               <option key={t} value={t}>
                 {t}
               </option>
