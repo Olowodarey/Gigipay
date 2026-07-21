@@ -307,6 +307,136 @@ export function sendAgentMessage(payload: {
   });
 }
 
+// ─── Scheduled / Recurring Payments ───────────────────────────────────────────
+
+/** Authenticated fetch — attaches the Gigipay JWT. */
+function authFetch<T>(
+  path: string,
+  token: string,
+  options?: RequestInit,
+): Promise<T> {
+  return apiFetch(path, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      ...(options?.headers || {}),
+    },
+  });
+}
+
+export type ScheduleKind = "airtime" | "batch-transfer";
+export type ScheduleCadence = "daily" | "weekly" | "monthly";
+export type ScheduleStatus = "active" | "paused" | "cancelled" | "completed";
+
+export interface Schedule {
+  id: string;
+  ownerAddress: string;
+  chainId: number;
+  kind: ScheduleKind;
+  tokenSymbol: string;
+  params:
+    | { phoneNumber: string; amountNgn: number; network: string }
+    | { recipients: { address: string; amount: string }[] };
+  cadence: ScheduleCadence;
+  nextRunAt: string;
+  endAt: string | null;
+  status: ScheduleStatus;
+  spendCapUsd: string | null;
+  label: string | null;
+  cyclesCreated: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ScheduleRunStatus =
+  | "pending"
+  | "signed"
+  | "fulfilled"
+  | "failed"
+  | "skipped";
+
+export interface ScheduleRun {
+  id: string;
+  scheduleId: string;
+  cycle: number;
+  dueAt: string;
+  status: ScheduleRunStatus;
+  txHash: string | null;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+  schedule: Schedule | null;
+}
+
+export interface CreateSchedulePayload {
+  kind: ScheduleKind;
+  chainId?: number;
+  tokenSymbol: string;
+  cadence: ScheduleCadence;
+  startAt?: string;
+  endAt?: string;
+  spendCapUsd?: number;
+  label?: string;
+  // airtime
+  phoneNumber?: string;
+  amountNgn?: number;
+  network?: string;
+  // batch-transfer
+  recipients?: { address: string; amount: string }[];
+}
+
+export function createSchedule(
+  token: string,
+  payload: CreateSchedulePayload,
+): Promise<Schedule> {
+  return authFetch("/schedules", token, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function listSchedules(token: string): Promise<Schedule[]> {
+  return authFetch("/schedules", token);
+}
+
+export function listScheduleRuns(token: string): Promise<ScheduleRun[]> {
+  return authFetch("/schedules/runs", token);
+}
+
+/** Build the signable calldata for a due run (rendered with PreparedTxCard). */
+export function prepareScheduleRun(
+  token: string,
+  runId: string,
+): Promise<AgentPreparedTx> {
+  return authFetch(`/schedules/runs/${runId}/prepare`, token, {
+    method: "POST",
+  });
+}
+
+export function markScheduleRunSigned(
+  token: string,
+  runId: string,
+  txHash: string,
+): Promise<ScheduleRun> {
+  return authFetch(`/schedules/runs/${runId}/signed`, token, {
+    method: "POST",
+    body: JSON.stringify({ txHash }),
+  });
+}
+
+export function pauseSchedule(token: string, id: string): Promise<Schedule> {
+  return authFetch(`/schedules/${id}/pause`, token, { method: "PATCH" });
+}
+
+export function resumeSchedule(token: string, id: string): Promise<Schedule> {
+  return authFetch(`/schedules/${id}/resume`, token, { method: "PATCH" });
+}
+
+export function cancelSchedule(token: string, id: string): Promise<Schedule> {
+  return authFetch(`/schedules/${id}/cancel`, token, { method: "PATCH" });
+}
+
 // ─── Privy Login ──────────────────────────────────────────────────────────────
 
 /**

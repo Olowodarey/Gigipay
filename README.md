@@ -29,7 +29,7 @@ Each folder has its own README with full setup instructions:
 
 | Network      | Address                                      |
 | ------------ | -------------------------------------------- |
-| Celo Mainnet | `0x70b92a67F391F674aFFfCE3Dd7EB3d99e1f1E9a8` |
+| Celo Mainnet | `0x4e83B060F788413e97ad0Dd5FC9FC8781CC95cDc` |
 | Base Mainnet | `0xEdc6abb2f1A25A191dAf8B648c1A3686EfFE6Dd6` |
 
 ## Quick Start

@@ -44,6 +44,8 @@ const voucherPaths = voucherLinks.map((l) => l.href).concat(["/voucher"]);
 
 const baseNavLinks = [
   { name: "Home", href: "/" },
+  { name: "Agent", href: "/agent" },
+  { name: "Schedules", href: "/schedules" },
   { name: "Batch Payment", href: "/batch-payment" },
   { name: "Buy Airtime", href: "/buy-airtime" },
   { name: "Bulk Airtime", href: "/bulk-airtime" },

@@ -7,7 +7,7 @@ import type { Address } from "viem";
  */
 export const CONTRACT_ADDRESSES: Record<number, Address> = {
   42220: (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_CELO ||
-    "0x4e83B060F788413e97ad0Dd5FC9FC8781CC95cDc") as Address, // Celo Mainnet - Gigipay v2.0
+    "0x79aB973f8985755dC7E185fcd0F60888e46019a3") as Address, // Celo Mainnet - Gigipay v2.0 (redeployed 2026-07-21, Safe admin)
   8453: (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_BASE ||
     "0xEdc6abb2f1A25A191dAf8B648c1A3686EfFE6Dd6") as Address, // Base Mainnet
 };

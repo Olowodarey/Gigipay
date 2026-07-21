@@ -17,7 +17,7 @@ Next.js 15 web app for the Gigipay protocol. Supports wallet connections, paymen
 
 | Network | Chain ID | Contract                                     |
 | ------- | -------- | -------------------------------------------- |
-| Celo    | 42220    | `0x70b92a67F391F674aFFfCE3Dd7EB3d99e1f1E9a8` |
+| Celo    | 42220    | `0x4e83B060F788413e97ad0Dd5FC9FC8781CC95cDc` |
 | Base    | 8453     | `0xEdc6abb2f1A25A191dAf8B648c1A3686EfFE6Dd6` |
 
 ## Project Structure
@@ -111,7 +111,7 @@ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
 NEXT_PUBLIC_PRIVY_APP_ID=
 
 # Contract addresses (update after each deployment)
-NEXT_PUBLIC_CONTRACT_ADDRESS_CELO=0x70b92a67F391F674aFFfCE3Dd7EB3d99e1f1E9a8
+NEXT_PUBLIC_CONTRACT_ADDRESS_CELO=0x4e83B060F788413e97ad0Dd5FC9FC8781CC95cDc
 NEXT_PUBLIC_CONTRACT_ADDRESS_BASE=0xEdc6abb2f1A25A191dAf8B648c1A3686EfFE6Dd6
 
 # Admin wallets (comma-separated, for /admin/bills access)
