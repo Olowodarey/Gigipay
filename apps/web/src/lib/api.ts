@@ -500,21 +500,6 @@ export function unsubscribePush(
   });
 }
 
-// ─── Privy Login ──────────────────────────────────────────────────────────────
-
-/**
- * Exchange a Privy access token for a Gigipay JWT.
- * Called automatically after Privy authentication succeeds.
- */
-export function privyLogin(payload: {
-  accessToken: string;
-}): Promise<{ token: string; user: UserProfile }> {
-  return apiFetch("/auth/privy", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
 // ─── Public metrics (stats page) ───────────────────────────────────────────────
 
 export interface GigipayMetrics {

@@ -1,23 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { usePrivy } from "@privy-io/react-auth";
 import { useAccount } from "wagmi";
 import { getMyProfile, UserProfile } from "@/lib/api";
 
 const TOKEN_KEY = "gigipay_token";
 
 /**
- * Unified hook that returns the current user profile from the backend,
- * regardless of whether they logged in via wallet or Privy (email/phone).
- * Automatically re-fetches when auth state changes.
+ * Returns the current user profile from the backend for a connected wallet.
+ * Re-fetches when the wallet connection changes.
  */
 export function useUser() {
-  const {
-    ready,
-    authenticated: privyAuthenticated,
-    logout: privyLogout,
-  } = usePrivy();
   const { isConnected: walletConnected } = useAccount();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -44,25 +37,19 @@ export function useUser() {
   }, []);
 
   useEffect(() => {
-    if (ready) {
-      fetchProfile();
-    }
-  }, [ready, privyAuthenticated, walletConnected, fetchProfile]);
+    fetchProfile();
+  }, [walletConnected, fetchProfile]);
 
   const logout = useCallback(async () => {
     localStorage.removeItem(TOKEN_KEY);
     setProfile(null);
     setHasToken(false);
-    if (privyAuthenticated) {
-      await privyLogout();
-    }
-  }, [privyAuthenticated, privyLogout]);
+  }, []);
 
   return {
     profile,
     loading,
-    isLoggedIn: hasToken && (privyAuthenticated || walletConnected),
-    isPrivyUser: privyAuthenticated,
+    isLoggedIn: hasToken && walletConnected,
     isWalletUser: walletConnected,
     logout,
     refetch: fetchProfile,

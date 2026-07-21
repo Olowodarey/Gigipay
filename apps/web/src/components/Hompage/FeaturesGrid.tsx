@@ -4,7 +4,6 @@ import {
   Phone,
   Gift,
   Users,
-  Mail,
   CheckCircle,
   Shield,
 } from "lucide-react";
@@ -25,7 +24,7 @@ const features = [
   {
     icon: <CheckCircle className="h-6 w-6 text-accent" />,
     title: "Claim a Payment",
-    desc: "Received a payment code? Enter the voucher name and your unique code to claim your stablecoins instantly. No wallet setup needed — just sign in with Gmail and you're done.",
+    desc: "Received a payment code? Enter the voucher name and your unique code to claim your stablecoins instantly — you only need a wallet to claim.",
     link: { href: "/claim-payment", label: "Claim now" },
   },
   {
@@ -35,11 +34,10 @@ const features = [
     link: { href: "/buy-airtime", label: "Buy airtime" },
   },
   {
-    icon: <Mail className="h-6 w-6 text-accent" />,
-    title: "Gmail Login",
-    desc: "No MetaMask? No problem. Sign in with your Google account and Gigipay automatically creates a secure embedded wallet for you. Start receiving stablecoins in seconds.",
-    link: null,
-    footer: 'Just click "Sign in with Google" →',
+    icon: <Phone className="h-6 w-6 text-accent" />,
+    title: "Recurring Payments",
+    desc: "Set airtime or payroll to repeat automatically. When each one is due, you get a card to approve and sign — never a silent spend. You stay in control.",
+    link: { href: "/schedules", label: "Set up a schedule" },
   },
   {
     icon: <Shield className="h-6 w-6 text-accent" />,

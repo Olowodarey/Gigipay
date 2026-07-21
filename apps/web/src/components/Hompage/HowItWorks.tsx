@@ -5,7 +5,7 @@ const steps = [
     step: "01",
     icon: <Wallet className="h-6 w-6 text-accent" />,
     title: "Connect & Fund",
-    desc: "Connect your wallet (or sign in with Gmail). Choose how much to send and which stablecoin to use — USDC, USDT, USDm, and more.",
+    desc: "Connect your wallet. Choose how much to send and which stablecoin to use — USDC, USDT, USDm, and more.",
   },
   {
     step: "02",

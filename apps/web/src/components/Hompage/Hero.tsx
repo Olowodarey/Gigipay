@@ -1,7 +1,6 @@
 import HeroSection from "./HeroSection";
 import HowItWorks from "./HowItWorks";
 import FeaturesGrid from "./FeaturesGrid";
-import GmailCTA from "./GmailCTA";
 import FAQ from "./FAQ";
 
 /** Root homepage component — composes all homepage sections in order. */
@@ -12,7 +11,6 @@ export default function Hero() {
       <HowItWorks />
       <FeaturesGrid />
       <FAQ />
-      <GmailCTA />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Gift, Mail, Wallet, CheckCircle } from "lucide-react";
+import { ArrowRight, Gift, Ticket, Wallet, CheckCircle } from "lucide-react";
 
 /** Hero section with headline, mini flow diagram, CTA buttons, and a mock payment card visual. */
 export default function HeroSection() {
@@ -12,22 +12,22 @@ export default function HeroSection() {
           <div className="space-y-6 lg:space-y-8">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight text-balance">
               Pay Anyone, Anywhere —{" "}
-              <span className="text-accent">Just a Gmail Needed</span>
+              <span className="text-accent">with Stablecoins</span>
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed">
-              Send stablecoin payments, run giveaways, and top up airtime — all
-              on-chain. Recipients only need a Gmail address. No wallet setup,
-              no technical know-how required.
+              Send batch payments, run giveaways with claim codes, and top up
+              airtime — all on-chain. Recipients can claim with a simple code, no
+              wallet address needed.
             </p>
 
             {/* Mini flow */}
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5 bg-muted rounded-full px-3 py-1">
-                <Mail className="h-3.5 w-3.5 text-accent" /> Gmail login
+                <Wallet className="h-3.5 w-3.5 text-accent" /> Connect wallet
               </span>
               <ArrowRight className="h-4 w-4 shrink-0" />
               <span className="flex items-center gap-1.5 bg-muted rounded-full px-3 py-1">
-                <Wallet className="h-3.5 w-3.5 text-accent" /> Auto wallet
+                <Ticket className="h-3.5 w-3.5 text-accent" /> Share a code
               </span>
               <ArrowRight className="h-4 w-4 shrink-0" />
               <span className="flex items-center gap-1.5 bg-muted rounded-full px-3 py-1">
@@ -73,21 +73,19 @@ export default function HeroSection() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  {["alice@gmail.com", "bob@gmail.com", "carol@gmail.com"].map(
-                    (email, i) => (
-                      <div
-                        key={email}
-                        className="flex items-center justify-between text-sm"
-                      >
-                        <span className="text-muted-foreground flex items-center gap-1.5">
-                          <Mail className="h-3 w-3" /> {email}
-                        </span>
-                        <span className="font-medium text-accent">
-                          {[50, 75, 100][i]} cUSD
-                        </span>
-                      </div>
-                    ),
-                  )}
+                  {["GIFT-4A9K", "GIFT-7B2M", "GIFT-1C8X"].map((code, i) => (
+                    <div
+                      key={code}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <span className="text-muted-foreground flex items-center gap-1.5">
+                        <Ticket className="h-3 w-3" /> {code}
+                      </span>
+                      <span className="font-medium text-accent">
+                        {[50, 75, 100][i]} USDC
+                      </span>
+                    </div>
+                  ))}
                   <div className="text-xs text-muted-foreground pt-1">
                     +2 more…
                   </div>
@@ -97,7 +95,7 @@ export default function HeroSection() {
                     Total sent
                   </span>
                   <span className="text-xl font-bold text-accent">
-                    500 cUSD
+                    500 USDC
                   </span>
                 </div>
               </div>

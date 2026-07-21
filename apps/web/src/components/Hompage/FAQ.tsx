@@ -27,7 +27,7 @@ const faqs: FAQItem[] = [
     category: "General",
     question: "Do I need to create an account?",
     answer:
-      "No account needed. You just connect your wallet (via Privy, MetaMask, or any WalletConnect-compatible wallet) and you're ready to go. Your wallet address is your identity on Gigipay.",
+      "No account needed. You just connect your wallet (MetaMask, MiniPay, or any WalletConnect-compatible wallet) and you're ready to go. Your wallet address is your identity on Gigipay.",
   },
 
   // ── Batch Payment ─────────────────────────────────────────────────────────
@@ -137,7 +137,7 @@ const faqs: FAQItem[] = [
     category: "Security",
     question: "What wallets are supported?",
     answer:
-      "Any WalletConnect-compatible wallet works, including MetaMask, Rainbow, Coinbase Wallet, and MiniPay. Gigipay also supports Privy embedded wallets so users can log in with email or social accounts without needing a separate wallet app.",
+      "Any WalletConnect-compatible wallet works, including MetaMask, Rainbow, and Coinbase Wallet. Inside the MiniPay wallet, Gigipay connects automatically — no connect step needed.",
   },
 ];
 
