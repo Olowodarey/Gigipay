@@ -31,6 +31,7 @@ import {
 import { formatUnits, Address } from "viem";
 import { useTokenBalance } from "@/hooks/useTokenApproval";
 import { ClientOnly } from "@/components/batch-payment/ClientOnly";
+import { MiniPayNudge } from "@/components/minipay-nudge";
 
 const TOKEN_ADDRESSES: Record<number, Record<string, Address>> = {
   42220: {
@@ -375,6 +376,12 @@ function ClaimPageContent() {
               }`}
             >
               {notice.message}
+            </div>
+          )}
+          {/* No-wallet visitors: nudge toward MiniPay (keeps the wallet flow too) */}
+          {!isConnected && (
+            <div className="mb-6">
+              <MiniPayNudge />
             </div>
           )}
           {/* Initial State */}

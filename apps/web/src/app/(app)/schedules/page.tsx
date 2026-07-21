@@ -63,15 +63,11 @@ export default function SchedulesPage() {
 }
 
 function SchedulesContent() {
-  const { isConnected } = useAccount();
-  const {
-    token,
-    user,
-    isAuthenticated,
-    isAuthenticating,
-    signIn,
-    error: authError,
-  } = useAuth();
+  const { isConnected, isConnecting, isReconnecting } = useAccount();
+  // While wagmi restores a persisted connection, it briefly reports
+  // isConnected=false — don't flash the "Connect wallet" card during that.
+  const walletSettling = isConnecting || isReconnecting;
+  const { token, isAuthenticating, signIn, error: authError } = useAuth();
 
   // Auto-start the one-time SIWE sign-in when a wallet is connected but there's
   // no stored session yet. Guarded so a rejected signature doesn't loop.
@@ -86,8 +82,6 @@ function SchedulesContent() {
       signIn();
     }
   }, [isConnected, token, signIn]);
-
-  const restoringSession = !!token && !user; // valid JWT, profile still loading
 
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [runs, setRuns] = useState<ScheduleRun[]>([]);
@@ -112,9 +106,12 @@ function SchedulesContent() {
     }
   }, [token]);
 
+  // Load as soon as we have a session token — viewing schedules only needs the
+  // JWT (which persists ~7 days), not a live wallet connection. The wallet is
+  // only required to *sign* a due payment (handled by PreparedTxCard).
   useEffect(() => {
-    if (isAuthenticated) reload();
-  }, [isAuthenticated, reload]);
+    if (token) reload();
+  }, [token, reload]);
 
   const pendingRuns = runs.filter((r) => r.status === "pending");
 
@@ -143,47 +140,56 @@ function SchedulesContent() {
           </p>
         </div>
 
-        {!isConnected ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Connect your wallet</CardTitle>
-              <CardDescription>
-                Connect a wallet to set up and confirm recurring payments.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <WalletConnectButton />
-            </CardContent>
-          </Card>
-        ) : !isAuthenticated ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {isAuthenticating || restoringSession
-                  ? "Signing you in…"
-                  : "One-time sign-in"}
-              </CardTitle>
-              <CardDescription>
-                A quick signature (no fee) so only you can see and confirm your
-                recurring payments.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              {isAuthenticating || restoringSession ? (
+        {!token ? (
+          walletSettling ? (
+            <Card>
+              <CardContent className="py-8">
                 <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Check your wallet
-                  to approve the sign-in…
+                  <Loader2 className="h-4 w-4 animate-spin" /> Reconnecting your
+                  wallet…
                 </div>
-              ) : (
-                <>
-                  {authError && (
-                    <p className="text-sm text-destructive">{authError}</p>
-                  )}
-                  <Button onClick={signIn}>Sign in</Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ) : !isConnected ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Connect your wallet</CardTitle>
+                <CardDescription>
+                  Connect a wallet to set up and confirm recurring payments.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <WalletConnectButton />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {isAuthenticating ? "Signing you in…" : "One-time sign-in"}
+                </CardTitle>
+                <CardDescription>
+                  A quick signature (no fee) so only you can see and confirm your
+                  recurring payments.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                {isAuthenticating ? (
+                  <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Check your wallet
+                    to approve the sign-in…
+                  </div>
+                ) : (
+                  <>
+                    {authError && (
+                      <p className="text-sm text-destructive">{authError}</p>
+                    )}
+                    <Button onClick={signIn}>Sign in</Button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )
         ) : (
           <>
             {error && <p className="text-sm text-destructive">{error}</p>}

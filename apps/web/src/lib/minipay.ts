@@ -13,6 +13,17 @@ export function addCashDeeplink(tokens: readonly string[] = MINIPAY_TOKENS): str
   return `https://link.minipay.xyz/add_cash?tokens=${tokens.join(",")}`;
 }
 
+/** MiniPay's official site (download / learn more). */
+export const MINIPAY_SITE = "https://minipay.to";
+
+/** App URL used when deep-linking into the MiniPay in-app browser. */
+const APP_URL = process.env.NEXT_PUBLIC_URL || "https://gigipay-app.vercel.app";
+
+/** Deeplink that opens Gigipay inside the MiniPay in-app browser. */
+export function openInMiniPayDeeplink(url: string = APP_URL): string {
+  return `https://link.minipay.xyz/browse?url=${encodeURIComponent(url)}`;
+}
+
 /**
  * SSR-safe MiniPay detection. MiniPay injects `window.ethereum.isMiniPay = true`.
  * Returns false during SSR and in normal browsers.
