@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Sparkles, CheckCircle2, ExternalLink } from "lucide-react";
 import {
+  useAccount,
   useSendTransaction,
+  useSwitchChain,
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
@@ -34,6 +36,15 @@ export function PreparedTxCard({
     }
   }, [tx.chainId]);
 
+  // The run/agent tx is prepared for a specific chain (tx.chainId). If the wallet
+  // is on a different network, the approval + payment would hit the wrong chain's
+  // contract/token — so we switch first and pin every write to tx.chainId.
+  const { chainId: walletChainId } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
+  const [switching, setSwitching] = useState(false);
+  const [chainError, setChainError] = useState<string | null>(null);
+  const wrongChain = walletChainId != null && walletChainId !== tx.chainId;
+
   const {
     writeContract: approve,
     data: approvalHash,
@@ -42,6 +53,7 @@ export function PreparedTxCard({
   } = useWriteContract();
   const { isSuccess: approvalConfirmed } = useWaitForTransactionReceipt({
     hash: approvalHash,
+    chainId: tx.chainId,
   });
 
   const {
@@ -52,6 +64,7 @@ export function PreparedTxCard({
   } = useSendTransaction();
   const { isSuccess: txConfirmed } = useWaitForTransactionReceipt({
     hash: txHash,
+    chainId: tx.chainId,
   });
 
   const [approvalStarted, setApprovalStarted] = useState(false);
@@ -60,15 +73,32 @@ export function PreparedTxCard({
 
   const doSend = () =>
     sendTransaction({
+      chainId: tx.chainId,
       to: tx.to,
       data: tx.data,
       value: BigInt(tx.value || "0"),
     });
 
-  const onSign = () => {
+  const onSign = async () => {
+    setChainError(null);
+    // Make sure the wallet is on the chain this payment was prepared for.
+    if (wrongChain) {
+      try {
+        setSwitching(true);
+        await switchChainAsync({ chainId: tx.chainId });
+      } catch {
+        setChainError(
+          `Please switch your wallet to the correct network to pay.`,
+        );
+        return;
+      } finally {
+        setSwitching(false);
+      }
+    }
     if (tx.requiresApproval && spender) {
       setApprovalStarted(true);
       approve({
+        chainId: tx.chainId,
         address: tx.token.address,
         abi: erc20Abi,
         functionName: "approve",
@@ -113,7 +143,15 @@ export function PreparedTxCard({
         ? "https://basescan.org/tx/"
         : "https://celo-sepolia.blockscout.com/tx/";
 
-  const busy = approvePending || sendPending;
+  const busy = approvePending || sendPending || switching;
+  const chainName =
+    tx.chainId === 42220
+      ? "Celo"
+      : tx.chainId === 8453
+        ? "Base"
+        : tx.chainId === 11142220
+          ? "Celo Sepolia"
+          : `chain ${tx.chainId}`;
   const humanAmount = (() => {
     try {
       return formatUnits(BigInt(tx.amount), tx.token.decimals);
@@ -157,21 +195,25 @@ export function PreparedTxCard({
           onClick={onSign}
           disabled={busy || !!txHash}
         >
-          {approvePending
-            ? "Approve in wallet…"
-            : sendPending
-              ? "Confirm in wallet…"
-              : txHash
-                ? "Processing…"
-                : tx.requiresApproval
-                  ? "Approve & Sign"
-                  : "Sign payment"}
+          {switching
+            ? `Switch to ${chainName}…`
+            : approvePending
+              ? "Approve in wallet…"
+              : sendPending
+                ? "Confirm in wallet…"
+                : txHash
+                  ? "Processing…"
+                  : wrongChain
+                    ? `Switch to ${chainName} & pay`
+                    : tx.requiresApproval
+                      ? "Approve & Sign"
+                      : "Sign payment"}
         </Button>
       )}
 
-      {(approveError || sendError) && (
+      {(chainError || approveError || sendError) && (
         <p className="text-xs text-destructive">
-          {(approveError || sendError)?.message?.slice(0, 140)}
+          {chainError || (approveError || sendError)?.message?.slice(0, 140)}
         </p>
       )}
     </div>
